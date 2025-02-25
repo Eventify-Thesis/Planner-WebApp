@@ -48,7 +48,7 @@ const chartColors = {
 };
 
 export const lightColorsTheme: ITheme = {
-  primary: '#0D6E00',
+  primary: '#FA4032',
   primary1: '#f5f5f5',
   primaryGradient: 'linear-gradient(211.49deg, #00607A 15.89%, #005066 48.97%)',
   light: '#C5D3E0',
@@ -67,7 +67,7 @@ export const lightColorsTheme: ITheme = {
   scroll: '#0A5800',
   border: '#cce1f4',
   borderNft: '#79819A',
-  textMain: '#404040',
+  textMain: BASE_COLORS.white,
   textLight: '#9A9B9F',
   textSuperLight: '#BEC0C6',
   textSecondary: BASE_COLORS.white,

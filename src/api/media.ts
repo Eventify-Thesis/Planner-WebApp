@@ -1,6 +1,4 @@
-// @ts-nocheck
-// @ts-ignore
-import { httpApi } from "@/api/http.api";
+import { httpApi } from '@/api/http.api';
 
 export interface SignUrlRequest {
   fileName: string;
@@ -14,12 +12,12 @@ export interface SignUrlResponse {
 }
 
 export const getSignUrl = async (
-  signUrlRequest: SignUrlRequest
+  signUrlRequest: SignUrlRequest,
 ): Promise<SignUrlResponse> => {
   try {
     const response = await httpApi.get<SignUrlResponse>(
-      "/media/signedUrlForPuttingObject",
-      { params: signUrlRequest }
+      '/media/signedUrlForPuttingObject',
+      { params: signUrlRequest },
     );
     return response.data;
   } catch (e: any) {

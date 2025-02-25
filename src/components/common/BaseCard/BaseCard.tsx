@@ -1,5 +1,3 @@
-// @ts-nocheck
-// @ts-ignore
 import React from 'react';
 import { CardProps } from 'antd';
 import { defaultPaddings } from '@/constants/defaultPaddings';

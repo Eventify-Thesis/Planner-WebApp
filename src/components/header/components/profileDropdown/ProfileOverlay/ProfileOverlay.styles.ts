@@ -1,9 +1,7 @@
-// @ts-nocheck
-// @ts-ignore
-import styled from "styled-components";
-import { media } from "@/styles/themes/constants";
-import { BaseTypography } from "@/components/common/BaseTypography/BaseTypography";
-import { BaseDivider } from "@/components/common/BaseDivider/BaseDivider";
+import styled from 'styled-components';
+import { media } from '@/styles/themes/constants';
+import { BaseTypography } from '@/components/common/BaseTypography/BaseTypography';
+import { BaseDivider } from '@/components/common/BaseDivider/BaseDivider';
 
 export const Text = styled(BaseTypography.Text)`
   display: flex;

@@ -1,7 +1,5 @@
-// @ts-nocheck
-// @ts-ignore
-import { BaseRadio } from "@/components/common/BaseRadio/BaseRadio";
-import styled from "styled-components";
+import { BaseRadio } from '@/components/common/BaseRadio/BaseRadio';
+import styled from 'styled-components';
 
 export const SettingsOverlayMenu = styled.div`
   width: 13rem;

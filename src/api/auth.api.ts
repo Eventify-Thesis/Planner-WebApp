@@ -1,8 +1,6 @@
-// @ts-nocheck
-// @ts-ignore
-import { httpApi } from "@/api/http.api";
-import { ChangePasswordMessage } from "@/components/profile/profileCard/profileFormNav/nav/SecuritySettings/passwordForm/PasswordForm/PasswordForm";
-import { UserModel } from "@/domain/UserModel";
+import { httpApi } from '@/api/http.api';
+import { ChangePasswordMessage } from '@/components/profile/profileCard/profileFormNav/nav/SecuritySettings/passwordForm/PasswordForm/PasswordForm';
+import { UserModel } from '@/domain/UserModel';
 
 export interface AuthData {
   email: string;
@@ -41,35 +39,38 @@ export interface LoginResponse {
 
 export const login = (loginPayload: LoginRequest): Promise<LoginResponse> =>
   httpApi
-    .post<LoginResponse>("/auth/signin", { ...loginPayload })
+    .post<LoginResponse>('/auth/signin', { ...loginPayload })
     .then(({ data }) => data);
 
 export const signUp = (signUpData: SignUpRequest): Promise<undefined> =>
   httpApi
-    .post<undefined>("/auth/signup", { ...signUpData })
+    .post<undefined>('/auth/signup', { ...signUpData })
     .then(({ data }) => data);
 
 export const resetPassword = (
-  resetPasswordPayload: ResetPasswordRequest
+  resetPasswordPayload: ResetPasswordRequest,
 ): Promise<undefined> =>
   httpApi
-    .post<undefined>("/auth/forgotPassword", { ...resetPasswordPayload })
+    .post<undefined>('/auth/forgotPassword', { ...resetPasswordPayload })
     .then(({ data }) => data);
 
 export const verifySecurityCode = (
-  securityCodePayload: SecurityCodePayload
+  securityCodePayload: SecurityCodePayload,
 ): Promise<undefined> =>
   httpApi
-    .post<undefined>("verifySecurityCode", { ...securityCodePayload })
+    .post<undefined>('verifySecurityCode', { ...securityCodePayload })
     .then(({ data }) => data);
 
 export const setNewPassword = (
-  newPasswordData: NewPasswordData
+  newPasswordData: NewPasswordData,
 ): Promise<ChangePasswordMessage> =>
   httpApi
     .post<ChangePasswordMessage>(
-      "/auth/change-password",
+      '/auth/change-password',
       { ...newPasswordData },
-      { headers: { "Content-Type": "application/json" }, withCredentials: true }
+      {
+        headers: { 'Content-Type': 'application/json' },
+        withCredentials: true,
+      },
     )
     .then(({ data }) => data);

@@ -1,5 +1,3 @@
-// @ts-nocheck
-// @ts-ignore
 import styled from 'styled-components';
 import { CloseOutlined } from '@ant-design/icons';
 import { FONT_SIZE } from '@/styles/themes/constants';

@@ -1,5 +1,3 @@
-// @ts-nocheck
-// @ts-ignore
 import React from 'react';
 import { MoonSunSwitch } from '@/components/common/MoonSunSwitch/MoonSunSwitch';
 import { ThemeType } from '@/interfaces/interfaces';

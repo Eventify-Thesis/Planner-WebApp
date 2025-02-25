@@ -1,13 +1,11 @@
-// @ts-nocheck
-// @ts-ignore
-import React from "react";
-import { NotificationsDropdown } from "../components/notificationsDropdown/NotificationsDropdown";
-import { ProfileDropdown } from "../components/profileDropdown/ProfileDropdown/ProfileDropdown";
-import { HeaderSearch } from "../components/HeaderSearch/HeaderSearch";
-import { SettingsDropdown } from "../components/settingsDropdown/SettingsDropdown";
-import * as S from "../Header.styles";
-import { BaseRow } from "@/components/common/BaseRow/BaseRow";
-import { BaseCol } from "@/components/common/BaseCol/BaseCol";
+import React from 'react';
+import { NotificationsDropdown } from '../components/notificationsDropdown/NotificationsDropdown';
+import { ProfileDropdown } from '../components/profileDropdown/ProfileDropdown/ProfileDropdown';
+import { HeaderSearch } from '../components/HeaderSearch/HeaderSearch';
+import { SettingsDropdown } from '../components/settingsDropdown/SettingsDropdown';
+import * as S from '../Header.styles';
+import { BaseRow } from '@/components/common/BaseRow/BaseRow';
+import { BaseCol } from '@/components/common/BaseCol/BaseCol';
 
 interface MobileHeaderProps {
   toggleSider: () => void;

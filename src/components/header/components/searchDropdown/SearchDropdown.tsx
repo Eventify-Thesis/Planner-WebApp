@@ -1,5 +1,3 @@
-// @ts-nocheck
-// @ts-ignore
 import React, { useEffect, useRef, useState } from 'react';
 import { FilterIcon } from '@/components/common/icons/FilterIcon';
 import { SearchOverlay } from './searchOverlay/SearchOverlay/SearchOverlay';

@@ -1,11 +1,9 @@
-// @ts-nocheck
-// @ts-ignore
-import React, { useState } from "react";
-import { SettingOutlined } from "@ant-design/icons";
-import { BaseButton } from "@/components/common/BaseButton/BaseButton";
-import { HeaderActionWrapper } from "@/components/header/Header.styles";
-import { SettingsOverlay } from "./settingsOverlay/SettingsOverlay/SettingsOverlay";
-import { BasePopover } from "@/components/common/BasePopover/BasePopover";
+import React, { useState } from 'react';
+import { SettingOutlined } from '@ant-design/icons';
+import { BaseButton } from '@/components/common/BaseButton/BaseButton';
+import { HeaderActionWrapper } from '@/components/header/Header.styles';
+import { SettingsOverlay } from './settingsOverlay/SettingsOverlay/SettingsOverlay';
+import { BasePopover } from '@/components/common/BasePopover/BasePopover';
 
 export const SettingsDropdown: React.FC = () => {
   const [isOpened, setOpened] = useState(false);
@@ -18,8 +16,10 @@ export const SettingsDropdown: React.FC = () => {
     >
       <HeaderActionWrapper>
         <BaseButton
-          type={isOpened ? "ghost" : "text"}
-          icon={<SettingOutlined />}
+          type={isOpened ? 'ghost' : 'text'}
+          icon={
+            <SettingOutlined style={{ fontSize: '20px', color: 'white' }} />
+          }
         />
       </HeaderActionWrapper>
     </BasePopover>

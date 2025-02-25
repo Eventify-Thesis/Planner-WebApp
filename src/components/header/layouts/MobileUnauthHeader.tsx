@@ -1,11 +1,9 @@
-// @ts-nocheck
-// @ts-ignore
-import React from "react";
-import { ProfileDropdown } from "../components/profileDropdown/ProfileDropdown/ProfileDropdown";
-import { SettingsDropdown } from "../components/settingsDropdown/SettingsDropdown";
-import * as S from "../UnauthHeader.styles";
-import { BaseRow } from "@/components/common/BaseRow/BaseRow";
-import { BaseCol } from "@/components/common/BaseCol/BaseCol";
+import React from 'react';
+import { ProfileDropdown } from '../components/profileDropdown/ProfileDropdown/ProfileDropdown';
+import { SettingsDropdown } from '../components/settingsDropdown/SettingsDropdown';
+import * as S from '../UnauthHeader.styles';
+import { BaseRow } from '@/components/common/BaseRow/BaseRow';
+import { BaseCol } from '@/components/common/BaseCol/BaseCol';
 
 interface MobileUnauthHeaderProps {
   toggleSider: () => void;

@@ -1,9 +1,7 @@
-// @ts-nocheck
-// @ts-ignore
-import styled from "styled-components";
-import { InputNumber } from "@/components/common/inputs/InputNumber/InputNumber";
-import { FONT_SIZE, FONT_WEIGHT } from "@/styles/themes/constants";
-import { BaseTypography } from "@/components/common/BaseTypography/BaseTypography";
+import styled from 'styled-components';
+import { InputNumber } from '@/components/common/inputs/InputNumber/InputNumber';
+import { FONT_SIZE, FONT_WEIGHT } from '@/styles/themes/constants';
+import { BaseTypography } from '@/components/common/BaseTypography/BaseTypography';
 
 const pathWidth = 22;
 

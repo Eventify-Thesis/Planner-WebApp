@@ -1,6 +1,4 @@
-// @ts-nocheck
-// @ts-ignore
-import { httpApi } from "@/api/http.api";
+import { httpApi } from '@/api/http.api';
 
 export interface IndustryFilterResponse {
   data: string[];
@@ -30,7 +28,7 @@ export const getIndustryFilterAPI = async (): Promise<
   IndustryFilterResponse | undefined
 > => {
   try {
-    const response = await httpApi.get<IndustryFilterResponse>("/job/industry");
+    const response = await httpApi.get<IndustryFilterResponse>('/job/industry');
     return response.data;
   } catch (e: any) {
     throw new Error(e);
@@ -41,7 +39,7 @@ export const getLocationsFilterAPI = async (): Promise<
   LocationFilterResponse | undefined
 > => {
   try {
-    const response = await httpApi.get<LocationFilterResponse>("/job/location");
+    const response = await httpApi.get<LocationFilterResponse>('/job/location');
     return response.data;
   } catch (e: any) {
     throw new Error(e);

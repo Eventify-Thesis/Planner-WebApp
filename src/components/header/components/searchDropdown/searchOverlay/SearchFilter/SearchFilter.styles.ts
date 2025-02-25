@@ -1,8 +1,6 @@
-// @ts-nocheck
-// @ts-ignore
-import { BaseCheckbox } from "@/components/common/BaseCheckbox/BaseCheckbox";
-import { media } from "@/styles/themes/constants";
-import styled, { css } from "styled-components";
+import { BaseCheckbox } from '@/components/common/BaseCheckbox/BaseCheckbox';
+import { media } from '@/styles/themes/constants';
+import styled, { css } from 'styled-components';
 
 interface FilterWrapperProps {
   isOpen: boolean;

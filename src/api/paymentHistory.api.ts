@@ -1,6 +1,4 @@
-// @ts-nocheck
-// @ts-ignore
-import { CurrencyTypeEnum } from "@/interfaces/interfaces";
+import { CurrencyTypeEnum } from '@/interfaces/interfaces';
 
 export interface Payment {
   id: number;
@@ -18,43 +16,43 @@ export const getPaymentHistory = (): Promise<Payment[]> => {
       res([
         {
           id: 1,
-          recipient: "IBM Transactions",
+          recipient: 'IBM Transactions',
           date: 1626037200000,
           status: 1,
           amount: 500,
           currency: CurrencyTypeEnum.USD,
           imgUrl:
-            "https://res.cloudinary.com/lapkinthegod/image/upload/v1632988451/Ellipse_72_hwxejr.png",
+            'https://res.cloudinary.com/lapkinthegod/image/upload/v1632988451/Ellipse_72_hwxejr.png',
         },
         {
           id: 2,
-          recipient: "Citigroup",
+          recipient: 'Citigroup',
           date: 1630443600000,
           status: 2,
           amount: 40,
           currency: CurrencyTypeEnum.USD,
           imgUrl:
-            "https://res.cloudinary.com/lapkinthegod/image/upload/v1632988456/Ellipse_73_zanfs3.png",
+            'https://res.cloudinary.com/lapkinthegod/image/upload/v1632988456/Ellipse_73_zanfs3.png',
         },
         {
           id: 3,
-          recipient: "Netflix",
+          recipient: 'Netflix',
           date: 1628370000000,
           status: 3,
           amount: 1200,
           currency: CurrencyTypeEnum.USD,
           imgUrl:
-            "https://res.cloudinary.com/lapkinthegod/image/upload/v1632988460/Ellipse_73_1_hhfpzj.png",
+            'https://res.cloudinary.com/lapkinthegod/image/upload/v1632988460/Ellipse_73_1_hhfpzj.png',
         },
         {
           id: 4,
-          recipient: "IBM Transactions",
+          recipient: 'IBM Transactions',
           date: 1622667600000,
           status: 4,
           amount: 190,
           currency: CurrencyTypeEnum.USD,
           imgUrl:
-            "https://res.cloudinary.com/lapkinthegod/image/upload/v1632988451/Ellipse_72_hwxejr.png",
+            'https://res.cloudinary.com/lapkinthegod/image/upload/v1632988451/Ellipse_72_hwxejr.png',
         },
       ]);
     }, 0);

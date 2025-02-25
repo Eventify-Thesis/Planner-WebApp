@@ -1,10 +1,8 @@
-// @ts-nocheck
-// @ts-ignore
-import styled from "styled-components";
-import { BaseButton } from "@/components/common/BaseButton/BaseButton";
-import { media } from "@/styles/themes/constants";
-import { BaseDivider } from "@/components/common/BaseDivider/BaseDivider";
-import { BaseTypography } from "@/components/common/BaseTypography/BaseTypography";
+import styled from 'styled-components';
+import { BaseButton } from '@/components/common/BaseButton/BaseButton';
+import { media } from '@/styles/themes/constants';
+import { BaseDivider } from '@/components/common/BaseDivider/BaseDivider';
+import { BaseTypography } from '@/components/common/BaseTypography/BaseTypography';
 
 export const NoticesOverlayMenu = styled.div`
   max-width: 15rem;

@@ -1,5 +1,3 @@
-// @ts-nocheck
-// @ts-ignore
 import React from 'react';
 import * as S from './Legend.styles';
 import { BasePopover } from '@/components/common/BasePopover/BasePopover';

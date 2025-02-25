@@ -3,6 +3,7 @@ import * as S from './MainSider/MainSider.styles';
 import { RightOutlined } from '@ant-design/icons';
 import { useResponsive } from '@/hooks/useResponsive';
 import logo from '@/assets/logo.png';
+import { useAppSelector } from '@/hooks/reduxHooks';
 
 interface SiderLogoProps {
   isSiderCollapsed: boolean;
@@ -14,16 +15,15 @@ export const SiderLogo: React.FC<SiderLogoProps> = ({
 }) => {
   const { tabletOnly } = useResponsive();
 
-  // const theme = useAppSelector((state) => state.theme.theme);
-  const theme = 'light';
+  const theme = useAppSelector((state) => state.theme.theme);
 
-  const img = theme === 'dark' ? logo : logo;
+  const img = theme === 'light' ? logo : logo;
 
   return (
     <S.SiderLogoDiv>
       <S.SiderLogoLink to="/">
         <img src={img} alt="Lightence" width={48} height={48} />
-        <S.BrandSpan>Lightence</S.BrandSpan>
+        <S.BrandSpan>Planner Center</S.BrandSpan>
       </S.SiderLogoLink>
       {tabletOnly && (
         <S.CollapseButton

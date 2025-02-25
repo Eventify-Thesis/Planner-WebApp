@@ -1,16 +1,14 @@
-// @ts-nocheck
-// @ts-ignore
-import React, { useState } from "react";
-import { BellOutlined } from "@ant-design/icons";
-import { BaseButton } from "@/components/common/BaseButton/BaseButton";
-import { BaseBadge } from "@/components/common/BaseBadge/BaseBadge";
-import { NotificationsOverlay } from "@/components/header/components/notificationsDropdown/NotificationsOverlay/NotificationsOverlay";
+import React, { useState } from 'react';
+import { BellOutlined } from '@ant-design/icons';
+import { BaseButton } from '@/components/common/BaseButton/BaseButton';
+import { BaseBadge } from '@/components/common/BaseBadge/BaseBadge';
+import { NotificationsOverlay } from '@/components/header/components/notificationsDropdown/NotificationsOverlay/NotificationsOverlay';
 import {
   notifications as fetchedNotifications,
   Notification,
-} from "@/api/notifications.api";
-import { HeaderActionWrapper } from "@/components/header/Header.styles";
-import { BasePopover } from "@/components/common/BasePopover/BasePopover";
+} from '@/api/notifications.api';
+import { HeaderActionWrapper } from '@/components/header/Header.styles';
+import { BasePopover } from '@/components/common/BasePopover/BasePopover';
 
 export const NotificationsDropdown: React.FC = () => {
   const [notifications, setNotifications] =
@@ -30,7 +28,7 @@ export const NotificationsDropdown: React.FC = () => {
     >
       <HeaderActionWrapper>
         <BaseButton
-          type={isOpened ? "ghost" : "text"}
+          type={isOpened ? 'ghost' : 'text'}
           icon={
             <BaseBadge dot>
               <BellOutlined />
