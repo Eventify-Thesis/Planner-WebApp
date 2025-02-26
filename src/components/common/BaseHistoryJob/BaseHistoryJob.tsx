@@ -6,7 +6,7 @@ import { BaseAvatar } from '../BaseAvatar/BaseAvatar';
 import * as S from './BaseHistoryJob.styles';
 import { useTranslation } from 'react-i18next';
 import { BaseButton } from '../BaseButton/BaseButton';
-import { HistoryJobListResponse } from '@/api/jobs.api';
+import { HistoryJobListResponse } from '@/api/events.api';
 import { BaseModal } from '../BaseModal/BaseModal';
 import logo from 'assets/logo_svg.svg';
 import { formatDate } from '@/utils/utils';

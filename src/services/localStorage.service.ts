@@ -7,8 +7,7 @@ export const persistToken = (token: string): void => {
 };
 
 export const readToken = (): string | null => {
-  console.log('Cookies.get(access_token)', Cookies.get('access_token'));
-  return Cookies.get('access_token') || null;
+  return Cookies.get('__session') || null;
 };
 
 export const persistQuery = (query: QueryModel): void => {

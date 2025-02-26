@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 // // no lazy loading for auth pages to avoid flickering
 const AuthLayout = React.lazy(
@@ -12,9 +12,10 @@ import RequireAuth from '@/components/router/RequireAuth';
 
 import { withLoading } from '@/hocs/withLoading.hoc';
 import { SignIn, SignUp } from '@clerk/clerk-react';
+import { NotFound } from '../common/NotFound/NotFound';
 const EventDashboardPage = React.lazy(
-  () => import('@/pages/EventDashboardPage')
-)
+  () => import('@/pages/EventDashboardPage'),
+);
 
 const AuthLayoutFallback = withLoading(AuthLayout);
 export const HOME_PATH = '/';
@@ -29,10 +30,13 @@ export const AppRouter: React.FC = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path={HOME_PATH} element={<MainLayout />}>
-          <Route index element={<EventDashboardPage/>} />
+        <Route path={HOME_PATH} element={<Navigate to="/events" replace />} />
+
+        <Route path={HOME_PATH} element={protectedLayout}>
+          <Route path="events" element={<EventDashboardPage />} />
+          <Route path="export-file" element={<NotFound />} />
+          <Route path="legal-document" element={<NotFound />} />
         </Route>
-        <Route path={HOME_PATH} element={protectedLayout}></Route>
         <Route path="/auth" element={<AuthLayoutFallback />}>
           <Route path="login" element={<SignIn signUpUrl="/auth/sign-up" />} />
           <Route path="sign-up" element={<SignUp />} />

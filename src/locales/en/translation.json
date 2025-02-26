@@ -166,5 +166,21 @@
       "viewAll": "View all"
     },
     "search": "Search"
+  },
+  "eventDashboard": {
+    "filter": {
+      "draft": "Draft",
+      "past": "Past",
+      "upcoming": "Upcoming",
+      "waitingForApproval": "Waiting approval"
+    },
+    "inputs": {
+      "searchText": "Search event"
+    },
+    "overview": "Overview",
+    "members": "Members",
+    "orders": "Orders",
+    "seating": "Seating",
+    "edit": "Edit"
   }
 }

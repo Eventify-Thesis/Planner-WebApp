@@ -4,7 +4,7 @@ import { ApiError } from '@/api/ApiError';
 import { readToken } from '@/services/localStorage.service';
 
 export const httpApi = axios.create({
-  baseURL: import.meta.env.BASE_URL,
+  baseURL: `${import.meta.env.VITE_API_BASE_URL}/event`,
   withCredentials: true,
 });
 
