@@ -1,5 +1,3 @@
-// @ts-nocheck
-// @ts-ignore
 import React from 'react';
 import { DropdownCollapse } from '@/components/header/Header.styles';
 import { useTranslation } from 'react-i18next';

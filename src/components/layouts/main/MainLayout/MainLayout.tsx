@@ -4,8 +4,8 @@ import MainContent from '../MainContent/MainContent';
 import { MainHeader } from '../MainHeader/MainHeader';
 import * as S from './MainLayout.styles';
 import { Outlet } from 'react-router-dom';
-import { UnauthHeader } from '@/components/header/UnauthHeader';
 import { useAuth } from '@clerk/clerk-react';
+import MainSider from '../sider/MainSider/MainSider';
 
 const MainLayout: React.FC = () => {
   const [siderCollapsed, setSiderCollapsed] = useState(true);
@@ -15,23 +15,14 @@ const MainLayout: React.FC = () => {
 
   return (
     <S.LayoutMaster>
-      {/* <MainSider
+      <MainSider
         isCollapsed={siderCollapsed}
         setCollapsed={setSiderCollapsed}
-      /> */}
+      />
       <S.LayoutMain>
-        {isSignedIn ? (
-          <MainHeader>
-            <Header toggleSider={toggleSider} isSiderOpened={!siderCollapsed} />
-          </MainHeader>
-        ) : (
-          <MainHeader>
-            <UnauthHeader
-              isSiderOpened={!siderCollapsed}
-              toggleSider={toggleSider}
-            />
-          </MainHeader>
-        )}
+        <MainHeader>
+          <Header toggleSider={toggleSider} isSiderOpened={!siderCollapsed} />
+        </MainHeader>
         <MainContent id="main-content">
           <div>
             <Outlet />

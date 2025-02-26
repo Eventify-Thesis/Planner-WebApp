@@ -1,20 +1,18 @@
-// @ts-nocheck
-// @ts-ignore
-import React, { useMemo, ReactNode } from "react";
-import { Trans } from "react-i18next";
-import { useTranslation } from "react-i18next";
-import { Link } from "react-router-dom";
-import { BaseNotification } from "@/components/common/BaseNotification/BaseNotification";
-import { capitalize } from "@/utils/utils";
+import React, { useMemo, ReactNode } from 'react';
+import { Trans } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
+import { BaseNotification } from '@/components/common/BaseNotification/BaseNotification';
+import { capitalize } from '@/utils/utils';
 import {
   Mention,
   Notification as NotificationType,
-} from "api/notifications.api";
-import { notificationsSeverities } from "constants/notificationsSeverities";
-import * as S from "./NotificationsOverlay.styles";
-import { BaseRow } from "@/components/common/BaseRow/BaseRow";
-import { BaseCol } from "@/components/common/BaseCol/BaseCol";
-import { BaseSpace } from "@/components/common/BaseSpace/BaseSpace";
+} from 'api/notifications.api';
+import { notificationsSeverities } from 'constants/notificationsSeverities';
+import * as S from './NotificationsOverlay.styles';
+import { BaseRow } from '@/components/common/BaseRow/BaseRow';
+import { BaseCol } from '@/components/common/BaseCol/BaseCol';
+import { BaseSpace } from '@/components/common/BaseSpace/BaseSpace';
 
 interface NotificationsOverlayProps {
   notifications: NotificationType[];
@@ -32,16 +30,16 @@ export const NotificationsOverlay: React.FC<NotificationsOverlayProps> = ({
     () =>
       notifications.map((notification, index) => {
         const type = notificationsSeverities.find(
-          (dbSeverity) => dbSeverity.id === notification.id
+          (dbSeverity) => dbSeverity.id === notification.id,
         )?.name;
 
         return (
           <BaseNotification
             key={index}
-            type={type || "warning"}
-            title={capitalize(type || "warning")}
+            type={type || 'warning'}
+            title={capitalize(type || 'warning')}
             description={t(notification.description)}
-            {...(type === "mention" && {
+            {...(type === 'mention' && {
               mentionIconSrc: (notification as Mention).userIcon,
               title: (notification as Mention).username,
               description: (
@@ -59,7 +57,7 @@ export const NotificationsOverlay: React.FC<NotificationsOverlayProps> = ({
           />
         );
       }),
-    [notifications, t]
+    [notifications, t],
   );
 
   return (
@@ -75,7 +73,7 @@ export const NotificationsOverlay: React.FC<NotificationsOverlayProps> = ({
               {noticesList}
             </BaseSpace>
           ) : (
-            <S.Text>{t("header.notifications.noNotifications")}</S.Text>
+            <S.Text>{t('header.notifications.noNotifications')}</S.Text>
           )}
         </BaseCol>
         <BaseCol span={24}>
@@ -83,13 +81,13 @@ export const NotificationsOverlay: React.FC<NotificationsOverlayProps> = ({
             {notifications.length > 0 && (
               <BaseCol span={24}>
                 <S.Btn type="ghost" onClick={() => setNotifications([])}>
-                  {t("header.notifications.readAll")}
+                  {t('header.notifications.readAll')}
                 </S.Btn>
               </BaseCol>
             )}
             <BaseCol span={24}>
               <S.Btn type="link">
-                <Link to="/">{t("header.notifications.viewAll")}</Link>
+                <Link to="/">{t('header.notifications.viewAll')}</Link>
               </S.Btn>
             </BaseCol>
           </BaseRow>

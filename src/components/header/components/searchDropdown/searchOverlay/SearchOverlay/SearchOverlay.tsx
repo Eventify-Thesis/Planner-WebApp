@@ -1,11 +1,9 @@
-// @ts-nocheck
-// @ts-ignore
-import React from "react";
-import { SearchFilter } from "../SearchFilter/SearchFilter";
-import { SearchResults } from "../SearchResults/SearchResults";
-import { CategoryComponents } from "@/components/header/components/HeaderSearch/HeaderSearch";
-import { NotFound } from "@/components/common/NotFound/NotFound";
-import * as S from "./SearchOverlay.styles";
+import React from 'react';
+import { SearchFilter } from '../SearchFilter/SearchFilter';
+import { SearchResults } from '../SearchResults/SearchResults';
+import { CategoryComponents } from '@/components/header/components/HeaderSearch/HeaderSearch';
+import { NotFound } from '@/components/common/NotFound/NotFound';
+import * as S from './SearchOverlay.styles';
 
 interface SearchOverlayProps {
   data: CategoryComponents[] | null;

@@ -1,5 +1,3 @@
-// @ts-nocheck
-// @ts-ignore
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { categoriesList, CategoryType } from '@/constants/categoriesList';

@@ -1,5 +1,3 @@
-// @ts-nocheck
-// @ts-ignore
 import styled from 'styled-components';
 import { Table as AntdTable } from 'antd';
 import { FONT_SIZE } from '@/styles/themes/constants';

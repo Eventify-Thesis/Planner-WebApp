@@ -1,5 +1,3 @@
-// @ts-nocheck
-// @ts-ignore
 import styled from 'styled-components';
 import {
   BORDER_RADIUS,

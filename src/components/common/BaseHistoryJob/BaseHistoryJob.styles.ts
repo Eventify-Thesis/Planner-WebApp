@@ -1,5 +1,3 @@
-// @ts-nocheck
-// @ts-ignore
 import styled from 'styled-components';
 import { NFTCard } from '@/components/nft-dashboard/common/NFTCard/NFTCard';
 import { FONT_SIZE, media, FONT_FAMILY } from '@/styles/themes/constants';

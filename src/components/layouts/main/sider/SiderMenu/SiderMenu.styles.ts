@@ -1,6 +1,6 @@
-import styled from "styled-components";
-import { FONT_SIZE } from "@/styles/themes/constants";
-import { BaseMenu } from "@/components/common/BaseMenu/BaseMenu";
+import styled from 'styled-components';
+import { FONT_SIZE } from '@/styles/themes/constants';
+import { BaseMenu } from '@/components/common/BaseMenu/BaseMenu';
 
 export const Menu = styled(BaseMenu)`
   background: transparent;
@@ -14,6 +14,7 @@ export const Menu = styled(BaseMenu)`
   .ant-menu-item,
   .ant-menu-submenu {
     font-size: ${FONT_SIZE.xs};
+    padding: 24px 16px 24px 24px;
   }
 
   .ant-menu-item-icon {
@@ -22,7 +23,7 @@ export const Menu = styled(BaseMenu)`
 
   .ant-menu-submenu-expand-icon,
   .ant-menu-submenu-arrow,
-  span[role="img"],
+  span[role='img'],
   a,
   .ant-menu-item,
   .ant-menu-submenu {
@@ -34,7 +35,7 @@ export const Menu = styled(BaseMenu)`
   .ant-menu-submenu-title:hover {
     .ant-menu-submenu-expand-icon,
     .ant-menu-submenu-arrow,
-    span[role="img"],
+    span[role='img'],
     a,
     .ant-menu-item-icon,
     .ant-menu-title-content {
@@ -49,7 +50,7 @@ export const Menu = styled(BaseMenu)`
 
       .ant-menu-submenu-expand-icon,
       .ant-menu-submenu-arrow,
-      span[role="img"] {
+      span[role='img'] {
         color: var(--text-sider-primary-color);
         fill: var(--text-sider-primary-color);
       }
@@ -61,7 +62,7 @@ export const Menu = styled(BaseMenu)`
 
     .ant-menu-submenu-expand-icon,
     .ant-menu-submenu-arrow,
-    span[role="img"],
+    span[role='img'],
     .ant-menu-item-icon,
     a {
       color: var(--text-sider-primary-color);

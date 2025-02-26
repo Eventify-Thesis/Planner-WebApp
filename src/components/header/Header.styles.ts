@@ -9,7 +9,7 @@ import { Icon } from '@iconify/react/dist/iconify.js';
 
 export const HeaderActionWrapper = styled.div`
   cursor: pointer;
-
+  color: white;
   & > .ant-btn > span[role='img'],
   .ant-badge {
     font-size: 1.25rem;

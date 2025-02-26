@@ -1,5 +1,3 @@
-// @ts-nocheck
-// @ts-ignore
 import React, { CSSProperties, useEffect, useState } from 'react';
 import { EChartsOption } from 'echarts-for-react';
 import ReactECharts from 'echarts-for-react';

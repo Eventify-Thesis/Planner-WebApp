@@ -1,9 +1,9 @@
-import styled, { css } from "styled-components";
-import { Link } from "react-router-dom";
-import { media } from "@/styles/themes/constants";
-import { LAYOUT } from "@/styles/themes/constants";
-import { BaseButton } from "@/components/common/BaseButton/BaseButton";
-import { BaseLayout } from "@/components/common/BaseLayout/BaseLayout";
+import styled, { css } from 'styled-components';
+import { Link } from 'react-router-dom';
+import { media } from '@/styles/themes/constants';
+import { LAYOUT } from '@/styles/themes/constants';
+import { BaseButton } from '@/components/common/BaseButton/BaseButton';
+import { BaseLayout } from '@/components/common/BaseLayout/BaseLayout';
 
 export const Sider = styled(BaseLayout.Sider)`
   position: fixed;
@@ -88,6 +88,8 @@ export const SiderLogoDiv = styled.div`
 export const BrandSpan = styled.span`
   margin: 0 1rem;
   font-weight: 700;
-  font-size: 1.125rem;
-  color: var(--white);
+  width: 100%;
+  line-break: normal;
+  font-size: 1.3rem;
+  color: var(--primary-color);
 `;

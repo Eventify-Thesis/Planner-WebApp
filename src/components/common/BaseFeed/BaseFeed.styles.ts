@@ -1,5 +1,3 @@
-// @ts-nocheck
-// @ts-ignore
 import { media } from '@/styles/themes/constants';
 import styled from 'styled-components';
 

@@ -1,5 +1,3 @@
-// @ts-nocheck
-// @ts-ignore
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import {
   ResetPasswordRequest,

@@ -1,5 +1,3 @@
-// @ts-nocheck
-// @ts-ignore
 import styled from 'styled-components';
 import { SearchOutlined } from '@ant-design/icons';
 import { BaseModal } from '@/components/common/BaseModal/BaseModal';

@@ -1,5 +1,3 @@
-// @ts-nocheck
-// @ts-ignore
 import React from 'react';
 import { ButtonProps as AntButtonProps, Button as AntdButton } from 'antd';
 import { Severity } from '@/interfaces/interfaces';

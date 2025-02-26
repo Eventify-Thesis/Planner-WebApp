@@ -1,5 +1,3 @@
-// @ts-nocheck
-// @ts-ignore
 export interface QueryModel {
   page: number;
   limit: number;

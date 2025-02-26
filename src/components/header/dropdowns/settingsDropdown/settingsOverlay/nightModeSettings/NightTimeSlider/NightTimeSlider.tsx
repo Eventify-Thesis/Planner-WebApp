@@ -1,11 +1,9 @@
-// @ts-nocheck
-// @ts-ignore
-import React, { useState } from "react";
-import { useTranslation } from "react-i18next";
-import { createComponent } from "@lit-labs/react";
-import { RoundSlider } from "round-slider";
-import { hToMS, msToH } from "@/utils/utils";
-import * as S from "./NightTimeSlider.styles";
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { createComponent } from '@lit-labs/react';
+import { RoundSlider } from 'round-slider';
+import { hToMS, msToH } from '@/utils/utils';
+import * as S from './NightTimeSlider.styles';
 
 interface NightTimeSliderProps {
   from: number;
@@ -15,26 +13,26 @@ interface NightTimeSliderProps {
 
 const RoundSliderComponent = createComponent(
   React,
-  "round-slider",
+  'round-slider',
   RoundSlider,
   {
-    onValueChanged: "value-changed",
-    onChange: "value-changing",
-  }
+    onValueChanged: 'value-changed',
+    onChange: 'value-changing',
+  },
 );
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const handleSlider = (
   event: any,
   onLow: (value: number) => void,
-  onHigh: (value: number) => void
+  onHigh: (value: number) => void,
 ) => {
   const entries = event.detail && Object.entries(event.detail)[0];
 
   const value = entries && entries[1];
 
   if (entries) {
-    if (entries[0] === "high") {
+    if (entries[0] === 'high') {
       onHigh(value);
     } else {
       onLow(value);
@@ -69,7 +67,7 @@ export const NightTimeSlider: React.FC<NightTimeSliderProps> = ({
             handleSlider(
               event,
               (value) => setNightTime([hToMS(value), to]),
-              (value) => setNightTime([from, hToMS(value)])
+              (value) => setNightTime([from, hToMS(value)]),
             )
           }
         />
@@ -84,7 +82,7 @@ export const NightTimeSlider: React.FC<NightTimeSliderProps> = ({
             {toValue > fromValue
               ? toValue - fromValue
               : 24 - fromValue + toValue}
-            {t("header.nightMode.h")}
+            {t('header.nightMode.h')}
           </S.CenterText>
 
           <S.BotText>12</S.BotText>
@@ -95,7 +93,7 @@ export const NightTimeSlider: React.FC<NightTimeSliderProps> = ({
 
       <S.TimeRow>
         <S.TimeWrapper>
-          <S.Text>{t("header.nightMode.from").toUpperCase()}</S.Text>
+          <S.Text>{t('header.nightMode.from').toUpperCase()}</S.Text>
           <S.NumberInput
             type="number"
             size="small"
@@ -107,7 +105,7 @@ export const NightTimeSlider: React.FC<NightTimeSliderProps> = ({
         </S.TimeWrapper>
 
         <S.TimeWrapper>
-          <S.Text>{t("header.nightMode.to").toUpperCase()}</S.Text>
+          <S.Text>{t('header.nightMode.to').toUpperCase()}</S.Text>
           <S.NumberInput
             type="number"
             size="small"

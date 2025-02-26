@@ -1,12 +1,10 @@
-// @ts-nocheck
-// @ts-ignore
-import React from "react";
-import { NightTimePicker } from "./NightTimePicker/NightTimePicker";
-import { BaseSwitch } from "@/components/common/BaseSwitch/BaseSwitch";
-import styled from "styled-components";
-import { useTranslation } from "react-i18next";
-import { useAppDispatch, useAppSelector } from "@/hooks/reduxHooks";
-import { setNightMode, setNightTime } from "@/store/slices/nightModeSlice";
+import React from 'react';
+import { NightTimePicker } from './NightTimePicker/NightTimePicker';
+import { BaseSwitch } from '@/components/common/BaseSwitch/BaseSwitch';
+import styled from 'styled-components';
+import { useTranslation } from 'react-i18next';
+import { useAppDispatch, useAppSelector } from '@/hooks/reduxHooks';
+import { setNightMode, setNightTime } from '@/store/slices/nightModeSlice';
 
 export const NightModeSettings: React.FC = () => {
   const { t } = useTranslation();
@@ -27,7 +25,7 @@ export const NightModeSettings: React.FC = () => {
   return (
     <>
       <SwitchContainer>
-        <span>{t("common.auto")}</span>
+        <span>{t('common.auto')}</span>
         <BaseSwitch
           checkedChildren="On"
           unCheckedChildren="Off"
