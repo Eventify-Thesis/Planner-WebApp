@@ -19,6 +19,9 @@ export const CreateEventButton: React.FC = (props) => {
         />
       }
       target="_blank"
+      onClick={() => {
+        window.open('/create-event', '_blank');
+      }}
       $isDark={theme === 'dark'}
       {...props}
     >

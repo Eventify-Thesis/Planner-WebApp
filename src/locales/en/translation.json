@@ -182,5 +182,72 @@
     "orders": "Orders",
     "seating": "Seating",
     "edit": "Edit"
+  },
+
+  "event_create": {
+    "save": "Save",
+    "continue": "Continue",
+    "previous_step_required": "Please complete the current step before moving on",
+    "next_step_required": "Please complete the previous step before moving on",
+    "failed_to_save": "Failed to save event",
+    "failed_to_load": "Failed to load event",
+    "event_identity": {
+      "title": "Event Identity",
+      "logo": "Event Logo",
+      "logo_required": "Please upload event logo",
+      "banner": "Event Banner",
+      "banner_required": "Please upload event banner",
+      "name": "Event Name",
+      "name_required": "Please enter event name"
+    },
+    "upload": {
+      "logo": "Upload Logo",
+      "banner": "Upload Banner",
+      "organizer_logo": "Upload Organizer Logo"
+    },
+    "event_location": {
+      "title": "Event Location",
+      "type": "Event Type",
+      "type_required": "Please select event type",
+      "offline": "Offline Event",
+      "online": "Online Event",
+      "venue_name": "Venue Name",
+      "venue_required": "Please enter venue name",
+      "city": "City/Province",
+      "district": "District",
+      "ward": "Ward",
+      "city_placeholder": "Select city",
+      "city_required": "Please select city",
+      "district_placeholder": "Select district",
+      "district_required": "Please select district",
+      "ward_placeholder": "Select ward",
+      "ward_required": "Please select ward",
+      "street_address": "Street Address",
+      "street_address_placeholder": "Enter street address",
+      "street_address_required": "Please enter street address",
+      "street_required": "Please enter street address"
+    },
+    "event_category": {
+      "title": "Event Category",
+      "label": "Category",
+      "required": "Please select category",
+      "placeholder": "Select category",
+      "info": "Event category information",
+      "info_required": "Please enter event category information"
+    },
+    "event_description": {
+      "title": "Event Description",
+      "label": "Event Information",
+      "required": "Please enter event description"
+    },
+    "organizer_information": {
+      "title": "Organizer Information",
+      "logo": "Organizer Logo",
+      "logo_required": "Please upload organizer logo",
+      "name": "Organizer Name",
+      "name_required": "Please enter organizer name",
+      "information": "Organizer Information",
+      "info_required": "Please enter organizer information"
+    }
   }
 }

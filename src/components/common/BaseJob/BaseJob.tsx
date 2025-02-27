@@ -50,7 +50,6 @@ export const BaseJob: React.FC<BaseJobProps> = ({ jobData }) => {
 
   const handleOnCardClick = () => {
     setModalOpen(true);
-    console.log('Data: ', jobData);
   };
 
   // Log jobData to verify the structure

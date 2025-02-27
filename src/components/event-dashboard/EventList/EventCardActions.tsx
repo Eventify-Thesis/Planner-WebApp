@@ -7,38 +7,38 @@ import { useResponsive } from '@/hooks/useResponsive';
 
 export const EventCardActions = () => {
   const { t } = useTranslation();
-  const { isMobile } = useResponsive();
+  const { isMobile, isTablet, isDesktop } = useResponsive();
 
   return (
     <ActionsContainer>
       <ActionItem>
         <ActionLink isMobile={isMobile}>
           <Icon icon="mdi:home" width="24" height="24" />
-          {!isMobile && <ActionText>{t('eventDashboard.overview')}</ActionText>}
+          {isDesktop && <ActionText>{t('eventDashboard.overview')}</ActionText>}
         </ActionLink>
       </ActionItem>
       <ActionItem>
         <ActionLink isMobile={isMobile}>
           <Icon icon="material-symbols:person" width="24" height="24" />
-          {!isMobile && <ActionText>{t('eventDashboard.members')}</ActionText>}
+          {isDesktop && <ActionText>{t('eventDashboard.members')}</ActionText>}
         </ActionLink>
       </ActionItem>
       <ActionItem>
         <ActionLink isMobile={isMobile}>
           <Icon icon="mdi:cart" width="24" height="24" />
-          {!isMobile && <ActionText>{t('eventDashboard.orders')}</ActionText>}
+          {isDesktop && <ActionText>{t('eventDashboard.orders')}</ActionText>}
         </ActionLink>
       </ActionItem>
       <ActionItem>
         <ActionLink isMobile={isMobile}>
           <Icon icon="mdi:chair" width="24" height="24" />
-          {!isMobile && <ActionText>{t('eventDashboard.seating')}</ActionText>}
+          {isDesktop && <ActionText>{t('eventDashboard.seating')}</ActionText>}
         </ActionLink>
       </ActionItem>
       <ActionItem>
         <ActionLink isMobile={isMobile}>
           <Icon icon="mdi:cog" width="24" height="24" />
-          {!isMobile && <ActionText>{t('eventDashboard.edit')}</ActionText>}
+          {isDesktop && <ActionText>{t('eventDashboard.edit')}</ActionText>}
         </ActionLink>
       </ActionItem>
     </ActionsContainer>
