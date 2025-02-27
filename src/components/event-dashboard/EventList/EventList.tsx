@@ -9,6 +9,7 @@ interface EventListProps {
 const Container = styled.div`
   display: flex;
   justify-content: center;
+  flex-direction: column;
   align-items: center;
   min-height: 300px; // Adjust as needed
   width: 100%;

@@ -4,6 +4,7 @@ export interface SignUrlRequest {
   fileName: string;
   contentType: string;
   isPublic: boolean;
+  folder: string;
 }
 
 export interface SignUrlResponse {
@@ -15,11 +16,13 @@ export const getSignUrl = async (
   signUrlRequest: SignUrlRequest,
 ): Promise<SignUrlResponse> => {
   try {
-    const response = await httpApi.get<SignUrlResponse>(
+    const response = await httpApi.get<any>(
       '/media/signedUrlForPuttingObject',
-      { params: signUrlRequest },
+      {
+        params: signUrlRequest,
+      },
     );
-    return response.data;
+    return response.data.data;
   } catch (e: any) {
     throw new Error(e);
   }

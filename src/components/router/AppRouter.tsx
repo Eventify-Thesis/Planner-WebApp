@@ -17,6 +17,8 @@ const EventDashboardPage = React.lazy(
   () => import('@/pages/EventDashboardPage'),
 );
 
+const EventCreatePage = React.lazy(() => import('@/pages/EventCreatePage'));
+
 const AuthLayoutFallback = withLoading(AuthLayout);
 export const HOME_PATH = '/';
 
@@ -34,6 +36,11 @@ export const AppRouter: React.FC = () => {
 
         <Route path={HOME_PATH} element={protectedLayout}>
           <Route path="events" element={<EventDashboardPage />} />
+          <Route path="create-event" element={<EventCreatePage />} />
+          <Route
+            path="create-event/:eventId/:step?"
+            element={<EventCreatePage />}
+          />
           <Route path="export-file" element={<NotFound />} />
           <Route path="legal-document" element={<NotFound />} />
         </Route>

@@ -67,7 +67,7 @@ export const lightColorsTheme: ITheme = {
   scroll: '#0A5800',
   border: '#cce1f4',
   borderNft: '#79819A',
-  textMain: BASE_COLORS.white,
+  textMain: 'white',
   textLight: '#9A9B9F',
   textSuperLight: '#BEC0C6',
   textSecondary: BASE_COLORS.white,

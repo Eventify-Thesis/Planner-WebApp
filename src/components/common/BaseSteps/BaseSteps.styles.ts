@@ -19,6 +19,10 @@ export const Steps = styled(AntdSteps)`
     }
   }
 
+  .ant-steps-item-process .ant-steps-item-icon {
+    background: var(--primary-color);
+  }
+
   .ant-steps-item-wait
     > .ant-steps-item-container
     > .ant-steps-item-content
@@ -32,6 +36,7 @@ export const Steps = styled(AntdSteps)`
     }
   }
   .ant-steps-item-wait .ant-steps-item-icon {
+    background: white;
     border-color: var(--disabled-color);
 
     & > .ant-steps-icon {
