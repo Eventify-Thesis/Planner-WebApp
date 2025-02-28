@@ -14,17 +14,22 @@ import EventInfoForm from '@/components/event-create/EventInfo/EventInfoForm';
 import { Steps } from '@/components/common/BaseSteps/BaseSteps.styles';
 import { notificationController } from '@/controllers/notificationController';
 import { uploadFile } from '@/services/fileUpload.service';
-import { eventInfoDraft } from '@/services/eventInfoDraft.service';
+import {
+  eventInfoDraft,
+  updateEventSetting,
+  updateEventShow,
+  updateEventPayment,
+} from '@/services/event.service';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAppDispatch } from '@/hooks/reduxHooks';
+import { BASE_COLORS } from '@/styles/themes/constants';
 
 const { Step } = Steps;
 
 const StyledFormContainer = styled.div`
   width: 100%;
-  padding: 24px;
-  background: white;
+  padding: 1rem;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 `;
@@ -35,8 +40,9 @@ const FormContainer = styled.div<{ $active: boolean }>`
 
 const EventCreatePage: React.FC = () => {
   const navigate = useNavigate();
-  const params = useParams<{ eventId?: string; step?: string }>();
-  const { eventId, step } = params;
+  const params = useParams<{ eventId?: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { eventId } = params;
   const { t } = useTranslation();
   const [current, setCurrent] = useState(0);
   const [formData, setFormData] = useState({});
@@ -45,46 +51,78 @@ const EventCreatePage: React.FC = () => {
   const dispatch = useAppDispatch();
 
   const steps = [
-    { title: 'Event Info', content: EventInfoForm },
-    { title: 'Show & Tickets', content: ShowAndTicketForm },
-    { title: 'Event Settings', content: EventSettingsForm },
-    { title: 'Payment Info', content: PaymentInfoForm },
+    { title: 'Event Info', key: 'info', content: EventInfoForm },
+    { title: 'Show & Tickets', key: 'show', content: ShowAndTicketForm },
+    { title: 'Event Settings', key: 'setting', content: EventSettingsForm },
+    { title: 'Payment Info', key: 'payment', content: PaymentInfoForm },
   ];
 
   useEffect(() => {
+    const step = searchParams.get('step');
+    console.log('Current step:', step); // Add a log here to check if the step is correctly retrieved
+
     if (step) {
-      setCurrent(Number(step));
+      const stepIndex = steps.findIndex((s) => s.key == step);
+      if (stepIndex !== -1) {
+        setCurrent(stepIndex);
+      }
     }
-  }, [step]);
+
+    if (!step) {
+      // Redirect to step=info if not already present in the URL
+      navigate('/create-event?step=info', { replace: true });
+    }
+  }, [searchParams]);
 
   const handleNext = async () => {
-    try {
-      // Validate current step
-      const values = await formRefs[current].current.validateFields();
+    let values;
 
-      // If it's the first step (EventInfoForm), save the event draft
+    try {
+      values = await formRefs[current].current.validateFields();
+    } catch (error) {
+      notificationController.error({
+        message: error.message || t('event_create.previous_step_required'),
+      });
+      throw error;
+    }
+
+    try {
       if (steps[current].content === EventInfoForm) {
         const event = await handleSaveAsDraft(values);
 
-        // Update URL with new event ID if it's a new event
         if (event && !eventId) {
           const newEventId = event.id || event._id;
-          navigate(`/create-event/${newEventId}/${current + 1}`, {
-            replace: true,
-          });
+          navigate(
+            `/create-event/${newEventId}?step=${steps[current + 1].key}`,
+            {
+              replace: true,
+            },
+          );
         }
       }
 
-      // Update URL to include eventId when navigating
+      if (steps[current].content === ShowAndTicketForm) {
+        await handleSave();
+      }
+
+      if (steps[current].content === EventSettingsForm) {
+        await handleSave();
+      }
+
+      if (steps[current].content === PaymentInfoForm) {
+        await handleSave();
+      }
+
       if (eventId) {
-        navigate(`/create-event/${eventId}/${current + 1}`, { replace: true });
+        navigate(`/create-event/${eventId}?step=${steps[current + 1].key}`, {
+          replace: true,
+        });
       }
 
       setCurrent(current + 1);
     } catch (error) {
       notificationController.error({
-        message:
-          error.message || 'Please fill all required fields before continuing',
+        message: error.message || t('event_create.failed_to_save'),
       });
     }
   };
@@ -92,16 +130,38 @@ const EventCreatePage: React.FC = () => {
   const handlePrev = () => setCurrent(current - 1);
 
   const handleSave = async () => {
-    try {
-      const values = await formRefs[current].current.validateFields();
+    let values;
 
+    try {
+      values = await formRefs[current].current.validateFields();
+    } catch (error) {
+      notificationController.error({
+        message: error.message || t('event_create.previous_step_required'),
+      });
+      throw error;
+    }
+
+    try {
       if (steps[current].content === EventInfoForm) {
-        handleSaveAsDraft(values);
+        await handleSaveAsDraft(values);
+      }
+
+      if (steps[current].content === ShowAndTicketForm) {
+        await handleShowUpdate(values.shows);
+      }
+
+      if (steps[current].content === EventSettingsForm) {
+        await handleSettingUpdate(values);
+      }
+
+      if (steps[current].content === PaymentInfoForm) {
+        await handlePaymentUpdate(values);
       }
     } catch (error) {
       notificationController.error({
-        message: 'Please fill all required fields before continuing',
+        message: error.message || t('event_create.failed_to_save'),
       });
+      throw error;
     }
   };
 
@@ -115,8 +175,15 @@ const EventCreatePage: React.FC = () => {
       if (event) {
         // Update URL with new event ID
         const newEventId = event.id || event._id;
-        navigate(`/create-event/${newEventId}/${current}`, { replace: true });
+        navigate(`/create-event/${newEventId}?step=${steps[current].key}`, {
+          replace: true,
+        });
       }
+
+      notificationController.success({
+        message: t('event_create.event_info_saved_successfully'),
+      });
+
       return event;
     } catch (error) {
       notificationController.error({
@@ -126,22 +193,71 @@ const EventCreatePage: React.FC = () => {
     }
   };
 
+  const handleShowUpdate = async (updatedShow: any) => {
+    try {
+      await updateEventShow(eventId, {
+        showings: updatedShow,
+      });
+
+      notificationController.success({
+        message: t('event_create.event_info_saved_successfully'),
+      });
+    } catch (error) {
+      notificationController.error({
+        message: error.message || t('event_create.failed_to_save_event_show'),
+      });
+      throw error;
+    }
+  };
+
+  const handleSettingUpdate = async (updatedSetting: any) => {
+    try {
+      await updateEventSetting(eventId, updatedSetting);
+
+      notificationController.success({
+        message: t('event_create.event_info_saved_successfully'),
+      });
+    } catch (error) {
+      notificationController.error({
+        message:
+          error.message || t('event_create.failed_to_save_event_setting'),
+      });
+      throw error;
+    }
+  };
+
+  const handlePaymentUpdate = async (updatedPayment: any) => {
+    try {
+      await updateEventPayment(eventId, updatedPayment);
+
+      notificationController.success({
+        message: t('event_create.event_info_saved_successfully'),
+      });
+    } catch (error) {
+      notificationController.error({
+        message:
+          error.message || t('event_create.failed_to_save_event_payment'),
+      });
+      throw error;
+    }
+  };
+
   const handleStepChange = async (nextStep: number) => {
     try {
-      // Only validate when moving forward
       if (nextStep > current) {
         await formRefs[current].current.validateFields();
+        return;
       }
 
-      // Save draft if it's the EventInfoForm
       if (steps[current].content === EventInfoForm) {
         const values = formRefs[current].current.getFieldsValue();
         await handleSaveAsDraft(values);
       }
 
-      // Update URL to include eventId when navigating
       if (eventId) {
-        navigate(`/create-event/${eventId}/${nextStep}`, { replace: true });
+        navigate(`/create-event/${eventId}?step=${steps[nextStep].key}`, {
+          replace: true,
+        });
       }
 
       setCurrent(nextStep);
@@ -165,7 +281,7 @@ const EventCreatePage: React.FC = () => {
             onChange={handleStepChange}
             style={{
               flex: 1,
-              maxWidth: '1300px',
+              maxWidth: '1200px',
             }}
           >
             {steps.map((step, index) => (
@@ -181,7 +297,7 @@ const EventCreatePage: React.FC = () => {
               <Button
                 style={{
                   backgroundColor: 'var(--primary-color)',
-                  color: 'white',
+                  color: 'var(--text-main-color)',
                   borderColor: 'var(--primary-color)',
                 }}
                 type="primary"

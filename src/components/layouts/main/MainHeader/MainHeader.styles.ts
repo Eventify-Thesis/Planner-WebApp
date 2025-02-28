@@ -11,6 +11,8 @@ export const Header = styled(BaseLayout.Header)<Header>`
   line-height: 1.5;
   height: ${LAYOUT.desktop.headerHeight};
 
+  background: rgba(0, 0, 0, 0.8);
+
   @media only screen and ${media.md} {
     padding: ${LAYOUT.desktop.paddingVertical}
       ${LAYOUT.desktop.paddingHorizontal};

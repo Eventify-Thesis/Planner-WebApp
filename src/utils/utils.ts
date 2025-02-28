@@ -4,6 +4,17 @@ import { CurrencyTypeEnum, Severity } from '@/interfaces/interfaces';
 import { BaseBadgeProps } from '@/components/common/BaseBadge/BaseBadge';
 import { currencies } from '@/constants/config/currencies';
 
+export const transformFile = (url: string, fieldName: string) => {
+  if (!url) return [];
+  return [
+    {
+      uid: `-1`,
+      name: fieldName,
+      status: 'done',
+      url: url,
+    },
+  ];
+};
 export const camelize = (string: string): string => {
   return string
     .split(' ')

@@ -12,9 +12,7 @@ export const StyledFormContainer = styled.div`
 export const StickyHeader = styled.div`
   position: sticky;
   top: 0;
-  // background: #15161b;
-  background: #15161b;
-  color: white;
+  background: rgba(0, 0, 0, 0.4);
   z-index: 1000;
   padding: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -27,6 +25,10 @@ export const StickyHeader = styled.div`
 
     && .ant-steps-item-icon {
       color: white !important;
+    }
+
+    .ant-steps-item .ant-steps-item-active .ant-steps-icon {
+      color: black !important;
     }
   }
 `;

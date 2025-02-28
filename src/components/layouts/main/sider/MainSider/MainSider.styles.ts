@@ -5,11 +5,27 @@ import { LAYOUT } from '@/styles/themes/constants';
 import { BaseButton } from '@/components/common/BaseButton/BaseButton';
 import { BaseLayout } from '@/components/common/BaseLayout/BaseLayout';
 
+export const SiderDiv = styled.div`
+  background: #70e1f5; /* fallback for old browsers */
+  background: -webkit-linear-gradient(
+    to bottom,
+    #ffd194,
+    #70e1f5
+  ); /* Chrome 10-25, Safari 5.1-6 */
+  background: linear-gradient(
+    to bottom,
+    #ffd194,
+    #70e1f5
+  ); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+`;
+
 export const Sider = styled(BaseLayout.Sider)`
   position: fixed;
   overflow: visible;
   right: 0;
   z-index: 5;
+  background: rgba(0, 0, 0, 0.7);
+
   min-height: 100vh;
   max-height: 100vh;
 

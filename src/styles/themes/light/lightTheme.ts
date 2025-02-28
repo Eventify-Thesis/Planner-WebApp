@@ -48,7 +48,7 @@ const chartColors = {
 };
 
 export const lightColorsTheme: ITheme = {
-  primary: '#FA4032',
+  primary: '#FFE047',
   primary1: '#f5f5f5',
   primaryGradient: 'linear-gradient(211.49deg, #00607A 15.89%, #005066 48.97%)',
   light: '#C5D3E0',
@@ -56,7 +56,7 @@ export const lightColorsTheme: ITheme = {
   error: '#FF5252',
   warning: '#FFB155',
   success: '#30AF5B',
-  background: BASE_COLORS.white,
+  background: BASE_COLORS.black,
   secondaryBackground: '#F8FBFF',
   secondaryBackgroundSelected: shadeColor('#F8FBFF', -5),
   additionalBackground: '#ffffff',
@@ -67,10 +67,10 @@ export const lightColorsTheme: ITheme = {
   scroll: '#0A5800',
   border: '#cce1f4',
   borderNft: '#79819A',
-  textMain: 'white',
+  textMain: BASE_COLORS.black,
   textLight: '#9A9B9F',
   textSuperLight: '#BEC0C6',
-  textSecondary: BASE_COLORS.white,
+  textSecondary: BASE_COLORS.black,
   textDark: '#404040',
   textNftLight: '#79819A',
   textSiderPrimary: '#FFB765',

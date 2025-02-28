@@ -4,7 +4,9 @@ import {
   EventListQueryModel,
   getDetailEventAPI,
   getEventListAllAPI,
+  saveShowsAPI,
 } from '@/api/events.api';
+import { ShowModel } from '@/domain/ShowModel';
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
 export const getEventList = createAsyncThunk(

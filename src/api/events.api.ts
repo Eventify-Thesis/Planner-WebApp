@@ -1,7 +1,10 @@
 import { httpApi } from '@/api/http.api';
 import { EventStatus, EventType } from '@/constants/enums/event';
 import { EventModel } from '@/domain/EventModel';
+import { PaymentModel } from '@/domain/PaymentModel';
 import { QueryModel } from '@/domain/QueryModel';
+import { SettingModel } from '@/domain/SettingModel';
+import { ShowModel } from '@/domain/ShowModel';
 import { EventListAllResponse } from '@/dto/event-doc.dto';
 
 export interface PaginationResponse {
@@ -73,6 +76,86 @@ export const saveEventDraftAPI = async (
 export const getDetailEventAPI = async (id: string): Promise<EventModel> => {
   try {
     const response = await httpApi.get<any>(`/planner/events/${id}`);
+    return response.data.data;
+  } catch (e: any) {
+    throw new Error(e);
+  }
+};
+
+export const updateEventShowAPI = async (
+  eventId: string,
+  show: ShowModel,
+): Promise<ShowModel> => {
+  try {
+    const response = await httpApi.put<any>(
+      `/planner/events/${eventId}/shows`,
+      show,
+    );
+    return response.data.data;
+  } catch (e: any) {
+    throw new Error(e);
+  }
+};
+
+export const updateEventSettingAPI = async (
+  eventId: string,
+  setting: SettingModel,
+): Promise<SettingModel> => {
+  try {
+    const response = await httpApi.put<any>(
+      `/planner/events/${eventId}/settings`,
+      setting,
+    );
+    return response.data.data;
+  } catch (e: any) {
+    throw new Error(e);
+  }
+};
+
+export const getEventShowAPI = async (eventId: string): Promise<ShowModel> => {
+  try {
+    const response = await httpApi.get<any>(`/planner/events/${eventId}/shows`);
+    return response.data.data;
+  } catch (e: any) {
+    throw new Error(e);
+  }
+};
+
+export const getEventSettingAPI = async (
+  eventId: string,
+): Promise<SettingModel> => {
+  try {
+    const response = await httpApi.get<any>(
+      `/planner/events/${eventId}/settings`,
+    );
+    return response.data.data;
+  } catch (e: any) {
+    throw new Error(e);
+  }
+};
+
+export const updateEventPaymentAPI = async (
+  eventId: string,
+  payment: PaymentModel,
+): Promise<PaymentModel> => {
+  try {
+    const response = await httpApi.put<any>(
+      `/planner/events/${eventId}/payment-info`,
+      payment,
+    );
+    return response.data.data;
+  } catch (e: any) {
+    throw new Error(e);
+  }
+};
+
+export const getEventPaymentAPI = async (
+  eventId: string,
+): Promise<PaymentModel> => {
+  try {
+    const response = await httpApi.get<any>(
+      `/planner/events/${eventId}/payment-info`,
+    );
     return response.data.data;
   } catch (e: any) {
     throw new Error(e);
