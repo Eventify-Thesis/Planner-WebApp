@@ -7,6 +7,7 @@ const AuthLayout = React.lazy(
 );
 
 import MainLayout from '@/components/layouts/main/MainLayout/MainLayout';
+import { eventDetailRoutes } from '@/routes/eventDetailRoutes';
 
 import RequireAuth from '@/components/router/RequireAuth';
 
@@ -47,6 +48,20 @@ export const AppRouter: React.FC = () => {
           <Route path="export-file" element={<NotFound />} />
           <Route path="legal-document" element={<NotFound />} />
         </Route>
+
+        {/* Event Detail Routes */}
+        {eventDetailRoutes.map((route) => (
+          <Route key={route.path} path={route.path} element={route.element}>
+            {route.children?.map((childRoute) => (
+              <Route
+                key={childRoute.path}
+                path={childRoute.path}
+                element={childRoute.element}
+              />
+            ))}
+          </Route>
+        ))}
+
         <Route path="/auth" element={<AuthLayoutFallback />}>
           <Route path="login" element={<SignIn signUpUrl="/auth/sign-up" />} />
           <Route path="sign-up" element={<SignUp />} />

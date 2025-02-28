@@ -6,16 +6,18 @@ import { useResponsive } from '@/hooks/useResponsive';
 interface HeaderProps {
   toggleSider: () => void;
   isSiderOpened: boolean;
+  eventName?: string;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   toggleSider,
   isSiderOpened,
+  eventName,
 }) => {
   const { isTablet } = useResponsive();
 
   return isTablet ? (
-    <DesktopHeader />
+    <DesktopHeader eventName={eventName} />
   ) : (
     <MobileHeader toggleSider={toggleSider} isSiderOpened={isSiderOpened} />
   );

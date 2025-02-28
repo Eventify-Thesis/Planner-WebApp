@@ -62,6 +62,16 @@ export interface CreateDraftEventDto {
   eventType: EventType;
 }
 
+export interface EventBriefResponse {
+  id: string;
+
+  eventName: string;
+
+  eventLogoURL: string;
+
+  eventBannerURL: string;
+}
+
 export const saveEventDraftAPI = async (
   data: CreateDraftEventDto,
 ): Promise<EventModel> => {
@@ -156,6 +166,17 @@ export const getEventPaymentAPI = async (
     const response = await httpApi.get<any>(
       `/planner/events/${eventId}/payment-info`,
     );
+    return response.data.data;
+  } catch (e: any) {
+    throw new Error(e);
+  }
+};
+
+export const getEventBriefAPI = async (
+  eventId: string,
+): Promise<EventBriefResponse> => {
+  try {
+    const response = await httpApi.get<any>(`/planner/events/${eventId}/brief`);
     return response.data.data;
   } catch (e: any) {
     throw new Error(e);

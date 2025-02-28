@@ -37,7 +37,7 @@ const handleFileUpload = async (
   fileList: UploadFile[],
   setFileList: EventIdentitySectionProps['setFileList'],
   fieldName: string,
-  formRef: React.RefObject<any>
+  formRef: React.RefObject<any>,
 ) => {
   setFileList((prevFileList) => ({
     ...prevFileList,
@@ -47,7 +47,7 @@ const handleFileUpload = async (
   if (fileList[0]?.originFileObj) {
     const url = await uploadFile(fileList[0].originFileObj as RcFile);
     formRef.current?.setFieldsValue({
-      [`${fieldName}URL`]: url,
+      [`event${fieldName[0].toUpperCase() + fieldName.slice(1)}URL`]: url,
     });
   }
 };

@@ -24,6 +24,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAppDispatch } from '@/hooks/reduxHooks';
 import { BASE_COLORS } from '@/styles/themes/constants';
+import dayjs from 'dayjs';
 
 const { Step } = Steps;
 
@@ -59,7 +60,6 @@ const EventCreatePage: React.FC = () => {
 
   useEffect(() => {
     const step = searchParams.get('step');
-    console.log('Current step:', step); // Add a log here to check if the step is correctly retrieved
 
     if (step) {
       const stepIndex = steps.findIndex((s) => s.key == step);
@@ -193,8 +193,64 @@ const EventCreatePage: React.FC = () => {
     }
   };
 
-  const handleShowUpdate = async (updatedShow: any) => {
+  const validateShows = (shows: any[]) => {
+    if (!shows || shows.length === 0) {
+      throw new Error(t('event_create.at_least_one_show'));
+    }
+
+    shows.forEach((show, index) => {
+      if (!show.startTime || !show.endTime) {
+        throw new Error(t('event_create.show_time_required'));
+      }
+
+      if (dayjs(show.startTime).isAfter(dayjs(show.endTime))) {
+        throw new Error(t('event_create.start_time_before_end_time'));
+      }
+
+      if (!show.ticketTypes || show.ticketTypes.length === 0) {
+        throw new Error(t('event_create.at_least_one_ticket_type'));
+      }
+
+      show.ticketTypes.forEach((ticket, ticketIndex) => {
+        if (!ticket.name || !ticket.price || !ticket.quantity) {
+          throw new Error(t('event_create.ticket_info_required'));
+        }
+
+        if (ticket.price < 0) {
+          throw new Error(t('event_create.ticket_price_positive'));
+        }
+
+        if (ticket.quantity < 1) {
+          throw new Error(t('event_create.ticket_quantity_positive'));
+        }
+      });
+
+      // Check for overlapping shows
+      shows.forEach((otherShow, otherIndex) => {
+        if (index !== otherIndex) {
+          const showStart = dayjs(show.startTime);
+          const showEnd = dayjs(show.endTime);
+          const otherStart = dayjs(otherShow.startTime);
+          const otherEnd = dayjs(otherShow.endTime);
+
+          if (
+            showStart.isBetween(otherStart, otherEnd, null, '[]') ||
+            showEnd.isBetween(otherStart, otherEnd, null, '[]') ||
+            otherStart.isBetween(showStart, showEnd, null, '[]') ||
+            otherEnd.isBetween(showStart, showEnd, null, '[]')
+          ) {
+            throw new Error(t('event_create.overlapping_shows'));
+          }
+        }
+      });
+    });
+  };
+
+  const handleShowUpdate = async (updatedShow: any[]) => {
     try {
+      // Validate shows before updating
+      validateShows(updatedShow);
+
       await updateEventShow(eventId, {
         showings: updatedShow,
       });
