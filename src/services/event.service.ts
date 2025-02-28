@@ -2,6 +2,8 @@ import { EventModel } from '@/domain/EventModel';
 import { uploadFile } from './fileUpload.service';
 import { notificationController } from '@/controllers/notificationController';
 import {
+  EventBriefResponse,
+  getEventBriefAPI,
   getEventPaymentAPI,
   getEventSettingAPI,
   getEventShowAPI,
@@ -101,6 +103,17 @@ export const getEventPayment = async (
 ): Promise<PaymentModel | undefined> => {
   try {
     const response = await getEventPaymentAPI(eventId);
+    return response;
+  } catch (e: any) {
+    throw e;
+  }
+};
+
+export const getEventBrief = async (
+  eventId: string,
+): Promise<EventBriefResponse | undefined> => {
+  try {
+    const response = await getEventBriefAPI(eventId);
     return response;
   } catch (e: any) {
     throw e;

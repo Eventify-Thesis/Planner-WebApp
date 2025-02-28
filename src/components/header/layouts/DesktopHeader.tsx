@@ -4,10 +4,23 @@ import * as S from '../Header.styles';
 import { BaseRow } from '@/components/common/BaseRow/BaseRow';
 import { BaseCol } from '@/components/common/BaseCol/BaseCol';
 import { UserButton } from '@clerk/clerk-react';
-interface DesktopHeaderProps {}
+interface DesktopHeaderProps {
+  eventName?: string;
+}
 
-export const DesktopHeader: React.FC<DesktopHeaderProps> = ({}) => {
-  const leftSide = <h1> </h1>;
+export const DesktopHeader: React.FC<DesktopHeaderProps> = ({ eventName }) => {
+  const leftSide = (
+    <h1
+      style={{
+        color: 'white',
+        fontWeight: 'bold',
+        marginLeft: '20px',
+        fontSize: '20px',
+      }}
+    >
+      {eventName || ''}
+    </h1>
+  );
 
   return (
     <BaseRow

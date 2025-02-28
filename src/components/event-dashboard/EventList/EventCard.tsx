@@ -3,6 +3,9 @@ import styled from 'styled-components';
 import { EventCardActions } from './EventCardActions';
 import { EventStatus } from '@/constants/enums/event';
 import { Icon } from '@iconify/react/dist/iconify.js';
+import dayjs from 'dayjs';
+import 'dayjs/locale/vi';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface EventCardProps {
   id: string;
@@ -29,6 +32,9 @@ export const EventCard = ({
   venueName,
   role,
 }: EventCardProps) => {
+  const { language } = useLanguage();
+  const locale = language === 'en' ? 'en' : 'vi';
+
   return (
     <CardContainer>
       <CardContent>
@@ -39,7 +45,9 @@ export const EventCard = ({
             <DateInfo>
               <Icon icon="mdi:calendar" width="24" height="24" color="white" />
               <DateTime>
-                {startTime ? startTime.toDateString() : 'Null'}
+                {startTime
+                  ? dayjs(startTime).locale(locale).format('LLLL')
+                  : 'Null'}
               </DateTime>
             </DateInfo>
             {location && (
