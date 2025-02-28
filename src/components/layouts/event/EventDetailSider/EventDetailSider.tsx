@@ -13,14 +13,29 @@ import {
   BorderOutlined,
 } from '@ant-design/icons';
 import { styled } from 'styled-components';
-import { LAYOUT } from '@/styles/themes/constants';
+import { BASE_COLORS, FONT_SIZE, LAYOUT } from '@/styles/themes/constants';
 import { media } from '@/styles/themes/constants';
 import { SiderLogo } from '../../main/sider/SiderLogo';
+import { menuItems } from './menuItems';
 
 const { Sider } = Layout;
 
+export const SiderDiv = styled.div`
+  background: #70e1f5; /* fallback for old browsers */
+  background: -webkit-linear-gradient(
+    to bottom,
+    #ffd194,
+    #70e1f5
+  ); /* Chrome 10-25, Safari 5.1-6 */
+  background: linear-gradient(
+    to bottom,
+    #ffd194,
+    #70e1f5
+  ); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+`;
+
 const StyledSider = styled(Sider)`
-  background: #fff;
+  background: rgba(0, 0, 0, 0.7);
   border-right: 1px solid #f0f0f0;
   height: 100vh;
   position: fixed;
@@ -37,42 +52,28 @@ const StyledSider = styled(Sider)`
   }
 `;
 
-const LogoWrapper = styled.div`
-  height: ${LAYOUT.desktop.headerHeight};
-  padding: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid #f0f0f0;
-
-  img {
-    height: 32px;
-    width: auto;
-  }
-
-  .logo-text {
-    color: var(--primary-color);
-    font-size: 1.25rem;
-    font-weight: 700;
-    margin-left: 0.5rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-`;
-
 const BackButton = styled(Button)`
   margin: 16px;
   width: calc(100% - 32px);
+  background-color: var(--primary-color);
+  color: ${BASE_COLORS.black};
+  font-weight: 500;
+  font-size: ${FONT_SIZE.xs};
 `;
 
 const MenuSection = styled.div`
   margin-bottom: 16px;
 
   .ant-menu-item-group-title {
-    color: #8c8c8c;
+    color: ${BASE_COLORS.red};
     padding: 8px 16px;
-    font-size: 12px;
+    font-size: ${FONT_SIZE.xl};
+  }
+
+  .ant-menu-item {
+    color: ${BASE_COLORS.white};
+    padding: 8px 16px;
+    font-size: ${FONT_SIZE.md};
   }
 `;
 
@@ -103,89 +104,32 @@ export const EventDetailSider: React.FC<EventDetailSiderProps> = ({
   };
 
   return (
-    <StyledSider
-      trigger={null}
-      collapsible
-      collapsed={isCollapsed}
-      width={260}
-      collapsedWidth={80}
-    >
-      <SiderLogo isSiderCollapsed={isCollapsed} toggleSider={setCollapsed} />
+    <SiderDiv>
+      <StyledSider
+        trigger={null}
+        collapsible
+        collapsed={isCollapsed}
+        width={260}
+        collapsedWidth={80}
+      >
+        <SiderLogo isSiderCollapsed={isCollapsed} toggleSider={setCollapsed} />
 
-      <BackButton icon={<ArrowLeftOutlined />} onClick={handleBackClick}>
-        {!isCollapsed && 'Back to Events'}
-      </BackButton>
+        <BackButton icon={<ArrowLeftOutlined />} onClick={handleBackClick}>
+          {!isCollapsed && 'Back to Events'}
+        </BackButton>
 
-      <MenuSection>
-        <Menu
-          mode="inline"
-          selectedKeys={getSelectedKeys()}
-          onClick={handleMenuClick}
-          items={[
-            {
-              key: 'report',
-              type: 'group',
-              label: 'Report',
-              children: [
-                {
-                  key: 'analytics',
-                  icon: <BarChartOutlined />,
-                  label: 'Analytics',
-                },
-                {
-                  key: 'orders',
-                  icon: <OrderedListOutlined />,
-                  label: 'Order',
-                },
-                {
-                  key: 'checkin',
-                  icon: <ScanOutlined />,
-                  label: 'Check-in',
-                },
-              ],
-            },
-            {
-              key: 'settings',
-              type: 'group',
-              label: 'Event Settings',
-              children: [
-                {
-                  key: 'members',
-                  icon: <UserOutlined />,
-                  label: 'Member',
-                },
-                {
-                  key: 'settings',
-                  icon: <SettingOutlined />,
-                  label: 'Setting',
-                },
-                {
-                  key: 'seatmap',
-                  icon: <BorderOutlined />,
-                  label: 'Seat Map',
-                },
-                {
-                  key: 'questions',
-                  icon: <QuestionCircleOutlined />,
-                  label: 'Question',
-                },
-              ],
-            },
-            {
-              key: 'marketing',
-              type: 'group',
-              label: 'Marketing',
-              children: [
-                {
-                  key: 'vouchers',
-                  icon: <GiftOutlined />,
-                  label: 'Voucher',
-                },
-              ],
-            },
-          ]}
-        />
-      </MenuSection>
-    </StyledSider>
+        <MenuSection>
+          <Menu
+            style={{
+              background: 'rgba(0, 0, 0, 0.7)',
+            }}
+            mode="inline"
+            selectedKeys={getSelectedKeys()}
+            onClick={handleMenuClick}
+            items={menuItems}
+          />
+        </MenuSection>
+      </StyledSider>
+    </SiderDiv>
   );
 };
