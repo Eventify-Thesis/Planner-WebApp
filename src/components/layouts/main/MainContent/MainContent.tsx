@@ -7,6 +7,8 @@ interface HeaderProps {
 }
 
 export default styled(BaseLayout.Content)<HeaderProps>`
+  background: rgba(0, 0, 0, 0.1);
+
   overflow: auto;
   display: flex;
   flex-direction: column;

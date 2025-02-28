@@ -1,6 +1,7 @@
 import { httpApi } from '@/api/http.api';
 
 export interface Category {
+  id?: string;
   code: string;
   nameEn: string;
   nameVi: string;

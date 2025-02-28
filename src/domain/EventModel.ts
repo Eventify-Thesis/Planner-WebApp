@@ -21,4 +21,6 @@ export interface EventModel {
   districtId?: number;
   wardId?: number;
   street?: string;
+  categoriesIds?: string[];
+  categories?: string[];
 }

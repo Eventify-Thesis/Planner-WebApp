@@ -36,11 +36,14 @@ export const AppRouter: React.FC = () => {
 
         <Route path={HOME_PATH} element={protectedLayout}>
           <Route path="events" element={<EventDashboardPage />} />
-          <Route path="create-event" element={<EventCreatePage />} />
-          <Route
-            path="create-event/:eventId/:step?"
-            element={<EventCreatePage />}
-          />
+          <Route path="create-event" element={<EventCreatePage />}>
+            <Route
+              index
+              element={<Navigate to="/create-event?step=info" replace />}
+            />
+            <Route path=":eventId" element={<EventCreatePage />} />
+          </Route>
+
           <Route path="export-file" element={<NotFound />} />
           <Route path="legal-document" element={<NotFound />} />
         </Route>

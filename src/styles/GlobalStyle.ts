@@ -153,6 +153,10 @@ export default createGlobalStyle`
         color: var(--success-color);
       }
     }
+      
+    &.ant-select-selection-search-input {
+      color: white; 
+    }
   
     &.ant-notification-notice-info {
       border: 1px solid var(--primary-color);
@@ -220,5 +224,14 @@ export default createGlobalStyle`
   }
   // Clerk end
 
+  .ant-collapse {
+    border: none ;
+    box-shadow: none;
+  }
+    .ant-collapse-header {
+      border-radius: 8px;
+    }
 
+
+  
   `;

@@ -25,7 +25,7 @@ const MainSider: React.FC<MainSiderProps> = ({
   const toggleSider = () => setCollapsed(!isCollapsed);
 
   return (
-    <>
+    <S.SiderDiv>
       <S.Sider
         trigger={null}
         collapsed={!isDesktop && isCollapsed}
@@ -40,7 +40,7 @@ const MainSider: React.FC<MainSiderProps> = ({
         </S.SiderContent>
       </S.Sider>
       {mobileOnly && <Overlay onClick={toggleSider} show={!isCollapsed} />}
-    </>
+    </S.SiderDiv>
   );
 };
 

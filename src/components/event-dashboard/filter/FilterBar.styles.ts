@@ -1,3 +1,4 @@
+import { BASE_COLORS } from '@/styles/themes/constants';
 import { Radio } from 'antd';
 import styled from 'styled-components';
 
@@ -43,10 +44,11 @@ export const InputsWrapper = styled.div`
     margin-right: 8px;
   }
 
-  .ant-btn {
+  .ant-input-search-button {
     height: 2.5rem;
     padding: 6px 11px;
     color: black;
+    background: ${BASE_COLORS.white};
     display: flex;
     align-items: center;
     justify-content: center;
@@ -55,8 +57,8 @@ export const InputsWrapper = styled.div`
   && {
     .ant-input-search-button:hover {
       opacity: 0.8;
-      background-color: var(--primary-color);
-      color: white;
+      color: var(--primary-color);
+      background: ${BASE_COLORS.white};
     }
   }
 `;
@@ -66,6 +68,7 @@ export const RadioGroup = styled(Radio.Group)`
   align-items: center;
   height: auto;
 
+  color: ${BASE_COLORS.black};
   @media (max-width: 1280px) {
     width: 100%;
     justify-content: space-between;
@@ -73,9 +76,9 @@ export const RadioGroup = styled(Radio.Group)`
 
   .ant-radio-button-wrapper-checked {
     background-color: var(--primary-color);
-    border-color: var(--primary-color);
+    border-color: var(--primary-color) !important;
     border-radius: 4px;
-    color: white;
+    color: ${BASE_COLORS.black};
   }
 
   .ant-radio-button-wrapper-checked:before {
@@ -83,13 +86,13 @@ export const RadioGroup = styled(Radio.Group)`
   }
 
   .ant-radio-button-wrapper:hover {
-    color: var(--primary-color);
+    color: ${BASE_COLORS.black};
   }
 
   .ant-radio-button-wrapper-checked:hover {
     background-color: var(--primary-color);
     border-color: var(--primary-color);
-    color: white;
+    color: ${BASE_COLORS.white};
     border-radius: 4px;
   }
 `;

@@ -31,7 +31,7 @@ export const CreateEventButton: React.FC = (props) => {
 };
 
 const Button = styled(BaseButton)<{ $isDark: boolean }>`
-  color: ${(props) => BASE_COLORS[props.$isDark ? 'white' : 'white']};
+  color: ${(props) => BASE_COLORS[props.$isDark ? 'black' : 'black']};
   background: var(--primary-color);
   border-radius: 5px;
   padding-block: 0.5rem;
