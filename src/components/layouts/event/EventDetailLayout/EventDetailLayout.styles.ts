@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { media } from '@/styles/themes/constants';
+import { LAYOUT, media } from '@/styles/themes/constants';
 import { BaseLayout } from '@/components/common/BaseLayout/BaseLayout';
 
 export const LayoutMaster = styled(BaseLayout)`
@@ -21,17 +21,8 @@ export const LayoutMain = styled(BaseLayout)`
 `;
 
 export const MainContent = styled.main`
-  padding: 24px;
-  min-height: calc(100vh - 64px); // Subtract header height
-  width: 100%;
-  max-width: 1440px;
-  margin: 0 auto;
-  
-  @media only screen and ${media.md} {
-    padding: 32px;
-  }
-
-  @media only screen and ${media.xl} {
-    padding: 40px;
-  }
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 `;

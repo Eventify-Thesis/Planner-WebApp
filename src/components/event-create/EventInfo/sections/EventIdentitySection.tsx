@@ -8,6 +8,7 @@ import * as S from '../EventInfoForm.styles';
 import { UploadIcon } from '../components/UploadIcon';
 import { uploadFile } from '@/services/fileUpload.service';
 import type { RcFile } from 'antd/es/upload';
+import { transformFile } from '@/utils/utils';
 
 interface EventIdentitySectionProps {
   formRef: React.RefObject<any>;
@@ -49,6 +50,11 @@ const handleFileUpload = async (
     formRef.current?.setFieldsValue({
       [`event${fieldName[0].toUpperCase() + fieldName.slice(1)}URL`]: url,
     });
+
+    setFileList((prevFileList) => ({
+      ...prevFileList,
+      [fieldName]: transformFile(url, fieldName),
+    }));
   }
 };
 

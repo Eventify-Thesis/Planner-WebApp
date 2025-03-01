@@ -67,7 +67,7 @@ export const EventCard = ({
           </EventInfo>
         </EventDetails>
       </CardContent>
-      <EventCardActions />
+      <EventCardActions id={id} eventStatus={status} />
     </CardContainer>
   );
 };

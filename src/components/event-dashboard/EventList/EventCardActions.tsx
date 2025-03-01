@@ -1,42 +1,72 @@
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { useTranslation } from 'react-i18next';
-import React from 'react';
 import styled from 'styled-components';
 
 import { useResponsive } from '@/hooks/useResponsive';
+import { useNavigate } from 'react-router-dom';
+import { EventStatus } from '@/constants/enums/event';
 
-export const EventCardActions = () => {
+export const EventCardActions = ({
+  id,
+  eventStatus,
+}: {
+  id: string;
+  eventStatus: EventStatus;
+}) => {
   const { t } = useTranslation();
   const { isMobile, isTablet, isDesktop } = useResponsive();
+  const navigate = useNavigate();
 
   return (
     <ActionsContainer>
       <ActionItem>
-        <ActionLink isMobile={isMobile}>
+        <ActionLink
+          onClick={() => navigate(`/events/${id}/overview`)}
+          isMobile={isMobile}
+        >
           <Icon icon="mdi:home" width="24" height="24" />
           {isDesktop && <ActionText>{t('eventDashboard.overview')}</ActionText>}
         </ActionLink>
       </ActionItem>
       <ActionItem>
-        <ActionLink isMobile={isMobile}>
+        <ActionLink
+          isMobile={isMobile}
+          onClick={() => navigate(`/events/${id}/members`)}
+        >
           <Icon icon="material-symbols:person" width="24" height="24" />
           {isDesktop && <ActionText>{t('eventDashboard.members')}</ActionText>}
         </ActionLink>
       </ActionItem>
       <ActionItem>
-        <ActionLink isMobile={isMobile}>
+        <ActionLink
+          isMobile={isMobile}
+          onClick={() => navigate(`/events/${id}/orders`)}
+        >
           <Icon icon="mdi:cart" width="24" height="24" />
           {isDesktop && <ActionText>{t('eventDashboard.orders')}</ActionText>}
         </ActionLink>
       </ActionItem>
       <ActionItem>
-        <ActionLink isMobile={isMobile}>
+        <ActionLink
+          isMobile={isMobile}
+          onClick={() => navigate(`/events/${id}/seatmap`)}
+        >
           <Icon icon="mdi:chair" width="24" height="24" />
           {isDesktop && <ActionText>{t('eventDashboard.seating')}</ActionText>}
         </ActionLink>
       </ActionItem>
       <ActionItem>
-        <ActionLink isMobile={isMobile}>
+        <ActionLink
+          isMobile={isMobile}
+          onClick={() => {
+            console.log(eventStatus);
+            if (eventStatus === EventStatus.DRAFT) {
+              navigate(`/create-event/${id}?step=info`);
+            } else {
+              navigate(`/events/${id}/edit-event`);
+            }
+          }}
+        >
           <Icon icon="mdi:cog" width="24" height="24" />
           {isDesktop && <ActionText>{t('eventDashboard.edit')}</ActionText>}
         </ActionLink>

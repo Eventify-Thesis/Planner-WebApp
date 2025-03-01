@@ -291,7 +291,7 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
       ref={formRef}
       layout="vertical"
       style={{
-        height: '100%',
+        height: '100vh',
         padding: '0 24px 24px 24px',
         boxShadow: 'none',
       }}

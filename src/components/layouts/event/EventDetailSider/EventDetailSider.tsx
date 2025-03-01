@@ -27,6 +27,8 @@ export const SiderDiv = styled.div`
     #ffd194,
     #70e1f5
   ); /* Chrome 10-25, Safari 5.1-6 */
+  height: 100vh;
+
   background: linear-gradient(
     to bottom,
     #ffd194,
@@ -41,7 +43,7 @@ const StyledSider = styled(Sider)`
   position: fixed;
   left: 0;
   top: 0;
-  z-index: 2;
+  z-index: 100;
 
   @media only screen and ${media.md} {
     position: fixed;
@@ -63,6 +65,12 @@ const BackButton = styled(Button)`
 
 const MenuSection = styled.div`
   margin-bottom: 16px;
+
+  background: linear-gradient(
+    to bottom,
+    #ffd194,
+    #70e1f5
+  ); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
 
   .ant-menu-item-group-title {
     color: ${BASE_COLORS.red};
