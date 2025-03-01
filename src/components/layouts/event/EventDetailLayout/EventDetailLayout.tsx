@@ -35,7 +35,9 @@ export const EventDetailLayout: React.FC<EventDetailLayoutProps> = ({
           />
         </MainHeader>
         <S.MainContent>
-          <Outlet />
+          <div>
+            <Outlet />
+          </div>{' '}
         </S.MainContent>
       </S.LayoutMain>
     </S.LayoutMaster>

@@ -39,7 +39,7 @@ const FormContainer = styled.div<{ $active: boolean }>`
   display: ${(props) => (props.$active ? 'block' : 'none')};
 `;
 
-const EventCreatePage: React.FC = () => {
+const EventEditPage: React.FC = () => {
   const navigate = useNavigate();
   const params = useParams<{ eventId?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -70,7 +70,7 @@ const EventCreatePage: React.FC = () => {
 
     if (!step) {
       // Redirect to step=info if not already present in the URL
-      navigate('/create-event?step=info', { replace: true });
+      setSearchParams({ step: 'info' });
     }
   }, [searchParams]);
 
@@ -92,12 +92,9 @@ const EventCreatePage: React.FC = () => {
 
         if (event && !eventId) {
           const newEventId = event.id || event._id;
-          navigate(
-            `/create-event/${newEventId}?step=${steps[current + 1].key}`,
-            {
-              replace: true,
-            },
-          );
+          navigate(`?step=${steps[current + 1].key}`, {
+            replace: true,
+          });
         }
       }
 
@@ -114,7 +111,7 @@ const EventCreatePage: React.FC = () => {
       }
 
       if (eventId) {
-        navigate(`/create-event/${eventId}?step=${steps[current + 1].key}`, {
+        navigate(`?step=${steps[current + 1].key}`, {
           replace: true,
         });
       }
@@ -175,7 +172,7 @@ const EventCreatePage: React.FC = () => {
       if (event) {
         // Update URL with new event ID
         const newEventId = event.id || event._id;
-        navigate(`/create-event/${newEventId}?step=${steps[current].key}`, {
+        navigate(`?step=${steps[current].key}`, {
           replace: true,
         });
       }
@@ -300,15 +297,10 @@ const EventCreatePage: React.FC = () => {
 
   const handleStepChange = async (nextStep: number) => {
     try {
-      if (nextStep > current) {
-        await formRefs[current].current.validateFields();
-        return;
-      }
-
       formRefs[current].current.resetFields();
 
       if (eventId) {
-        navigate(`/create-event/${eventId}?step=${steps[nextStep].key}`, {
+        navigate(`?step=${steps[nextStep].key}`, {
           replace: true,
         });
       }
@@ -377,4 +369,4 @@ const EventCreatePage: React.FC = () => {
   );
 };
 
-export default EventCreatePage;
+export default EventEditPage;

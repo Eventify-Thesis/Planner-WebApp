@@ -41,6 +41,7 @@ export const EventSettingsForm: React.FC<EventSettingsFormProps> = ({
   const baseUrl = window.location.origin;
   const [url, setUrl] = useState('');
   const { eventId } = useParams<{ eventId?: string }>();
+  const [eventName, setEventName] = useState('');
 
   useEffect(() => {
     const loadEventData = async () => {
@@ -53,9 +54,15 @@ export const EventSettingsForm: React.FC<EventSettingsFormProps> = ({
             formRef.current.setFieldsValue({
               ...result,
             });
+
+            setEventName(result.eventName);
           }
 
           setUrl(result.url);
+
+          if (url.length == 0) {
+            setUrl(result.eventName);
+          }
         } catch (error) {
           notificationController.error({
             message: error.message || t('event_create.failed_to_load'),

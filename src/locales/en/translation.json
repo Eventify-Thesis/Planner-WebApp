@@ -168,6 +168,7 @@
     "search": "Search"
   },
   "eventDashboard": {
+    "title": "Event dashboard",
     "filter": {
       "draft": "Draft",
       "past": "Past",
@@ -255,15 +256,7 @@
       "name_required": "Please enter organizer name",
       "information": "Organizer Information",
       "info_required": "Please enter organizer information"
-    },
-    "at_least_one_show": "Please add at least one show",
-    "show_time_required": "Start time and end time are required for all shows",
-    "start_time_before_end_time": "Start time must be before end time",
-    "at_least_one_ticket_type": "Please add at least one ticket type for each show",
-    "ticket_info_required": "Name, price, and quantity are required for all tickets",
-    "ticket_price_positive": "Ticket price must be greater than or equal to 0",
-    "ticket_quantity_positive": "Ticket quantity must be greater than 0",
-    "overlapping_shows": "Shows cannot overlap with each other"
+    }
   },
   "event_settings": {
     "basic_settings": "Basic Settings",

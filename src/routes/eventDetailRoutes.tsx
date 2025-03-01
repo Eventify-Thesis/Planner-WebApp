@@ -1,16 +1,33 @@
 import React from 'react';
 import { RouteObject } from 'react-router-dom';
 import { EventDetailPage } from '../pages/EventDetailPage/EventDetailPage';
+import EventEditPage from '@/pages/EventEditPage';
 
 // Lazy load components for better performance
-const EventAnalytics = React.lazy(() => import('@/components/event/EventAnalytics/EventAnalytics'));
-const EventOrders = React.lazy(() => import('@/components/event/EventOrders/EventOrders'));
-const EventCheckin = React.lazy(() => import('@/components/event/EventCheckin/EventCheckin'));
-const EventMembers = React.lazy(() => import('@/components/event/EventMembers/EventMembers'));
-const EventSettings = React.lazy(() => import('@/components/event/EventSettings/EventSettings'));
-const EventSeatMap = React.lazy(() => import('@/components/event/EventSeatMap/EventSeatMap'));
-const EventQuestions = React.lazy(() => import('@/components/event/EventQuestions/EventQuestions'));
-const EventVouchers = React.lazy(() => import('@/components/event/EventVouchers/EventVouchers'));
+const EventAnalytics = React.lazy(
+  () => import('@/components/event/EventAnalytics/EventAnalytics'),
+);
+const EventOrders = React.lazy(
+  () => import('@/components/event/EventOrders/EventOrders'),
+);
+const EventCheckin = React.lazy(
+  () => import('@/components/event/EventCheckin/EventCheckin'),
+);
+const EventMembers = React.lazy(
+  () => import('@/components/event/EventMembers/EventMembers'),
+);
+const EventSettings = React.lazy(
+  () => import('@/components/event/EventSettings/EventSettings'),
+);
+const EventSeatMap = React.lazy(
+  () => import('@/components/event/EventSeatMap/EventSeatMap'),
+);
+const EventQuestions = React.lazy(
+  () => import('@/components/event/EventQuestions/EventQuestions'),
+);
+const EventVouchers = React.lazy(
+  () => import('@/components/event/EventVouchers/EventVouchers'),
+);
 
 const LoadingFallback = () => <div>Loading...</div>;
 
@@ -52,10 +69,10 @@ export const eventDetailRoutes: RouteObject[] = [
         ),
       },
       {
-        path: 'settings',
+        path: 'edit-event/',
         element: (
           <React.Suspense fallback={<LoadingFallback />}>
-            <EventSettings />
+            <EventEditPage />
           </React.Suspense>
         ),
       },

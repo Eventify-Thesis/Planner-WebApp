@@ -19,6 +19,7 @@ const EventDashboardPage = React.lazy(
 );
 
 const EventCreatePage = React.lazy(() => import('@/pages/EventCreatePage'));
+const EventEditPage = React.lazy(() => import('@/pages/EventEditPage'));
 
 const AuthLayoutFallback = withLoading(AuthLayout);
 export const HOME_PATH = '/';
