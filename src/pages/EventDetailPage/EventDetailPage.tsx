@@ -2,14 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { EventDetailLayout } from '../../components/layouts/event/EventDetailLayout/EventDetailLayout';
 import { Spin } from 'antd';
-import { EventBriefResponse } from '@/api/events.api';
-import { getEventBrief } from '@/services/event.service';
-
-interface EventDetails {
-  id: string;
-  name: string;
-  // Add other event details as needed
-}
+import { EventBriefResponse, getEventBriefAPI } from '@/api/events.api';
+import { EventProvider } from '../../contexts/EventContext';
 
 export const EventDetailPage: React.FC = () => {
   const { eventId } = useParams();
@@ -28,8 +22,7 @@ export const EventDetailPage: React.FC = () => {
   useEffect(() => {
     const fetchEventDetails = async () => {
       try {
-        const response = await getEventBrief(eventId || '');
-
+        const response = await getEventBriefAPI(eventId || '');
         setEventBrief(response);
       } catch (error) {
         console.error('Error fetching event details:', error);
@@ -64,8 +57,10 @@ export const EventDetailPage: React.FC = () => {
   }
 
   return (
-    <EventDetailLayout eventName={eventBrief.eventName}>
-      <Outlet />
-    </EventDetailLayout>
+    <EventProvider value={{ eventBrief, setEventBrief }}>
+      <EventDetailLayout eventName={eventBrief.eventName}>
+        <Outlet />
+      </EventDetailLayout>
+    </EventProvider>
   );
 };

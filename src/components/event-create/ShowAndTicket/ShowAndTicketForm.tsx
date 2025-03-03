@@ -83,7 +83,15 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
               : [],
           }));
 
-          setShows(formattedShows);
+          if (formattedShows.length > 0) setShows(formattedShows);
+          else
+            setShows([
+              {
+                startTime: undefined,
+                endTime: undefined,
+                ticketTypes: [],
+              },
+            ]);
 
           if (formRef.current) {
             formRef.current.setFieldsValue({

@@ -376,5 +376,93 @@
     "tax_number": "Tax Number",
     "tax_number_invalid": "Please enter valid tax number",
     "tax_number_placeholder": "Enter tax number"
+  },
+  "members": {
+    "errors": {
+      "alreadyExists": "This member already exists in the organization",
+      "notFound": "User not found",
+      "cannotAssignRole": "You don't have permission to assign this role",
+      "cannotDeleteMember": "You don't have permission to delete this member",
+      "cannotManageRole": "You don't have permission to manage this role",
+      "notOrganizationMember": "You are not a member of this organization",
+      "clerkError": "An error occurred while managing organization membership"
+    },
+    "role": {
+      "ADMIN": "Admin",
+      "ENTRY_STAFF": "Entry Staff",
+      "MANAGER": "Manager",
+      "MEMBER": "Member",
+      "OWNER": "Owner",
+      "VENDOR": "Vendor"
+    },
+    "table": {
+      "member": "Member",
+      "role": "Role",
+      "actions": "Actions"
+    },
+    "search": {
+      "placeholder": "Search members..."
+    },
+    "viewPermissions": "View Permissions",
+    "addMember": "Add Member",
+    "modal": {
+      "editTitle": "Edit Member Role",
+      "addTitle": "Add New Member"
+    },
+    "form": {
+      "email": "Email",
+      "emailRequired": "Please input member email!",
+      "emailInvalid": "Please input a valid email!",
+      "role": "Role",
+      "roleRequired": "Please select a role!"
+    },
+    "permissions": {
+      "title": "Role Permissions",
+      "permission": "Permission",
+      "role": "Role"
+    },
+    "list": {
+      "error": "Failed to fetch members list"
+    },
+    "add": {
+      "success": "Member added successfully",
+      "error": "Failed to add member"
+    },
+    "update": {
+      "success": "Member role updated successfully",
+      "error": "Failed to update member role"
+    },
+    "delete": {
+      "success": "Member removed successfully",
+      "error": "Failed to remove member"
+    }
+  },
+  "permissions": {
+    "org:event:analytic": "Event Analytics Dashboard",
+    "org:event:entry": "Event Checkin/Checkout",
+    "org:event:marketing": "Event Marketing",
+    "org:event:member": "Event Member",
+    "org:event:order": "Event Order",
+    "org:event:seatmap": "Event Seatmap",
+    "org:event:setting": "Event Setting",
+    "org:event:voucher": "Event Voucher"
+  },
+  "roles": {
+    "org:admin": "Admin",
+    "org:staff": "Entry Staff",
+    "org:manager": "Manager",
+    "org:member": "Member",
+    "org:owner": "Owner",
+    "org:vendor": "Vendor"
+  },
+  "event": {
+    "analytic": "Analytics",
+    "entry": "Entry Management",
+    "marketing": "Marketing",
+    "member": "Member Management",
+    "order": "Order Management",
+    "seatmap": "Seat Map",
+    "setting": "Settings",
+    "voucher": "Voucher Management"
   }
 }

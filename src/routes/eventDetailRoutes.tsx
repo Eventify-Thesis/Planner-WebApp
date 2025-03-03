@@ -16,9 +16,7 @@ const EventCheckin = React.lazy(
 const EventMembers = React.lazy(
   () => import('@/components/event/EventMembers/EventMembers'),
 );
-const EventSettings = React.lazy(
-  () => import('@/components/event/EventSettings/EventSettings'),
-);
+
 const EventSeatMap = React.lazy(
   () => import('@/components/event/EventSeatMap/EventSeatMap'),
 );
