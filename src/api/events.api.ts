@@ -1,8 +1,7 @@
 import { httpApi } from '@/api/http.api';
-import { EventStatus, EventType } from '@/constants/enums/event';
+import { EventRole, EventType } from '@/constants/enums/event';
 import { EventModel } from '@/domain/EventModel';
 import { PaymentModel } from '@/domain/PaymentModel';
-import { QueryModel } from '@/domain/QueryModel';
 import { SettingModel } from '@/domain/SettingModel';
 import { ShowModel } from '@/domain/ShowModel';
 import { EventListAllResponse } from '@/dto/event-doc.dto';
@@ -70,6 +69,10 @@ export interface EventBriefResponse {
   eventLogoURL: string;
 
   eventBannerURL: string;
+
+  organizationId: string;
+
+  role: EventRole;
 }
 
 export const saveEventDraftAPI = async (

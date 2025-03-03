@@ -1,0 +1,8 @@
+{
+  "org:admin": "Admin",
+  "org:staff": "Entry Staff",
+  "org:manager": "Manager",
+  "org:member": "Member",
+  "org:owner": "Owner",
+  "org:vendor": "Vendor"
+}

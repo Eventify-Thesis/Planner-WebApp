@@ -54,7 +54,7 @@ const membersMenuItem: MenuItem = {
 };
 
 const settingsMenuItem: MenuItem = {
-  key: 'settings',
+  key: 'edit-event',
   icon: <SettingOutlined />,
   label: 'Setting',
 };
