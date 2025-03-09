@@ -28,20 +28,20 @@ export const TicketSection: React.FC<TicketSectionProps> = ({
   const { t } = useTranslation();
 
   const handleDeleteTicket = (ticketIndex: number) => {
-    const updatedTicketTypes = [...show.ticketTypes];
-    updatedTicketTypes.splice(ticketIndex, 1);
-    onShowUpdate({ ...show, ticketTypes: updatedTicketTypes });
+    const updatedTickets = [...show.tickets];
+    updatedTickets.splice(ticketIndex, 1);
+    onShowUpdate({ ...show, tickets: updatedTickets });
   };
 
   return (
     <Form.Item
-      name={['shows', showIndex, 'ticketTypes']}
-      initialValue={show.ticketTypes}
+      name={['shows', showIndex, 'tickets']}
+      initialValue={show.tickets}
       trigger="onChange"
       validateTrigger={['onChange']}
     >
       <StyledTicketContainer>
-        {show.ticketTypes.map((ticket, ticketIndex) => (
+        {show.tickets.map((ticket, ticketIndex) => (
           <TicketCard
             key={ticket.id || ticketIndex}
             size="small"

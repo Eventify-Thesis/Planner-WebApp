@@ -14,7 +14,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { RcFile } from 'antd/lib/upload';
 import { uploadFile } from '@/services/fileUpload.service';
-import { TicketTypeModel } from '@/domain/ShowModel';
+import { TicketModel } from '@/domain/ShowModel';
 import dayjs from 'dayjs';
 import { DetailModal, ModalForm } from './TicketModal.styles';
 import { BASE_COLORS } from '@/styles/themes/constants';
@@ -24,10 +24,10 @@ const { TextArea } = Input;
 interface TicketModalProps {
   visible: boolean;
   onCancel: () => void;
-  onSave: (ticket: TicketTypeModel) => void;
+  onSave: (ticket: TicketModel) => void;
   showStartTime?: Date;
   showEndTime?: Date;
-  initialValues?: TicketTypeModel;
+  initialValues?: TicketModel;
 }
 
 export const TicketModal: React.FC<TicketModalProps> = ({

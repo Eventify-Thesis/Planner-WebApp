@@ -184,7 +184,6 @@
     "seating": "Seating",
     "edit": "Edit"
   },
-
   "event_create": {
     "save": "Save",
     "continue": "Continue",
@@ -376,6 +375,73 @@
     "tax_number": "Tax Number",
     "tax_number_invalid": "Please enter valid tax number",
     "tax_number_placeholder": "Enter tax number"
+  },
+  "questions": {
+    "options": "Options",
+    "please_add_option": "Please add at least one option",
+    "option": "Option",
+    "add_option": "Add Option",
+    "who_should_be_asked": "Who should be asked this question?",
+    "ask_once_per_order": "Ask once per order",
+    "ask_once_per_order_desc": "A single question per order. E.g, What is your company name?",
+    "ask_once_per_attendee": "Ask once per attendee",
+    "ask_once_per_attendee_desc": "A single question per attendee. E.g, What is your preferred meal?",
+    "what_tickets_apply": "What tickets should this question be apply to?",
+    "select_tickets": "Select tickets",
+    "what_type_of_question": "What type of question is this?",
+    "single_line_text": "Single line text box",
+    "single_line_text_desc": "A single line text input",
+    "multi_line_text": "Multi line text box",
+    "multi_line_text_desc": "A multi line text input",
+    "checkboxes": "Checkboxes",
+    "checkboxes_desc": "Checkbox options allow multiple selections",
+    "radio_option": "Radio Option",
+    "radio_option_desc": "A Radio option has multiple options but only one can be selected.",
+    "dropdown_selection": "Dropdown selection",
+    "dropdown_selection_desc": "A Dropdown input allows only one selection",
+    "address": "Address",
+    "address_desc": "Shows common address fields, including country",
+    "date": "Date",
+    "date_desc": "A date input. Perfect for asking for a date of birth etc.",
+    "question_title": "Question Title",
+    "question_title_placeholder": "What time will you be arriving?",
+    "question_description": "Question Description",
+    "question_description_desc": "Provide additional context or instructions for this question. Use this field to add terms and conditions, guidelines, or any important information that attendees need to know before answering.",
+    "add_description": "Add description",
+    "make_mandatory": "Make this question mandatory",
+    "make_mandatory_desc": "Mandatory questions must be answered before the customer can checkout.",
+    "hide_question": "Hide this question",
+    "hide_question_desc": "Hidden questions are only visible to the event organizer and not to the customer.",
+    "actions": "Actions",
+    "danger_zone": "Danger Zone",
+    "delete": "Delete Question",
+    "delete_confirmation": {
+      "title": "Delete Question",
+      "message": "Are you sure you want to delete this question?"
+    },
+    "delete_success": "Question deleted successfully",
+    "delete_error": "An error occurred while deleting the question. Please try again or refresh the page",
+    "sort_success": "Questions sorted successfully",
+    "sort_error": "An error occurred while sorting the questions. Please try again or refresh the page",
+    "edit": {
+      "title": "Edit Question",
+      "success": "Successfully Updated Question",
+      "error": "Unable to update question. Please check your details",
+      "working": "Working..."
+    },
+    "create": {
+      "title": "Create Question",
+      "success": "Successfully Created Question",
+      "error": "Unable to create question. Please check your details",
+      "working": "Working..."
+    },
+    "address": {
+      "line1": "Address line 1",
+      "line2": "Address line 2",
+      "city": "City",
+      "postal_code": "Postal Code",
+      "country": "Country"
+    }
   },
   "members": {
     "errors": {

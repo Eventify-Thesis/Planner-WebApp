@@ -18,8 +18,8 @@ const EventOrders: React.FC = () => {
     },
     {
       title: 'Ticket Type',
-      dataIndex: 'ticketType',
-      key: 'ticketType',
+      dataIndex: 'ticket',
+      key: 'ticket',
     },
     {
       title: 'Amount',

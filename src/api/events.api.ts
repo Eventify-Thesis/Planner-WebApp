@@ -4,6 +4,7 @@ import { EventModel } from '@/domain/EventModel';
 import { PaymentModel } from '@/domain/PaymentModel';
 import { SettingModel } from '@/domain/SettingModel';
 import { ShowModel } from '@/domain/ShowModel';
+import { TicketModel } from '@/domain/TicketModel';
 import { EventListAllResponse } from '@/dto/event-doc.dto';
 
 export interface PaginationResponse {
@@ -181,6 +182,19 @@ export const getEventBriefAPI = async (
   try {
     const response = await httpApi.get<any>(`/planner/events/${eventId}/brief`);
     return response.data.data;
+  } catch (e: any) {
+    throw new Error(e);
+  }
+};
+
+export const listTicketsAPI = async (
+  eventId: string,
+): Promise<TicketModel[]> => {
+  try {
+    const response = await httpApi.get<any>(
+      `/planner/events/${eventId}/tickets`,
+    );
+    return response.data.data.result;
   } catch (e: any) {
     throw new Error(e);
   }
