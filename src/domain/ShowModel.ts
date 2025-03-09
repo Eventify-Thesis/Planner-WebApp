@@ -1,21 +1,5 @@
-export interface TicketTypeModel {
-  id?: string;
-  name: string;
-  price: number;
-  isFree?: boolean;
-  quantity: number;
-  minTicketPurchase: number;
-  maxTicketPurchase: number;
-  startTime: Date;
-  endTime: Date;
-  description: string;
-  imageURL: string;
-  isDisabled?: boolean;
-  position: number;
-}
-
 export interface ShowingModel {
-  ticketTypes: TicketTypeModel[];
+  tickets: TicketModel[];
   startTime: Date;
   endTime: Date;
 }

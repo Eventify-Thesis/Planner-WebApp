@@ -204,11 +204,11 @@ const EventEditPage: React.FC = () => {
         throw new Error(t('event_create.start_time_before_end_time'));
       }
 
-      if (!show.ticketTypes || show.ticketTypes.length === 0) {
+      if (!show.tickets || show.tickets.length === 0) {
         throw new Error(t('event_create.at_least_one_ticket_type'));
       }
 
-      show.ticketTypes.forEach((ticket, ticketIndex) => {
+      show.tickets.forEach((ticket, ticketIndex) => {
         if (!ticket.name || !ticket.price || !ticket.quantity) {
           throw new Error(t('event_create.ticket_info_required'));
         }
