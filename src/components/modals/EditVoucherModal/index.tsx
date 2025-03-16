@@ -66,12 +66,20 @@ export const EditVoucherModal = ({
       return;
     }
 
-    updateVoucherMutation.mutate(values, {
-      onSuccess: () => {
-        onClose();
+    updateVoucherMutation.mutate(
+      {
+        eventId: eventId!,
+        voucherId: voucherId,
+        voucherData: values,
       },
-      onError: (error) => errorHandler(form, error),
-    });
+      {
+        onSuccess: () => {
+          onClose();
+          showSuccess(t('voucher.edit.success'));
+        },
+        onError: (error) => errorHandler(form, error),
+      },
+    );
   };
 
   useEffect(() => {

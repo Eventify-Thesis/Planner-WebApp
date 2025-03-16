@@ -89,7 +89,7 @@ export const VoucherTable = ({
     return (
       <NoResultsSplash
         heading={t('voucher.no_codes')}
-        imageHref={'/blank-slate/promo-codes.svg'}
+        imageHref={'/public/no-results-empty-boxes.svg'}
         subHeading={
           <>
             <p>{t('voucher.description')}</p>
@@ -99,7 +99,7 @@ export const VoucherTable = ({
               color={'green'}
               onClick={() => openCreateModal()}
             >
-              {t('voucher.create')}
+              {t('voucher.create.title')}
             </Button>
           </>
         }
@@ -117,7 +117,7 @@ export const VoucherTable = ({
             <MantineTable.Th>{t('voucher.usage')}</MantineTable.Th>
             <MantineTable.Th>{t('voucher.tickets')}</MantineTable.Th>
             <MantineTable.Th>{t('voucher.apply_expiry_date')}</MantineTable.Th>
-            <MantineTable.Th>{t('voucher.status')}</MantineTable.Th>
+            <MantineTable.Th>{t('voucher.status.title')}</MantineTable.Th>
             <MantineTable.Th></MantineTable.Th>
           </MantineTable.Tr>
         </TableHead>
