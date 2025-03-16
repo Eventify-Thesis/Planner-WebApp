@@ -180,14 +180,17 @@ export interface PaginationData {
   default_sort_direction: string;
 }
 
-export interface GenericDataResponse<T> {
-  data: T;
-  errors?: Record<string, string>;
-}
-
-export interface GenericPaginatedResponse<T> {
-  data: T[];
-  meta: PaginationData;
+export interface PaginationResponse<T> {
+  totalDocs: number;
+  limit: number;
+  totalPages: number;
+  page: number;
+  pagingCounter: number;
+  hasPrevPage: boolean;
+  hasNextPage: boolean;
+  prevPage: number | null;
+  nextPage: number | null;
+  docs: T[];
 }
 
 export enum Ticket {
@@ -397,13 +400,12 @@ export type QueryFilterFields = {
 };
 
 export interface QueryFilters {
-  pageNumber?: number;
-  perPage?: number;
-  query?: string;
+  page?: number;
+  limit?: number;
+  keyword?: string;
   sortBy?: string;
   sortDirection?: string;
   filterFields?: QueryFilterFields;
-  additionalParams?: Record<string, any>;
 }
 
 export interface GenericModalProps {
@@ -424,20 +426,20 @@ export enum MessageType {
   Event = 'EVENT',
 }
 
-export interface PromoCode {
+export interface Voucher {
   id?: number;
   code: string;
   discount?: number;
   applicable_ticket_ids?: number[] | string[];
   expiry_date?: string;
   event_id?: number;
-  discount_type?: PromoCodeDiscountType | null;
+  discount_type?: VoucherDiscountType | null;
   attendee_usage_count?: number;
   order_usage_count?: number;
   max_allowed_usages?: number | undefined;
 }
 
-export enum PromoCodeDiscountType {
+export enum VoucherDiscountType {
   Percentage = 'PERCENTAGE',
   Fixed = 'FIXED',
   None = 'NONE',

@@ -2,36 +2,17 @@ import { useParams } from 'react-router-dom';
 import { PageBody } from '@/components/common/PageBody';
 import { QuestionsTable } from '@/components/common/QuestionsTable';
 import { TableSkeleton } from '@/components/common/TableSkeleton';
-import { useEffect, useState } from 'react';
-import { listQuestionsAPI } from '@/api/questions.api';
+import { useListQuestions } from '@/queries/useQuestionQueries';
 
 export const EventQuestions = () => {
   const { eventId } = useParams();
-  const [questionQuery, setQuestionQuery] = useState<any>(null);
-
-  useEffect(() => {
-    listQuestionsAPI(eventId!).then((data) => {
-      setQuestionQuery(data);
-    });
-  }, []);
-
-  const reloadQuestions = async () => {
-    try {
-      const updatedQuestions = await listQuestionsAPI(eventId!);
-      setQuestionQuery(updatedQuestions);
-    } catch (error) {}
-  };
-
-  const orderQuestions = questionQuery;
+  const { data: questions, isLoading, refetch } = useListQuestions(eventId!);
 
   return (
     <PageBody>
-      <TableSkeleton numRows={5} isVisible={!orderQuestions} />
-      {orderQuestions && (
-        <QuestionsTable
-          questions={orderQuestions}
-          reloadQuestions={reloadQuestions}
-        />
+      <TableSkeleton numRows={5} isVisible={isLoading} />
+      {questions && (
+        <QuestionsTable questions={questions} reloadQuestions={refetch} />
       )}
     </PageBody>
   );

@@ -1,16 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useParams, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { EventDetailLayout } from '../../components/layouts/event/EventDetailLayout/EventDetailLayout';
 import { Spin } from 'antd';
-import { EventBriefResponse, getEventBriefAPI } from '@/api/events.api';
 import { EventProvider } from '../../contexts/EventContext';
+import { useGetEventBrief } from '@/queries/useGetEventBrief';
+import { useEffect } from 'react';
+import { ErrorResult } from '@/components/common/ErrorResult';
 
 export const EventDetailPage: React.FC = () => {
   const { eventId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const [eventBrief, setEventBrief] = useState<EventBriefResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: eventBrief, isLoading, error } = useGetEventBrief(eventId);
 
   useEffect(() => {
     // Redirect to analytics by default if no specific route is selected
@@ -19,25 +20,7 @@ export const EventDetailPage: React.FC = () => {
     }
   }, [eventId, location.pathname, navigate]);
 
-  useEffect(() => {
-    const fetchEventDetails = async () => {
-      try {
-        const response = await getEventBriefAPI(eventId || '');
-        setEventBrief(response);
-      } catch (error) {
-        console.error('Error fetching event details:', error);
-        // Handle error appropriately
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (eventId) {
-      fetchEventDetails();
-    }
-  }, [eventId]);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div
         style={{
@@ -52,12 +35,16 @@ export const EventDetailPage: React.FC = () => {
     );
   }
 
+  if (error) {
+    return <ErrorResult error={error} />;
+  }
+
   if (!eventBrief) {
     return <div>Event not found</div>;
   }
 
   return (
-    <EventProvider value={{ eventBrief, setEventBrief }}>
+    <EventProvider value={{ eventBrief }}>
       <EventDetailLayout eventName={eventBrief.eventName}>
         <Outlet />
       </EventDetailLayout>

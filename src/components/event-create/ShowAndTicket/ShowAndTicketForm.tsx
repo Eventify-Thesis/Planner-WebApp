@@ -13,7 +13,6 @@ import {
   DeleteOutlined,
   CaretUpOutlined,
   CaretDownOutlined,
-  CaretRightOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
@@ -25,12 +24,11 @@ import { FONT_SIZE, FONT_WEIGHT, BASE_COLORS } from '@/styles/themes/constants';
 import { TimePickerSection } from './components/TimePickerSection';
 import { TicketSection } from './components/TicketSection';
 import { useParams } from 'react-router-dom';
-import { useAppDispatch } from '@/hooks/reduxHooks';
-import { getEventShow } from '@/services/event.service';
+import { useListShows, useShowMutations } from '@/queries/useShowQueries';
 
 export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
   const { t } = useTranslation();
-  const dispatch = useAppDispatch();
+  const { eventId } = useParams();
 
   const [shows, setShows] = useState<ShowingModel[]>([
     {
@@ -45,7 +43,9 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
   const [currentTicket, setCurrentTicket] = useState<TicketModel>();
   const [activeKey, setActiveKey] = useState<string | string[]>(['0']);
 
-  const { eventId } = useParams<{ eventId?: string }>();
+  const { data: showsData, refetch: refetchShows } = useListShows(eventId!);
+  const { createShowMutation, updateShowMutation, deleteShowMutation } =
+    useShowMutations(eventId!);
 
   const months = Array.from({ length: 12 }, (_, i) => {
     const date = dayjs().month(i);
@@ -67,45 +67,33 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
   };
 
   useEffect(() => {
-    const loadEventData = async () => {
-      if (eventId) {
-        try {
-          const result = await getEventShow(eventId);
-          if (!result) return;
+    if (showsData?.showings) {
+      // Convert API date strings to Dayjs objects
 
-          // Convert API date strings to Dayjs objects
-          const formattedShows = result.showings.map((show) => ({
-            ...show,
-            startTime: show.startTime ? dayjs(show.startTime) : undefined,
-            endTime: show.endTime ? dayjs(show.endTime) : undefined,
-            tickets: Array.isArray(show.tickets) ? show.tickets : [],
-          }));
+      const formattedShows = showsData.showings.map((show) => ({
+        ...show,
+        startTime: show.startTime ? dayjs(show.startTime) : undefined,
+        endTime: show.endTime ? dayjs(show.endTime) : undefined,
+        tickets: Array.isArray(show.tickets) ? show.tickets : [],
+      }));
 
-          if (formattedShows.length > 0) setShows(formattedShows);
-          else
-            setShows([
-              {
-                startTime: undefined,
-                endTime: undefined,
-                tickets: [],
-              },
-            ]);
+      if (formattedShows.length > 0) setShows(formattedShows);
+      else
+        setShows([
+          {
+            startTime: undefined,
+            endTime: undefined,
+            tickets: [],
+          },
+        ]);
 
-          if (formRef.current) {
-            formRef.current.setFieldsValue({
-              shows: formattedShows,
-            });
-          }
-        } catch (error) {
-          notificationController.error({
-            message: error.message || t('event_create.failed_to_load'),
-          });
-        }
+      if (formRef.current) {
+        formRef.current.setFieldsValue({
+          shows: formattedShows,
+        });
       }
-    };
-
-    loadEventData();
-  }, [eventId, dispatch, formRef, t]);
+    }
+  }, [showsData, formRef]);
 
   // Initialize form with existing data if available
   useEffect(() => {

@@ -13,6 +13,9 @@ import { Helmet } from 'react-helmet';
 import { ClerkProvider } from '@clerk/clerk-react';
 import { viVN } from '@clerk/localizations';
 import { enUS } from '@clerk/localizations';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './utils/queryClient';
+import './styles/global.scss';
 
 // Import your Publishable Key
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -35,21 +38,23 @@ function App() {
         afterSignOutUrl="/"
         localization={language === 'en' ? enUS : viVN}
       >
-        <meta name="theme-color" content={themeObject[theme].primary} />
-        <GlobalStyle />
-        <HelmetProvider>
-          <Helmet>
-            <meta name="theme-color" content={themeObject[theme].primary} />
-            <meta
-              http-equiv="Content-Security-Policy"
-              content="upgrade-insecure-requests"
-            />
-          </Helmet>
+        <QueryClientProvider client={queryClient}>
+          <meta name="theme-color" content={themeObject[theme].primary} />
+          <GlobalStyle />
+          <HelmetProvider>
+            <Helmet>
+              <meta name="theme-color" content={themeObject[theme].primary} />
+              <meta
+                http-equiv="Content-Security-Policy"
+                content="upgrade-insecure-requests"
+              />
+            </Helmet>
 
-          <ConfigProvider locale={language === 'en' ? en : vnVN}>
-            <AppRouter />
-          </ConfigProvider>
-        </HelmetProvider>
+            <ConfigProvider locale={language === 'en' ? en : vnVN}>
+              <AppRouter />
+            </ConfigProvider>
+          </HelmetProvider>
+        </QueryClientProvider>
       </ClerkProvider>
     </>
   );

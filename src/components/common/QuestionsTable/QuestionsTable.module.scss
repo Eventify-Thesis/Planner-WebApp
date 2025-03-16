@@ -8,7 +8,6 @@
   .actions {
     gap: 15px;
     display: flex;
-    padding: 15px;
 
     @include respond-below(sm) {
       flex-direction: column;

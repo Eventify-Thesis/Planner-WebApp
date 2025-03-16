@@ -1,3 +1,5 @@
+import { TicketModel } from './TicketModel';
+
 export interface ShowingModel {
   tickets: TicketModel[];
   startTime: Date;

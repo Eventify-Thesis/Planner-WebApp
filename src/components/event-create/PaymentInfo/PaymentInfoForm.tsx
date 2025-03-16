@@ -1,13 +1,12 @@
-import React, { useEffect } from 'react';
-import { Form, Input, Select, Typography } from 'antd';
+import React from 'react';
+import { Form, Input, Select, Typography, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
 import * as S from './PaymentInfoForm.styles';
 import { FormStepProps } from '../types';
 import { BASE_COLORS } from '@/styles/themes/constants';
 import { useParams } from 'react-router-dom';
-import { notificationController } from '@/controllers/notificationController';
-import { getEventPayment } from '@/services/event.service';
 import { BusinessType } from '@/constants/enums/event';
+import { useGetEventPayment } from '@/queries/useGetEventPayment';
 
 const { Text } = Typography;
 
@@ -18,29 +17,26 @@ export const PaymentInfoForm: React.FC<PaymentInfoFormProps> = ({
 }) => {
   const { t } = useTranslation();
   const { eventId } = useParams<{ eventId?: string }>();
+  const { data: paymentData, isLoading } = useGetEventPayment(eventId);
 
-  useEffect(() => {
-    const loadPaymentData = async () => {
-      if (eventId) {
-        try {
-          const result = await getEventPayment(eventId);
-          if (!result) return;
+  // Set form data when payment data is loaded
+  React.useEffect(() => {
+    if (paymentData && formRef.current) {
+      formRef.current.setFieldsValue({
+        ...paymentData,
+      });
+    }
+  }, [paymentData, formRef]);
 
-          if (formRef.current) {
-            formRef.current.setFieldsValue({
-              ...result,
-            });
-          }
-        } catch (error) {
-          notificationController.error({
-            message: error.message || t('event_create.failed_to_load'),
-          });
-        }
-      }
-    };
-
-    loadPaymentData();
-  }, [eventId, formRef, t]);
+  if (isLoading) {
+    return (
+      <div
+        style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}
+      >
+        <Spin size="large" />
+      </div>
+    );
+  }
 
   return (
     <Form

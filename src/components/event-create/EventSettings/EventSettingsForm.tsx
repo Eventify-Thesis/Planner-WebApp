@@ -1,5 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { Form, InputNumber, Select, Input, Radio, Typography } from 'antd';
+import React, { useState } from 'react';
+import {
+  Form,
+  InputNumber,
+  Select,
+  Input,
+  Radio,
+  Typography,
+  Spin,
+} from 'antd';
 import { useTranslation } from 'react-i18next';
 import {
   UserOutlined,
@@ -14,9 +22,7 @@ import { FormStepProps } from '../types';
 import { BASE_COLORS } from '@/styles/themes/constants';
 import { AgeRestriction } from '@/constants/enums/event';
 import { useParams } from 'react-router-dom';
-import { notificationController } from '@/controllers/notificationController';
-import { getEventSetting } from '@/services/event.service';
-import { useAppDispatch } from '@/hooks/reduxHooks';
+import { useGetEventSetting } from '@/queries/useGetEventSetting';
 
 const { TextArea } = Input;
 const { Text } = Typography;
@@ -36,43 +42,35 @@ interface EventSettingsFormProps extends FormStepProps {}
 export const EventSettingsForm: React.FC<EventSettingsFormProps> = ({
   formRef,
 }) => {
-  const { dispatch } = useAppDispatch();
   const { t } = useTranslation();
   const baseUrl = window.location.origin;
   const [url, setUrl] = useState('');
   const { eventId } = useParams<{ eventId?: string }>();
   const [eventName, setEventName] = useState('');
 
-  useEffect(() => {
-    const loadEventData = async () => {
-      if (eventId) {
-        try {
-          const result = await getEventSetting(eventId);
-          if (!result) return;
+  const { data: eventSetting, isLoading } = useGetEventSetting(eventId);
 
-          if (formRef.current) {
-            formRef.current.setFieldsValue({
-              ...result,
-            });
+  // Set form data when event setting is loaded
+  React.useEffect(() => {
+    if (eventSetting && formRef.current) {
+      formRef.current.setFieldsValue({
+        ...eventSetting,
+      });
 
-            setEventName(result.eventName);
-          }
+      setEventName(eventSetting.eventName);
+      setUrl(eventSetting.url || eventSetting.eventName);
+    }
+  }, [eventSetting, formRef]);
 
-          setUrl(result.url);
-
-          if (url.length == 0) {
-            setUrl(result.eventName);
-          }
-        } catch (error) {
-          notificationController.error({
-            message: error.message || t('event_create.failed_to_load'),
-          });
-        }
-      }
-    };
-
-    loadEventData();
-  }, [eventId, dispatch, formRef, t]);
+  if (isLoading) {
+    return (
+      <div
+        style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}
+      >
+        <Spin size="large" />
+      </div>
+    );
+  }
 
   return (
     <Form
@@ -168,6 +166,7 @@ export const EventSettingsForm: React.FC<EventSettingsFormProps> = ({
             <a
               href={`${baseUrl}/events/${url}${eventId ? `-${eventId}` : ''}`}
               target="_blank"
+              rel="noopener noreferrer"
             >
               {`${baseUrl}/events/${url}${eventId ? `-${eventId}` : ''}`}
             </a>
