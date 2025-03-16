@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Button, message } from 'antd';
+import { Button } from 'antd';
 import { PageTitle } from '@/components/common/PageTitle/PageTitle';
 import styled from 'styled-components';
 import { ShowAndTicketForm } from '@/components/event-create/ShowAndTicket/ShowAndTicketForm';
@@ -13,18 +13,15 @@ import {
 import EventInfoForm from '@/components/event-create/EventInfo/EventInfoForm';
 import { Steps } from '@/components/common/BaseSteps/BaseSteps.styles';
 import { notificationController } from '@/controllers/notificationController';
-import { uploadFile } from '@/services/fileUpload.service';
-import {
-  eventInfoDraft,
-  updateEventSetting,
-  updateEventShow,
-  updateEventPayment,
-} from '@/services/event.service';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { useAppDispatch } from '@/hooks/reduxHooks';
-import { BASE_COLORS } from '@/styles/themes/constants';
 import dayjs from 'dayjs';
+import {
+  useEventInfoDraft,
+  useUpdateEventShow,
+  useUpdateEventSetting,
+  useUpdateEventPayment,
+} from '@/mutations/useEventMutations';
 
 const { Step } = Steps;
 
@@ -46,10 +43,13 @@ const EventEditPage: React.FC = () => {
   const { eventId } = params;
   const { t } = useTranslation();
   const [current, setCurrent] = useState(0);
-  const [formData, setFormData] = useState({});
-  const [formsValid, setFormsValid] = useState([false, false, false, false]);
   const formRefs = [useRef(), useRef(), useRef(), useRef()];
-  const dispatch = useAppDispatch();
+
+  // React Query mutations
+  const eventInfoMutation = useEventInfoDraft();
+  const showMutation = useUpdateEventShow();
+  const settingMutation = useUpdateEventSetting();
+  const paymentMutation = useUpdateEventPayment();
 
   const steps = [
     { title: 'Event Info', key: 'info', content: EventInfoForm },
@@ -69,7 +69,6 @@ const EventEditPage: React.FC = () => {
     }
 
     if (!step) {
-      // Redirect to step=info if not already present in the URL
       setSearchParams({ step: 'info' });
     }
   }, [searchParams]);
@@ -91,7 +90,6 @@ const EventEditPage: React.FC = () => {
         const event = await handleSaveAsDraft(values);
 
         if (event && !eventId) {
-          const newEventId = event.id || event._id;
           navigate(`?step=${steps[current + 1].key}`, {
             replace: true,
           });
@@ -124,8 +122,6 @@ const EventEditPage: React.FC = () => {
     }
   };
 
-  const handlePrev = () => setCurrent(current - 1);
-
   const handleSave = async () => {
     let values;
 
@@ -154,6 +150,10 @@ const EventEditPage: React.FC = () => {
       if (steps[current].content === PaymentInfoForm) {
         await handlePaymentUpdate(values);
       }
+
+      notificationController.success({
+        message: t('event_create.event_info_saved_successfully'),
+      });
     } catch (error) {
       notificationController.error({
         message: error.message || t('event_create.failed_to_save'),
@@ -164,28 +164,19 @@ const EventEditPage: React.FC = () => {
 
   const handleSaveAsDraft = async (values: any) => {
     try {
-      const event = await eventInfoDraft({
+      const event = await eventInfoMutation.mutateAsync({
         ...values,
         id: eventId,
       });
 
       if (event) {
-        // Update URL with new event ID
-        const newEventId = event.id || event._id;
         navigate(`?step=${steps[current].key}`, {
           replace: true,
         });
       }
 
-      notificationController.success({
-        message: t('event_create.event_info_saved_successfully'),
-      });
-
       return event;
     } catch (error) {
-      notificationController.error({
-        message: error.message || t('event_create.failed_to_save'),
-      });
       throw error;
     }
   };
@@ -208,7 +199,7 @@ const EventEditPage: React.FC = () => {
         throw new Error(t('event_create.at_least_one_ticket_type'));
       }
 
-      show.tickets.forEach((ticket, ticketIndex) => {
+      show.tickets.forEach((ticket) => {
         if (!ticket.name || !ticket.price || !ticket.quantity) {
           throw new Error(t('event_create.ticket_info_required'));
         }
@@ -222,7 +213,6 @@ const EventEditPage: React.FC = () => {
         }
       });
 
-      // Check for overlapping shows
       shows.forEach((otherShow, otherIndex) => {
         if (index !== otherIndex) {
           const showStart = dayjs(show.startTime);
@@ -245,52 +235,34 @@ const EventEditPage: React.FC = () => {
 
   const handleShowUpdate = async (updatedShow: any[]) => {
     try {
-      // Validate shows before updating
       validateShows(updatedShow);
-
-      await updateEventShow(eventId, {
-        showings: updatedShow,
-      });
-
-      notificationController.success({
-        message: t('event_create.event_info_saved_successfully'),
+      await showMutation.mutateAsync({
+        eventId,
+        showData: { showings: updatedShow },
       });
     } catch (error) {
-      notificationController.error({
-        message: error.message || t('event_create.failed_to_save_event_show'),
-      });
       throw error;
     }
   };
 
   const handleSettingUpdate = async (updatedSetting: any) => {
     try {
-      await updateEventSetting(eventId, updatedSetting);
-
-      notificationController.success({
-        message: t('event_create.event_info_saved_successfully'),
+      await settingMutation.mutateAsync({
+        eventId,
+        settingData: updatedSetting,
       });
     } catch (error) {
-      notificationController.error({
-        message:
-          error.message || t('event_create.failed_to_save_event_setting'),
-      });
       throw error;
     }
   };
 
   const handlePaymentUpdate = async (updatedPayment: any) => {
     try {
-      await updateEventPayment(eventId, updatedPayment);
-
-      notificationController.success({
-        message: t('event_create.event_info_saved_successfully'),
+      await paymentMutation.mutateAsync({
+        eventId,
+        paymentData: updatedPayment,
       });
     } catch (error) {
-      notificationController.error({
-        message:
-          error.message || t('event_create.failed_to_save_event_payment'),
-      });
       throw error;
     }
   };

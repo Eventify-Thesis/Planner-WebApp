@@ -1,0 +1,51 @@
+.show-card {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03),
+              0 2px 4px rgba(0, 0, 0, 0.03),
+              0 4px 8px rgba(0, 0, 0, 0.03);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.show-card:hover {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05),
+              0 4px 8px rgba(0, 0, 0, 0.05),
+              0 8px 16px rgba(0, 0, 0, 0.05);
+}
+
+.show-selection-row {
+  transition: background-color 0.3s ease;
+}
+
+.show-selection-row:hover {
+  background-color: #f5f5f5;
+}
+
+.ant-table-row {
+  cursor: pointer;
+}
+
+.section-card {
+  background: white;
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.add-show-button {
+  width: 100%;
+  height: 120px;
+  border: 2px dashed #d9d9d9;
+  background: transparent;
+  transition: all 0.3s ease;
+}
+
+.add-show-button:hover {
+  border-color: #1890ff;
+  color: #1890ff;
+}
+
+.section-title {
+  margin-bottom: 24px;
+  color: #1f2937;
+  font-weight: 600;
+}

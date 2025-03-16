@@ -12,11 +12,9 @@ import { Modal } from '../../common/Modal';
 import { QuestionForm } from '../../forms/QuestionForm';
 import { showError } from '@/utils/notifications.tsx';
 import { useTranslation } from 'react-i18next';
-import { listTicketsAPI } from '@/api/events.api';
-import { TicketModel } from '@/domain/TicketModel';
-import { useEffect, useState } from 'react';
+import { useListTickets } from '@/queries/useTicketQueries';
+import { useQuestionMutations } from '@/queries/useQuestionQueries';
 import { QuestionModel } from '@/domain/QuestionModel';
-import { createQuestionAPI } from '@/api/questions.api';
 
 interface CreateQuestionModalProps extends GenericModalProps {
   onCompleted: (question: Question) => void;
@@ -30,17 +28,9 @@ export const CreateQuestionModal = ({
 }: CreateQuestionModalProps) => {
   const { t } = useTranslation();
   const { eventId } = useParams();
-  //   const queryClient = useQueryClient();
-  const [tickets, setTickets] = useState<TicketModel[]>([]);
-  useEffect(() => {
-    const getTickets = async () => {
-      const tickets = await listTicketsAPI(eventId!);
-      setTickets(tickets);
-    };
-    getTickets();
-  }, []);
-
-  const [isLoading, setIsLoading] = useState(false);
+  const { data: ticketsResponse } = useListTickets(eventId!);
+  const tickets = ticketsResponse?.data || [];
+  const { createQuestionMutation } = useQuestionMutations(eventId!);
 
   const form = useForm({
     initialValues: {
@@ -49,75 +39,46 @@ export const CreateQuestionModal = ({
       type: QuestionType.SINGLE_LINE_TEXT.toString(),
       required: false,
       options: [],
-      ticket_ids: [],
-      apply_to_all_tickets: true,
-      belongs_to: 'ORDER',
+      ticketIds: [],
+      belongsTo: 'ORDER',
       isHidden: false,
     },
   });
 
-  //   const mutation = useMutation({
-  //     mutationFn: (questionData: Question) =>
-  //       questionClient.create(eventId, questionData as QuestionRequestData),
-
-  //     onSuccess: ({ data: question }) => {
-  //       notifications.show({
-  //         message: t`Successfully Created Question`,
-  //         color: 'green',
-  //       });
-  //       queryClient
-  //         .invalidateQueries({ queryKey: [GET_EVENT_QUESTIONS_QUERY_KEY] })
-  //         .then(() => {
-  //           onCompleted(question);
-  //           onClose();
-  //           form.reset();
-  //         });
-  //     },
-
-  //     onError: (error: any) => {
-  //       if (error?.response?.data?.errors) {
-  //         form.setErrors(error.response.data.errors);
-  //       } else {
-  //         showError(t`Unable to create question. Please check the your details`);
-  //       }
-  //     },
-  //   });
-
-  const createQuestion = async (questionData: QuestionModel) => {
+  const handleSubmit = async (values: QuestionModel) => {
     try {
-      setIsLoading(true);
-      const response = await createQuestionAPI(eventId!, questionData);
+      const { data: question } = await createQuestionMutation.mutateAsync(
+        values,
+      );
       notifications.show({
         message: t('questions.create.success'),
         color: 'green',
       });
-
-      await reloadQuestions();
-
       onClose();
-      setIsLoading(false);
-      onCompleted(questionData);
-
+      onCompleted(question);
       form.reset();
-
-      // Call the reload function to refresh the question list
-
-      return response;
-    } catch (error) {
-      showError(t('questions.create.error'));
+    } catch (error: any) {
+      if (error?.response?.data?.errors) {
+        form.setErrors(error.response.data.errors);
+      } else {
+        showError(t('questions.create.error'));
+      }
     }
   };
 
   return (
     <Modal opened onClose={onClose} heading={t('questions.create.title')}>
-      <form
-        onSubmit={form.onSubmit((values) =>
-          createQuestion(values as any as Question),
-        )}
-      >
+      <form onSubmit={form.onSubmit(handleSubmit)}>
         <QuestionForm form={form} tickets={tickets} />
-        <Button loading={isLoading} type="submit" fullWidth mt="xl">
-          {isLoading ? t('questions.create.working') : t('questions.create.title')}
+        <Button
+          loading={createQuestionMutation.isPending}
+          type="submit"
+          fullWidth
+          mt="xl"
+        >
+          {createQuestionMutation.isPending
+            ? t('questions.create.working')
+            : t('questions.create.title')}
         </Button>
       </form>
     </Modal>

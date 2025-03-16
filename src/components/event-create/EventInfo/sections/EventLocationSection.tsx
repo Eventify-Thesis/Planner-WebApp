@@ -111,7 +111,9 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
               ]}
             >
               <Select
-                placeholder={t('event_create.event_location.district_placeholder')}
+                placeholder={t(
+                  'event_create.event_location.district_placeholder',
+                )}
                 disabled={!selectedCity}
                 onChange={setSelectedDistrict}
                 options={districts.map((district) => ({
@@ -154,13 +156,15 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
               rules={[
                 {
                   required: true,
-                  message: t('event_create.event_location.street_address_required'),
+                  message: t(
+                    'event_create.event_location.street_address_required',
+                  ),
                 },
               ]}
             >
               <Input
                 placeholder={t(
-                  'event_create.event_location.street_address_placeholder'
+                  'event_create.event_location.street_address_placeholder',
                 )}
               />
             </Form.Item>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Table,
   Card,
@@ -27,16 +27,15 @@ import {
   EVENT_PERMISSION_LABELS,
   EVENT_ROLE_LABELS,
 } from './types';
-import {
-  addMemberAPI,
-  deleteMemberAPI,
-  listMembersAPI,
-  updateMemberRoleAPI,
-} from '../../../api/member.api';
 import { useEvent } from '../../../contexts/EventContext';
 import { MemberModel } from '@/domain/MemberModel';
 import { EventRole } from '@/constants/enums/event';
 import { BASE_COLORS, FONT_WEIGHT } from '@/styles/themes/constants';
+import { useListMembers, useMemberMutations } from '@/queries/useMemberQueries';
+import { ToolBar } from '@/components/common/ToolBar';
+import { SearchBarWrapper } from '@/components/common/SearchBar';
+import { useFilterQueryParamSync } from '@/hooks/useFilterQueryParamSync';
+import { QueryFilters } from '@tanstack/react-query';
 
 const { Text } = Typography;
 
@@ -47,80 +46,29 @@ const EventMembers: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingMember, setEditingMember] = useState<MemberModel | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [members, setMembers] = useState<MemberModel[]>([]);
   const [pagination, setPagination] = useState({
     current: 1,
     limit: 10,
-    total: 0,
   });
+
+  const [searchParams, setSearchParams] = useFilterQueryParamSync();
+
   const [form] = Form.useForm();
 
-  const fetchMembers = async (page: number = 1, search?: string) => {
-    if (!eventBrief) return;
+  const { data, isLoading } = useListMembers(
+    eventId!,
+    searchParams as QueryFilters,
+  );
 
-    try {
-      setLoading(true);
-      const response = await listMembersAPI(eventId!, {
-        page,
-        limit: pagination.limit,
-        search,
-      });
-      const { docs, totalDocs, totalPages } = response;
-      setMembers(docs);
-      setPagination({
-        ...pagination,
-        current: page,
-        total: totalDocs,
-      });
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || error.message;
-      let description = t('common.error');
+  const { addMemberMutation, updateMemberRoleMutation, deleteMemberMutation } =
+    useMemberMutations(eventId!);
 
-      switch (errorMessage) {
-        case 'Member already exists in the organization':
-          description = t('members.errors.alreadyExists');
-          break;
-        case 'Member not found':
-          description = t('members.errors.notFound');
-          break;
-        case 'You cannot assign this role':
-          description = t('members.errors.cannotAssignRole');
-          break;
-        case 'You cannot delete this member':
-          description = t('members.errors.cannotDeleteMember');
-          break;
-        case 'You cannot manage this role':
-          description = t('members.errors.cannotManageRole');
-          break;
-        case 'You are not a member of this organization':
-          description = t('members.errors.notOrganizationMember');
-          break;
-        case 'Error occurred while managing Clerk organization membership':
-          description = t('members.errors.clerkError');
-          break;
-        default:
-          description = t('members.list.error');
-      }
-
-      notification.error({
-        message: t('common.error'),
-        description,
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (eventId && eventBrief) {
-      fetchMembers(1, searchText);
-    }
-  }, [eventId, eventBrief]);
+  const members = data?.docs || [];
+  const totalDocs = data?.totalDocs || 0;
 
   const handleSearch = (value: string) => {
     setSearchText(value);
-    fetchMembers(1, value);
+    setPagination((prev) => ({ ...prev, current: 1 }));
   };
 
   const showAddModal = () => {
@@ -141,14 +89,15 @@ const EventMembers: React.FC = () => {
     try {
       const values = await form.validateFields();
       if (editingMember) {
-        await updateMemberRoleAPI(eventId!, editingMember.userId, {
-          role: values.role,
+        await updateMemberRoleMutation.mutateAsync({
+          userId: editingMember.userId,
+          data: { role: values.role },
         });
         notification.success({
           message: t('members.update.success'),
         });
       } else {
-        await addMemberAPI(eventId!, {
+        await addMemberMutation.mutateAsync({
           email: values.email,
           role: values.role,
           organizationId: eventBrief.organizationId!,
@@ -158,7 +107,6 @@ const EventMembers: React.FC = () => {
         });
       }
       setIsModalVisible(false);
-      fetchMembers(pagination.current, searchText);
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || error.message;
       let description = t('common.error');
@@ -202,11 +150,10 @@ const EventMembers: React.FC = () => {
     if (!eventBrief) return;
 
     try {
-      await deleteMemberAPI(eventId!, userId);
+      await deleteMemberMutation.mutateAsync(userId);
       notification.success({
         message: t('members.delete.success'),
       });
-      fetchMembers(pagination.current, searchText);
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || error.message;
       let description = t('common.error');
@@ -302,39 +249,41 @@ const EventMembers: React.FC = () => {
         padding: 24,
       }}
     >
-      <div style={{ marginBottom: 16 }}>
-        <Space style={{ width: '100%', justifyContent: 'space-between' }}>
-          <Input
-            placeholder={t('members.search.placeholder')}
-            prefix={<SearchOutlined />}
-            style={{ width: 300 }}
-            onChange={(e) => handleSearch(e.target.value)}
-            value={searchText}
+      <ToolBar
+        searchComponent={() => (
+          <SearchBarWrapper
+            placeholder={t`Search by name, email...`}
+            setSearchParams={setSearchParams}
+            searchParams={searchParams}
+            // pagination={pagination}
           />
-          <Button
-            type="primary"
-            icon={<UserAddOutlined />}
-            onClick={showAddModal}
-            style={{
-              color: BASE_COLORS.black,
-              fontWeight: FONT_WEIGHT.bold,
-              backgroundColor: 'var(--primary-color)',
-            }}
-          >
-            {t('members.addMember')}
-          </Button>
-        </Space>
-      </div>
-
+        )}
+      >
+        <Button
+          type="primary"
+          icon={<UserAddOutlined />}
+          onClick={showAddModal}
+          style={{
+            color: BASE_COLORS.black,
+            fontWeight: FONT_WEIGHT.bold,
+            backgroundColor: 'var(--primary-color)',
+          }}
+        >
+          {t('members.addMember')}
+        </Button>
+      </ToolBar>
       <Card>
         <Table
           columns={columns}
           dataSource={members}
           rowKey="id"
-          loading={loading}
+          loading={isLoading}
           pagination={{
-            ...pagination,
-            onChange: (page) => fetchMembers(page, searchText),
+            current: pagination.current,
+            pageSize: pagination.limit,
+            total: totalDocs,
+            onChange: (page, pageSize) =>
+              setPagination({ current: page, limit: pageSize }),
           }}
         />
       </Card>
@@ -348,7 +297,9 @@ const EventMembers: React.FC = () => {
         open={isModalVisible}
         onOk={handleModalOk}
         onCancel={() => setIsModalVisible(false)}
-        confirmLoading={loading}
+        confirmLoading={
+          addMemberMutation.isPending || updateMemberRoleMutation.isPending
+        }
         width={1200}
       >
         <Form form={form} layout="vertical">

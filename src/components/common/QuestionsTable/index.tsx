@@ -12,16 +12,13 @@ import {
 } from '@tabler/icons-react';
 import Truncate from '../Truncate';
 import classes from './QuestionsTable.module.scss';
-// import { QuestionInput } from '../CheckoutQuestion';
 import { useForm } from '@mantine/form';
 import { useDisclosure } from '@mantine/hooks';
 import { Card } from '../Card';
 import { useEffect, useState } from 'react';
 import { EditQuestionModal } from '@/components/modals/EditQuestionModal';
-// import { useDeleteQuestion } from '../../../mutations/useDeleteQuestion.ts';
 import { useParams } from 'react-router-dom';
 import { showError, showSuccess } from '@/utils/notifications.tsx';
-import { confirmationDialog } from '@/utils/confirmationDialog.tsx';
 import { InputGroup } from '@/components/common/InputGroup';
 import { useDragItemsHandler } from '../../../hooks/useDragItemsHandler.ts';
 import {
@@ -39,15 +36,14 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-// import { useSortQuestions } from '../../../mutations/useSortQuestions.ts';
 import classNames from 'classnames';
 import { Popover } from '../Popover';
 import { useTranslation } from 'react-i18next';
 import { QuestionModel } from '@/domain/QuestionModel.ts';
 import { CreateQuestionModal } from '@/components/modals/CreateQuestionModal/index.tsx';
-import { deleteQuestionAPI, sortQuestionAPI } from '@/api/questions.api.ts';
 import { QuestionInput } from '../CheckoutQuestion/index.tsx';
 import { modals } from '@mantine/modals';
+import { useQuestionMutations } from '@/queries/useQuestionQueries';
 
 interface QuestionsTableProp {
   questions: Partial<QuestionModel>[];
@@ -150,22 +146,27 @@ const QuestionsList = ({
 }: QuestionsTableProp) => {
   const { eventId } = useParams();
   const { t } = useTranslation();
-  console.log(questions);
-  //   const deleteQuestionMutation = useDeleteQuestion();
-  //   const sortMutation = useSortQuestions();
+  const { deleteQuestionMutation, sortQuestionsMutation } =
+    useQuestionMutations(eventId!);
+
   const { items, setItems, handleDragEnd } = useDragItemsHandler({
     initialItemIds: questions.map((question) => question.id),
-    onSortEnd: (newArray) => {
-      const sortQuestion = async () => {
+    onSortEnd: async (newArray) => {
+      const sortQuestions = async () => {
         try {
-          await sortQuestionAPI(eventId, newArray);
+          await sortQuestionsMutation.mutateAsync(
+            newArray.map((id, index) => ({
+              order: index + 1,
+              id: id,
+            })),
+          );
           showSuccess(t('questions.sort_success'));
         } catch (error) {
           showError(t('questions.sort_error'));
         }
       };
 
-      sortQuestion();
+      await sortQuestions();
     },
   });
 
@@ -178,7 +179,7 @@ const QuestionsList = ({
   const onDelete = (id: IdParam) => {
     const handleDelete = async () => {
       try {
-        await deleteQuestionAPI(eventId as string, id as string);
+        await deleteQuestionMutation.mutateAsync(id as string);
         showSuccess(t('questions.delete_success'));
         if (reloadQuestions) {
           await reloadQuestions();

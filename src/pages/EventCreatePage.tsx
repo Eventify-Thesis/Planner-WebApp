@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Button, message } from 'antd';
+import { Button } from 'antd';
 import { PageTitle } from '@/components/common/PageTitle/PageTitle';
 import styled from 'styled-components';
 import { ShowAndTicketForm } from '@/components/event-create/ShowAndTicket/ShowAndTicketForm';
@@ -13,18 +13,10 @@ import {
 import EventInfoForm from '@/components/event-create/EventInfo/EventInfoForm';
 import { Steps } from '@/components/common/BaseSteps/BaseSteps.styles';
 import { notificationController } from '@/controllers/notificationController';
-import { uploadFile } from '@/services/fileUpload.service';
-import {
-  eventInfoDraft,
-  updateEventSetting,
-  updateEventShow,
-  updateEventPayment,
-} from '@/services/event.service';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { useAppDispatch } from '@/hooks/reduxHooks';
-import { BASE_COLORS } from '@/styles/themes/constants';
 import dayjs from 'dayjs';
+import { useEventMutations } from '@/queries/useEventQueries';
 
 const { Step } = Steps;
 
@@ -46,10 +38,14 @@ const EventCreatePage: React.FC = () => {
   const { eventId } = params;
   const { t } = useTranslation();
   const [current, setCurrent] = useState(0);
-  const [formData, setFormData] = useState({});
-  const [formsValid, setFormsValid] = useState([false, false, false, false]);
   const formRefs = [useRef(), useRef(), useRef(), useRef()];
-  const dispatch = useAppDispatch();
+
+  const {
+    infoDraftMutation,
+    showMutation,
+    settingMutation,
+    paymentMutation,
+  } = useEventMutations(eventId);
 
   const steps = [
     { title: 'Event Info', key: 'info', content: EventInfoForm },
@@ -69,10 +65,62 @@ const EventCreatePage: React.FC = () => {
     }
 
     if (!step) {
-      // Redirect to step=info if not already present in the URL
       navigate('/create-event?step=info', { replace: true });
     }
   }, [searchParams]);
+
+  const validateShows = (shows: any[]) => {
+    if (!shows || shows.length === 0) {
+      throw new Error(t('event_create.at_least_one_show'));
+    }
+
+    shows.forEach((show, index) => {
+      if (!show.startTime || !show.endTime) {
+        throw new Error(t('event_create.show_time_required'));
+      }
+
+      if (dayjs(show.startTime).isAfter(dayjs(show.endTime))) {
+        throw new Error(t('event_create.start_time_before_end_time'));
+      }
+
+      if (!show.tickets || show.tickets.length === 0) {
+        throw new Error(t('event_create.at_least_one_ticket_type'));
+      }
+
+      show.tickets.forEach((ticket) => {
+        if (!ticket.name || !ticket.price || !ticket.quantity) {
+          throw new Error(t('event_create.ticket_info_required'));
+        }
+
+        if (ticket.price < 0) {
+          throw new Error(t('event_create.ticket_price_positive'));
+        }
+
+        if (ticket.quantity < 1) {
+          throw new Error(t('event_create.ticket_quantity_positive'));
+        }
+      });
+
+      // Check for overlapping shows
+      shows.forEach((otherShow, otherIndex) => {
+        if (index !== otherIndex) {
+          const showStart = dayjs(show.startTime);
+          const showEnd = dayjs(show.endTime);
+          const otherStart = dayjs(otherShow.startTime);
+          const otherEnd = dayjs(otherShow.endTime);
+
+          if (
+            showStart.isBetween(otherStart, otherEnd, null, '[]') ||
+            showEnd.isBetween(otherStart, otherEnd, null, '[]') ||
+            otherStart.isBetween(showStart, showEnd, null, '[]') ||
+            otherEnd.isBetween(showStart, showEnd, null, '[]')
+          ) {
+            throw new Error(t('event_create.overlapping_shows'));
+          }
+        }
+      });
+    });
+  };
 
   const handleNext = async () => {
     let values;
@@ -127,8 +175,6 @@ const EventCreatePage: React.FC = () => {
     }
   };
 
-  const handlePrev = () => setCurrent(current - 1);
-
   const handleSave = async () => {
     let values;
 
@@ -157,6 +203,10 @@ const EventCreatePage: React.FC = () => {
       if (steps[current].content === PaymentInfoForm) {
         await handlePaymentUpdate(values);
       }
+
+      notificationController.success({
+        message: t('event_create.event_info_saved_successfully'),
+      });
     } catch (error) {
       notificationController.error({
         message: error.message || t('event_create.failed_to_save'),
@@ -167,133 +217,42 @@ const EventCreatePage: React.FC = () => {
 
   const handleSaveAsDraft = async (values: any) => {
     try {
-      const event = await eventInfoDraft({
-        ...values,
-        id: eventId,
-      });
+      const event = await infoDraftMutation.mutateAsync(values);
 
       if (event) {
-        // Update URL with new event ID
         const newEventId = event.id || event._id;
         navigate(`/create-event/${newEventId}?step=${steps[current].key}`, {
           replace: true,
         });
       }
 
-      notificationController.success({
-        message: t('event_create.event_info_saved_successfully'),
-      });
-
       return event;
     } catch (error) {
-      notificationController.error({
-        message: error.message || t('event_create.failed_to_save'),
-      });
       throw error;
     }
   };
 
-  const validateShows = (shows: any[]) => {
-    if (!shows || shows.length === 0) {
-      throw new Error(t('event_create.at_least_one_show'));
-    }
-
-    shows.forEach((show, index) => {
-      if (!show.startTime || !show.endTime) {
-        throw new Error(t('event_create.show_time_required'));
-      }
-
-      if (dayjs(show.startTime).isAfter(dayjs(show.endTime))) {
-        throw new Error(t('event_create.start_time_before_end_time'));
-      }
-
-      if (!show.tickets || show.tickets.length === 0) {
-        throw new Error(t('event_create.at_least_one_ticket_type'));
-      }
-
-      show.tickets.forEach((ticket, ticketIndex) => {
-        if (!ticket.name || !ticket.price || !ticket.quantity) {
-          throw new Error(t('event_create.ticket_info_required'));
-        }
-
-        if (ticket.price < 0) {
-          throw new Error(t('event_create.ticket_price_positive'));
-        }
-
-        if (ticket.quantity < 1) {
-          throw new Error(t('event_create.ticket_quantity_positive'));
-        }
-      });
-
-      // Check for overlapping shows
-      shows.forEach((otherShow, otherIndex) => {
-        if (index !== otherIndex) {
-          const showStart = dayjs(show.startTime);
-          const showEnd = dayjs(show.endTime);
-          const otherStart = dayjs(otherShow.startTime);
-          const otherEnd = dayjs(otherShow.endTime);
-
-          if (
-            showStart.isBetween(otherStart, otherEnd, null, '[]') ||
-            showEnd.isBetween(otherStart, otherEnd, null, '[]') ||
-            otherStart.isBetween(showStart, showEnd, null, '[]') ||
-            otherEnd.isBetween(showStart, showEnd, null, '[]')
-          ) {
-            throw new Error(t('event_create.overlapping_shows'));
-          }
-        }
-      });
-    });
-  };
-
   const handleShowUpdate = async (updatedShow: any[]) => {
     try {
-      // Validate shows before updating
       validateShows(updatedShow);
-
-      await updateEventShow(eventId, {
-        showings: updatedShow,
-      });
-
-      notificationController.success({
-        message: t('event_create.event_info_saved_successfully'),
-      });
+      await showMutation.mutateAsync({ showings: updatedShow });
     } catch (error) {
-      notificationController.error({
-        message: error.message || t('event_create.failed_to_save_event_show'),
-      });
       throw error;
     }
   };
 
   const handleSettingUpdate = async (updatedSetting: any) => {
     try {
-      await updateEventSetting(eventId, updatedSetting);
-
-      notificationController.success({
-        message: t('event_create.event_info_saved_successfully'),
-      });
+      await settingMutation.mutateAsync(updatedSetting);
     } catch (error) {
-      notificationController.error({
-        message:
-          error.message || t('event_create.failed_to_save_event_setting'),
-      });
       throw error;
     }
   };
 
   const handlePaymentUpdate = async (updatedPayment: any) => {
     try {
-      await updateEventPayment(eventId, updatedPayment);
-
-      notificationController.success({
-        message: t('event_create.event_info_saved_successfully'),
-      });
+      await paymentMutation.mutateAsync(updatedPayment);
     } catch (error) {
-      notificationController.error({
-        message:
-          error.message || t('event_create.failed_to_save_event_payment'),
-      });
       throw error;
     }
   };

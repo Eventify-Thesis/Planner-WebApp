@@ -1,28 +1,27 @@
-import React, { useEffect, useState } from 'react';
-import { Form, message, Modal } from 'antd';
+import React, { useState } from 'react';
+import { Form, message, Modal, Spin } from 'antd';
 import { FormStepProps } from '../types';
 import type { RcFile, UploadProps } from 'antd/es/upload';
 import type { UploadFile } from 'antd/es/upload/interface';
-import { useAppDispatch } from '@/hooks/reduxHooks';
-import {
-  getCities,
-  getDistricts,
-  getWards,
-} from '@/store/slices/locationSlice';
 import { City, District, Ward } from '@/api/locations.api';
 import { useTranslation } from 'react-i18next';
 import { Category } from '@/api/categories.api';
-import { getCategories } from '@/store/slices/categorySlice';
 import { EventType } from '@/constants/enums/event';
 import { useParams } from 'react-router-dom';
 import { notificationController } from '@/controllers/notificationController';
-import { getEventDetail } from '@/store/slices/eventSlice';
 import { EventIdentitySection } from './sections/EventIdentitySection';
 import { EventLocationSection } from './sections/EventLocationSection';
 import { EventCategorySection } from './sections/EventCategorySection';
 import { EventDescriptionSection } from './sections/EventDescriptionSection';
 import { OrganizerInformationSection } from './sections/OrganizerInformationSection';
 import { transformFile } from '@/utils/utils';
+import {
+  useGetCities,
+  useGetDistricts,
+  useGetWards,
+} from '@/queries/useLocationQueries';
+import { useGetCategories } from '@/queries/useCategoryQueries';
+import { useGetEventDetail } from '@/queries/useGetEventDetail';
 
 const getBase64 = (file: RcFile): Promise<string> =>
   new Promise((resolve, reject) => {
@@ -33,8 +32,8 @@ const getBase64 = (file: RcFile): Promise<string> =>
   });
 
 const EventInfoForm: React.FC<FormStepProps> = ({ formRef }) => {
-  const dispatch = useAppDispatch();
   const { t } = useTranslation();
+  const { eventId } = useParams<{ eventId?: string }>();
 
   const [eventType, setEventType] = useState(EventType.OFFLINE);
   const [selectedCity, setSelectedCity] = useState<number | null>(null);
@@ -44,14 +43,7 @@ const EventInfoForm: React.FC<FormStepProps> = ({ formRef }) => {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState('');
   const [previewTitle, setPreviewTitle] = useState('');
-
-  const [cities, setCities] = useState<City[]>([]);
-  const [districts, setDistricts] = useState<District[]>([]);
-  const [wards, setWards] = useState<Ward[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-
-  const { eventId } = useParams<{ eventId?: string }>();
-  const [isLoading, setIsLoading] = useState(true);
+  const [editorHtml, setEditorHtml] = useState('');
 
   const [fileList, setFileList] = useState<{
     logo: UploadFile[];
@@ -63,91 +55,38 @@ const EventInfoForm: React.FC<FormStepProps> = ({ formRef }) => {
     organizerLogo: [],
   });
 
-  const [editorHtml, setEditorHtml] = useState('');
+  // React Query hooks
+  const { data: cities = [], isLoading: isCitiesLoading } = useGetCities();
+  const { data: districts = [], isLoading: isDistrictsLoading } =
+    useGetDistricts(selectedCity);
+  const { data: wards = [], isLoading: isWardsLoading } =
+    useGetWards(selectedDistrict);
+  const { data: categories = [], isLoading: isCategoriesLoading } =
+    useGetCategories();
+  const { data: eventDetail, isLoading: isEventLoading } =
+    useGetEventDetail(eventId);
 
-  useEffect(() => {
-    const loadEventData = async () => {
-      if (eventId) {
-        try {
-          const result = await dispatch(getEventDetail(eventId)).unwrap();
-          const eventData = result;
-          if (!eventData) return;
+  // Set form data when event detail is loaded
+  React.useEffect(() => {
+    if (eventDetail && formRef.current) {
+      const category =
+        eventDetail.categoriesIds[0] + '_' + eventDetail.categories[0];
+      setSelectedCategory(category);
+      setEventType(eventDetail.eventType);
 
-          const category =
-            eventData.categoriesIds[0] + '_' + eventData.categories[0];
-          setSelectedCategory(category);
-          setEventType(eventData.eventType);
-
-          if (formRef.current) {
-            formRef.current.setFieldsValue({
-              ...eventData,
-              category,
-            });
-            setEditorHtml(eventData.eventDescription);
-
-            setFileList({
-              logo: transformFile(eventData.eventLogoURL, 'logo'),
-              banner: transformFile(eventData.eventBannerURL, 'banner'),
-              organizerLogo: transformFile(
-                eventData.orgLogoURL,
-                'organizerLogo',
-              ),
-            });
-          }
-        } catch (error) {
-          notificationController.error({
-            message: error.message || t('event_create.failed_to_load'),
-          });
-        } finally {
-          setIsLoading(false);
-        }
-      } else {
-        setIsLoading(false);
-      }
-    };
-
-    loadEventData();
-  }, [eventId, dispatch, formRef, t]);
-
-  useEffect(() => {
-    dispatch(getCities(1))
-      .unwrap()
-      .then((res) => {
-        setCities(res.result);
-      })
-      .catch((error) => {
-        console.error('Failed to fetch cities:', error);
+      formRef.current.setFieldsValue({
+        ...eventDetail,
+        category,
       });
-  }, [dispatch]);
+      setEditorHtml(eventDetail.eventDescription);
 
-  useEffect(() => {
-    dispatch(getCategories())
-      .unwrap()
-      .then((res) => {
-        setCategories(res.result);
-      })
-      .catch((error) => {
-        console.error('Failed to fetch categories:', error);
+      setFileList({
+        logo: transformFile(eventDetail.eventLogoURL, 'logo'),
+        banner: transformFile(eventDetail.eventBannerURL, 'banner'),
+        organizerLogo: transformFile(eventDetail.orgLogoURL, 'organizerLogo'),
       });
-  }, [dispatch]);
-
-  useEffect(() => {
-    if (!selectedCity) return;
-    dispatch(getDistricts(selectedCity))
-      .unwrap()
-      .then((res) => {
-        setDistricts(res.result);
-      });
-  }, [selectedCity, dispatch]);
-
-  useEffect(() => {
-    if (!selectedDistrict) return;
-    dispatch(getWards(selectedDistrict))
-      .unwrap()
-      .then((res) => {
-        setWards(res.result);
-      });
-  }, [selectedDistrict, dispatch]);
+    }
+  }, [eventDetail, formRef]);
 
   const handleCancel = () => setPreviewOpen(false);
 
@@ -186,8 +125,14 @@ const EventInfoForm: React.FC<FormStepProps> = ({ formRef }) => {
     </Modal>
   );
 
-  if (isLoading) {
-    return null; // Or a loading spinner
+  if (isEventLoading || isCitiesLoading || isCategoriesLoading) {
+    return (
+      <div
+        style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}
+      >
+        <Spin size="large" />
+      </div>
+    );
   }
 
   return (
@@ -216,6 +161,8 @@ const EventInfoForm: React.FC<FormStepProps> = ({ formRef }) => {
         cities={cities}
         districts={districts}
         wards={wards}
+        isDistrictsLoading={isDistrictsLoading}
+        isWardsLoading={isWardsLoading}
       />
 
       <EventCategorySection
