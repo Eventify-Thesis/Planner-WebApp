@@ -56,7 +56,7 @@ export const vouchersClient = {
     data: UpdateVoucherDto,
   ): Promise<VoucherModel> => {
     try {
-      const response = await httpApi.put<any>(
+      const response = await httpApi.patch<any>(
         `/planner/events/${eventId}/vouchers/${id}`,
         data,
       );
