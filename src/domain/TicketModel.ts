@@ -9,7 +9,7 @@ export interface TicketModel {
   startTime: Date;
   endTime: Date;
   description: string;
-  imageURL: string;
+  imageUrl: string;
   isDisabled?: boolean;
   position: number;
 }

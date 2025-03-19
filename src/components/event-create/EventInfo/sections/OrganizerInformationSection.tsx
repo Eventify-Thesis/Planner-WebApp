@@ -36,7 +36,7 @@ interface OrganizerInformationSectionProps {
 const handleOrganizerLogoUpload = async (
   fileList: UploadFile[],
   setFileList: OrganizerInformationSectionProps['setFileList'],
-  formRef: React.RefObject<any>
+  formRef: React.RefObject<any>,
 ) => {
   setFileList((prevFileList) => ({
     ...prevFileList,
@@ -46,18 +46,14 @@ const handleOrganizerLogoUpload = async (
   if (fileList[0]?.originFileObj) {
     const url = await uploadFile(fileList[0].originFileObj as RcFile);
     formRef.current?.setFieldsValue({
-      orgLogoURL: url,
+      orgLogoUrl: url,
     });
   }
 };
 
-export const OrganizerInformationSection: React.FC<OrganizerInformationSectionProps> = ({
-  formRef,
-  fileList,
-  setFileList,
-  previewModal,
-  uploadProps,
-}) => {
+export const OrganizerInformationSection: React.FC<
+  OrganizerInformationSectionProps
+> = ({ formRef, fileList, setFileList, previewModal, uploadProps }) => {
   const { t } = useTranslation();
 
   return (
@@ -73,7 +69,7 @@ export const OrganizerInformationSection: React.FC<OrganizerInformationSectionPr
             width: '20%',
           }}
           label={t('event_create.organizer_information.logo')}
-          name="orgLogoURL"
+          name="orgLogoUrl"
           rules={[
             {
               required: true,

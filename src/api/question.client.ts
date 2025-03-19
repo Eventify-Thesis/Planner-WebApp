@@ -19,7 +19,7 @@ export const questionClient = {
     const response = await httpApi.get(
       `planner/events/${eventId}/questions/${questionId}`,
     );
-    return response.data.result;
+    return response.data.data;
   },
 
   create: async (
@@ -30,7 +30,7 @@ export const questionClient = {
       `planner/events/${eventId}/questions`,
       data,
     );
-    return response.data.result;
+    return response.data.data;
   },
 
   update: async (
@@ -38,7 +38,7 @@ export const questionClient = {
     questionId: IdParam,
     data: QuestionModel,
   ): Promise<QuestionModel> => {
-    const response = await httpApi.put(
+    const response = await httpApi.patch(
       `planner/events/${eventId}/questions/${questionId}`,
       data,
     );

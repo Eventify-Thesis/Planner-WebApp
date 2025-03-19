@@ -8,6 +8,7 @@ import { showError, showSuccess } from '@/utils/notifications.tsx';
 import { useTranslation } from 'react-i18next';
 import { VoucherForm } from '@/components/forms/VoucherForm';
 import {
+  VoucherCodeType,
   VoucherDiscountType,
   VoucherModel,
   VoucherStatus,
@@ -23,8 +24,8 @@ export const CreateVoucherModal = ({ onClose }: GenericModalProps) => {
   const form = useForm<VoucherModel>({
     initialValues: {
       name: '',
-      codeType: 1,
-      discountType: VoucherDiscountType.NONE,
+      codeType: VoucherCodeType.SINGLE,
+      discountType: VoucherDiscountType.FIXED,
       discountValue: 0,
       quantity: 0,
       isUnlimited: false,
@@ -62,7 +63,7 @@ export const CreateVoucherModal = ({ onClose }: GenericModalProps) => {
         voucherData: {
           ...values,
           status: VoucherStatus.ACTIVE,
-          discountType: Number(values.discountType),
+          discountType: values.discountType as VoucherDiscountType,
         },
       },
       {

@@ -7,7 +7,7 @@ export interface TicketsResponse {
 
 export const ticketClient = {
   list: async (eventId: string): Promise<TicketsResponse> => {
-    const response = await httpApi.get(`/events/${eventId}/tickets`);
-    return response.data;
+    const response = await httpApi.get(`/planner/events/${eventId}/tickets`);
+    return response.data.data.result;
   },
 };

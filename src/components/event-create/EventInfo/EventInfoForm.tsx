@@ -81,9 +81,9 @@ const EventInfoForm: React.FC<FormStepProps> = ({ formRef }) => {
       setEditorHtml(eventDetail.eventDescription);
 
       setFileList({
-        logo: transformFile(eventDetail.eventLogoURL, 'logo'),
-        banner: transformFile(eventDetail.eventBannerURL, 'banner'),
-        organizerLogo: transformFile(eventDetail.orgLogoURL, 'organizerLogo'),
+        logo: transformFile(eventDetail.eventLogoUrl, 'logo'),
+        banner: transformFile(eventDetail.eventBannerUrl, 'banner'),
+        organizerLogo: transformFile(eventDetail.orgLogoUrl, 'organizerLogo'),
       });
     }
   }, [eventDetail, formRef]);

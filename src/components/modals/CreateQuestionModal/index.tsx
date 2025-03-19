@@ -29,7 +29,7 @@ export const CreateQuestionModal = ({
   const { t } = useTranslation();
   const { eventId } = useParams();
   const { data: ticketsResponse } = useListTickets(eventId!);
-  const tickets = ticketsResponse?.data || [];
+  const tickets = ticketsResponse || [];
   const { createQuestionMutation } = useQuestionMutations(eventId!);
 
   const form = useForm({
@@ -47,16 +47,14 @@ export const CreateQuestionModal = ({
 
   const handleSubmit = async (values: QuestionModel) => {
     try {
-      const { data: question } = await createQuestionMutation.mutateAsync(
-        values,
-      );
+      const question = await createQuestionMutation.mutateAsync(values);
       notifications.show({
         message: t('questions.create.success'),
         color: 'green',
       });
-      onClose();
       onCompleted(question);
       form.reset();
+      onClose();
     } catch (error: any) {
       if (error?.response?.data?.errors) {
         form.setErrors(error.response.data.errors);

@@ -40,12 +40,8 @@ const EventCreatePage: React.FC = () => {
   const [current, setCurrent] = useState(0);
   const formRefs = [useRef(), useRef(), useRef(), useRef()];
 
-  const {
-    infoDraftMutation,
-    showMutation,
-    settingMutation,
-    paymentMutation,
-  } = useEventMutations(eventId);
+  const { infoDraftMutation, showMutation, settingMutation, paymentMutation } =
+    useEventMutations(eventId);
 
   const steps = [
     { title: 'Event Info', key: 'info', content: EventInfoForm },
@@ -217,6 +213,7 @@ const EventCreatePage: React.FC = () => {
 
   const handleSaveAsDraft = async (values: any) => {
     try {
+      console.log(values);
       const event = await infoDraftMutation.mutateAsync(values);
 
       if (event) {
@@ -235,7 +232,7 @@ const EventCreatePage: React.FC = () => {
   const handleShowUpdate = async (updatedShow: any[]) => {
     try {
       validateShows(updatedShow);
-      await showMutation.mutateAsync({ showings: updatedShow });
+      await showMutation.mutateAsync({ shows: updatedShow });
     } catch (error) {
       throw error;
     }

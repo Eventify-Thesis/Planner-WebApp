@@ -41,7 +41,7 @@ export const TicketModal: React.FC<TicketModalProps> = ({
   const [form] = Form.useForm();
   const { t } = useTranslation();
   const [isFree, setIsFree] = useState(initialValues?.isFree || false);
-  const [imageUrl, setImageUrl] = useState(initialValues?.imageURL || '');
+  const [imageUrl, setImageUrl] = useState(initialValues?.imageUrl || '');
 
   useEffect(() => {
     if (visible && initialValues) {
@@ -51,7 +51,7 @@ export const TicketModal: React.FC<TicketModalProps> = ({
         endTime: dayjs(initialValues.endTime),
       });
       setIsFree(initialValues.isFree || false);
-      setImageUrl(initialValues.imageURL || '');
+      setImageUrl(initialValues.imageUrl || '');
     } else if (visible) {
       form.resetFields();
       setIsFree(false);
@@ -76,7 +76,7 @@ export const TicketModal: React.FC<TicketModalProps> = ({
       onSave({
         ...values,
         isFree,
-        imageURL: imageUrl,
+        imageUrl: imageUrl,
         position: initialValues?.position || 0,
         startTime: values.startTime.toDate(),
         endTime: values.endTime.toDate(),
