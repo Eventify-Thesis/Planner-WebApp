@@ -48,7 +48,7 @@ const handleFileUpload = async (
   if (fileList[0]?.originFileObj) {
     const url = await uploadFile(fileList[0].originFileObj as RcFile);
     formRef.current?.setFieldsValue({
-      [`event${fieldName[0].toUpperCase() + fieldName.slice(1)}URL`]: url,
+      [`event${fieldName[0].toUpperCase() + fieldName.slice(1)}Url`]: url,
     });
 
     setFileList((prevFileList) => ({
@@ -73,7 +73,7 @@ export const EventIdentitySection: React.FC<EventIdentitySectionProps> = ({
         <BaseCol className="w-full md:w-1/4">
           <Form.Item
             label={t('event_create.event_identity.logo')}
-            name="eventLogoURL"
+            name="eventLogoUrl"
             rules={[
               {
                 required: true,
@@ -106,7 +106,7 @@ export const EventIdentitySection: React.FC<EventIdentitySectionProps> = ({
         <BaseCol className="w-full md:w-3/4">
           <Form.Item
             label={t('event_create.event_identity.banner')}
-            name="eventBannerURL"
+            name="eventBannerUrl"
             rules={[
               {
                 required: true,

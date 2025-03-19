@@ -12,9 +12,13 @@ import { Modal } from '../../common/Modal';
 import { QuestionForm } from '../../forms/QuestionForm';
 import { useTranslation } from 'react-i18next';
 import { useListTickets } from '@/queries/useTicketQueries';
-import { useGetQuestion, useQuestionMutations } from '@/queries/useQuestionQueries';
+import {
+  useGetQuestion,
+  useQuestionMutations,
+} from '@/queries/useQuestionQueries';
 import { showError } from '@/utils/notifications';
 import React from 'react';
+import { QuestionModel } from '@/domain/QuestionModel';
 
 interface EditQuestionModalProps extends GenericModalProps {
   questionId: IdParam;
@@ -30,10 +34,8 @@ export const EditQuestionModal = ({
   const { eventId } = useParams();
   const { data: ticketsResponse } = useListTickets(eventId!);
   const tickets = ticketsResponse?.data || [];
-  const { data: questionResponse, isLoading: isLoadingQuestion } = useGetQuestion(
-    eventId!,
-    questionId as string
-  );
+  const { data: questionResponse, isLoading: isLoadingQuestion } =
+    useGetQuestion(eventId!, questionId as string);
   const { updateQuestionMutation } = useQuestionMutations(eventId!);
 
   const form = useForm<QuestionRequestData>({
@@ -51,8 +53,8 @@ export const EditQuestionModal = ({
 
   // Update form when question data is loaded
   React.useEffect(() => {
-    if (questionResponse?.data) {
-      const question = questionResponse.data;
+    if (questionResponse) {
+      const question = questionResponse;
       form.setValues({
         title: question.title,
         description: question.description,
@@ -66,9 +68,9 @@ export const EditQuestionModal = ({
     }
   }, [questionResponse]);
 
-  const handleSubmit = async (values: QuestionRequestData) => {
+  const handleSubmit = async (values: QuestionModel) => {
     try {
-      const { data: question } = await updateQuestionMutation.mutateAsync({
+      const question = await updateQuestionMutation.mutateAsync({
         questionId: questionId as string,
         data: values,
       });

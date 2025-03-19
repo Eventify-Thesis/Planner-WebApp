@@ -39,6 +39,7 @@ export const useEventMutations = (eventId?: IdParam) => {
     mutationFn: async (data: any) => {
       const [categoryIds, categories] = data.category.split('_');
 
+      delete data.category;
       return await eventsClient.createDraft({
         ...data,
         categoriesIds: [categoryIds],

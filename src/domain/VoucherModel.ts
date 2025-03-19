@@ -1,18 +1,18 @@
 export enum VoucherCodeType {
-  SINGLE = 1,
-  BULK = 2,
+  SINGLE = 'SINGLE',
+  BULK = 'BULK',
 }
 
 export enum VoucherDiscountType {
-  PERCENT = 1,
-  FIXED = 2,
+  PERCENT = 'PERCENT',
+  FIXED = 'FIXED',
 }
 
 export enum VoucherStatus {
-  ACTIVE = 1,
-  INACTIVE = 2,
-  EXPIRED = 3,
-  DELETED = 4,
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  EXPIRED = 'EXPIRED',
+  DELETED = 'DELETED',
 }
 
 export interface ShowingVoucherDto {

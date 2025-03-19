@@ -208,11 +208,11 @@ export const VoucherForm = ({ form }: VoucherFormProps) => {
               <Radio.Group {...form.getInputProps('discountType')} required>
                 <Group mt="xs">
                   <Radio
-                    value={VoucherDiscountType.PERCENT.toString()}
+                    value={VoucherDiscountType.PERCENT}
                     label={t('voucher.discount_type_percent')}
                   />
                   <Radio
-                    value={VoucherDiscountType.FIXED.toString()}
+                    value={VoucherDiscountType.FIXED}
                     label={t('voucher.discount_type_fixed')}
                   />
                 </Group>

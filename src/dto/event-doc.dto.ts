@@ -5,7 +5,7 @@ export interface EventListAllResponse {
 
   addressFull: string;
 
-  eventBannerURL: string;
+  eventBannerUrl: string;
 
   eventName: string;
 

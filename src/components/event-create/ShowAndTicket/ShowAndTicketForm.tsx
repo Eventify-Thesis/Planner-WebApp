@@ -67,10 +67,11 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
   };
 
   useEffect(() => {
-    if (showsData?.showings) {
+    if (showsData) {
+      console.log(showsData);
       // Convert API date strings to Dayjs objects
 
-      const formattedShows = showsData.showings.map((show) => ({
+      const formattedShows = showsData.map((show) => ({
         ...show,
         startTime: show.startTime ? dayjs(show.startTime) : undefined,
         endTime: show.endTime ? dayjs(show.endTime) : undefined,

@@ -13,9 +13,9 @@ export interface EventModel {
   status?: EventStatus;
   orgName?: string;
   orgDescription?: string;
-  orgLogoURL?: string;
-  eventLogoURL?: string;
-  eventBannerURL?: string;
+  orgLogoUrl?: string;
+  eventLogoUrl?: string;
+  eventBannerUrl?: string;
   venueName?: string;
   cityId?: number;
   districtId?: number;

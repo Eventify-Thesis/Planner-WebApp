@@ -10,7 +10,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 interface EventCardProps {
   id: string;
   addressFull: string;
-  eventBannerURL: string;
+  eventBannerUrl: string;
   eventName: string;
   url: string;
   startTime: Date;
@@ -23,7 +23,7 @@ interface EventCardProps {
 export const EventCard = ({
   id,
   addressFull,
-  eventBannerURL,
+  eventBannerUrl,
   eventName,
   url,
   startTime,
@@ -38,7 +38,7 @@ export const EventCard = ({
   return (
     <CardContainer>
       <CardContent>
-        <EventImage src={eventBannerURL} alt={eventName} />
+        <EventImage src={eventBannerUrl} alt={eventName} />
         <EventDetails>
           <EventTitle href={`/${url}`}>{eventName}</EventTitle>
           <EventInfo>

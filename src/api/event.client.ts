@@ -25,12 +25,12 @@ export interface EventListQueryModel {
 
 export interface CreateDraftEventDto {
   id?: string; // Optional MongoDB ID
-  eventLogoURL: string;
-  eventBannerURL: string;
+  eventLogoUrl: string;
+  eventBannerUrl: string;
   eventName: string;
   categories: string[];
   eventDescription: string;
-  orgLogoURL: string;
+  orgLogoUrl: string;
   orgName: string;
   orgDescription: string;
   venueName: string;
@@ -45,8 +45,8 @@ export interface CreateDraftEventDto {
 export interface EventBriefResponse {
   id: string;
   eventName: string;
-  eventLogoURL: string;
-  eventBannerURL: string;
+  eventLogoUrl: string;
+  eventBannerUrl: string;
   organizationId: string;
   role: EventRole;
 }
@@ -171,17 +171,6 @@ export const eventsClient = {
       const response = await httpApi.put<any>(
         `/planner/events/${eventId}/payment-info`,
         paymentData,
-      );
-      return response.data.data;
-    } catch (e: any) {
-      throw new Error(e);
-    }
-  },
-
-  getShow: async (eventId: IdParam): Promise<any> => {
-    try {
-      const response = await httpApi.get<any>(
-        `/planner/events/${eventId}/shows`,
       );
       return response.data.data;
     } catch (e: any) {

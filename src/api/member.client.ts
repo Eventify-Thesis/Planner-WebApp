@@ -40,7 +40,7 @@ export const memberClient = {
     userId: IdParam,
     data: UpdateMemberRoleParams,
   ): Promise<MemberModel> => {
-    const response = await httpApi.put(
+    const response = await httpApi.post(
       `/planner/events/${eventId}/members/${userId}/role`,
       data,
     );

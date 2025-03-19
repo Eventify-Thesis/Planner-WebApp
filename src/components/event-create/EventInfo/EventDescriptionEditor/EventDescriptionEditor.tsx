@@ -103,14 +103,14 @@ const Editor: React.FC<EditorProps> = ({ editorHtml, onChange }) => {
       // Move cursor to right side of image (easier to continue typing)
       quillRef.current.editor.setSelection(range.index + 1);
 
-      const imageURL = await uploadFile(file);
+      const imageUrl = await uploadFile(file);
 
       // Remove placeholder image
       quillRef.current.editor.deleteText(range.index, 1);
 
       // Insert uploaded image
       // this.quill.insertEmbed(range.index, 'image', res.body.image);
-      quillRef.current.editor.insertEmbed(range.index, 'image', imageURL);
+      quillRef.current.editor.insertEmbed(range.index, 'image', imageUrl);
     };
   }, []);
 

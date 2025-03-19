@@ -5,7 +5,7 @@ import { IdParam } from '@/types/types';
 export const showClient = {
   list: async (eventId: IdParam): Promise<ShowModel> => {
     const response = await httpApi.get(`planner/events/${eventId}/shows`);
-    return response.data.data;
+    return response.data.data.result;
   },
 
   get: async (eventId: IdParam, showId: IdParam): Promise<ShowingModel> => {
