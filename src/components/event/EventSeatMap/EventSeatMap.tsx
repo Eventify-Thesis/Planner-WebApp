@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Layout, Card, Button, Space, Tabs, Input, Tooltip } from 'antd';
+import { Layout, Card, Button, Space, Tabs, Input, Tooltip, Switch } from 'antd';
 import {
   SaveOutlined,
   UndoOutlined,
@@ -9,6 +9,10 @@ import {
   SelectOutlined,
   TableOutlined,
   FontSizeOutlined,
+  BorderOutlined,
+  EllipsisOutlined,
+  StarOutlined,
+  CiCircleFilled,
 } from '@ant-design/icons';
 import { Stage, Layer, Circle, Text, Group, Rect } from 'react-konva';
 import { SeatingPlan, EditorTool } from './types';
@@ -47,6 +51,7 @@ const DEFAULT_SEATING_PLAN: SeatingPlan = {
 
 const EventSeatMap: React.FC = () => {
   const [seatingPlan, setSeatingPlan] = useState<SeatingPlan>(DEFAULT_SEATING_PLAN);
+  const [showGrid, setShowGrid] = useState(true);
   const {
     currentTool,
     setCurrentTool,
@@ -114,6 +119,13 @@ const EventSeatMap: React.FC = () => {
                 onClick={() => handleToolChange(EditorTool.SELECT)}
               />
             </Tooltip>
+            <Tooltip title="Select Row">
+              <Button
+                type={currentTool === EditorTool.SELECT_ROW ? 'primary' : 'default'}
+                icon={<SelectOutlined />}
+                onClick={() => handleToolChange(EditorTool.SELECT_ROW)}
+              />
+            </Tooltip>
             <Tooltip title="Add Row">
               <Button
                 type={currentTool === EditorTool.ADD_ROW ? 'primary' : 'default'}
@@ -121,11 +133,39 @@ const EventSeatMap: React.FC = () => {
                 onClick={() => handleToolChange(EditorTool.ADD_ROW)}
               />
             </Tooltip>
+            <Tooltip title="Add Rectangle Row">
+              <Button
+                type={currentTool === EditorTool.ADD_RECT_ROW ? 'primary' : 'default'}
+                icon={<BorderOutlined />}
+                onClick={() => handleToolChange(EditorTool.ADD_RECT_ROW)}
+              />
+            </Tooltip>
             <Tooltip title="Add Shape">
               <Button
                 type={currentTool === EditorTool.ADD_SHAPE ? 'primary' : 'default'}
-                icon={<TableOutlined />}
+                icon={<BorderOutlined />}
                 onClick={() => handleToolChange(EditorTool.ADD_SHAPE)}
+              />
+            </Tooltip>
+            <Tooltip title="Add Circle">
+              <Button
+                type={currentTool === EditorTool.ADD_CIRCLE ? 'primary' : 'default'}
+                icon={<CiCircleFilled />}
+                onClick={() => handleToolChange(EditorTool.ADD_CIRCLE)}
+              />
+            </Tooltip>
+            <Tooltip title="Add Ellipse">
+              <Button
+                type={currentTool === EditorTool.ADD_ELLIPSE ? 'primary' : 'default'}
+                icon={<EllipsisOutlined />}
+                onClick={() => handleToolChange(EditorTool.ADD_ELLIPSE)}
+              />
+            </Tooltip>
+            <Tooltip title="Add Polygon">
+              <Button
+                type={currentTool === EditorTool.ADD_POLYGON ? 'primary' : 'default'}
+                icon={<StarOutlined />}
+                onClick={() => handleToolChange(EditorTool.ADD_POLYGON)}
               />
             </Tooltip>
             <Tooltip title="Add Text">
@@ -174,6 +214,15 @@ const EventSeatMap: React.FC = () => {
             </Tooltip>
           </Space>
 
+          <Space>
+            <Switch
+              checkedChildren="Grid On"
+              unCheckedChildren="Grid Off"
+              checked={showGrid}
+              onChange={setShowGrid}
+            />
+          </Space>
+
           <Button type="primary" icon={<SaveOutlined />} onClick={handleSave}>
             Save Changes
           </Button>
@@ -187,12 +236,23 @@ const EventSeatMap: React.FC = () => {
             currentTool={currentTool}
             zoom={zoom}
             onPlanChange={handlePlanChange}
+            showGrid={showGrid}
           />
         </Content>
         <Sider width={300} className="plan-settings-panel">
           <PlanSettingsPanel
             seatingPlan={seatingPlan}
             onPlanChange={handlePlanChange}
+            currentTool={currentTool}
+            onToolChange={handleToolChange}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+            canUndo={canUndo}
+            canRedo={canRedo}
+            zoom={zoom}
+            onZoomChange={setZoom}
+            showGrid={showGrid}
+            onShowGridChange={setShowGrid}
           />
         </Sider>
       </Layout>
