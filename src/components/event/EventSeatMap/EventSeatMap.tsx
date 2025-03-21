@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Layout, Card, Button, Space, Tabs, Input, Tooltip, Switch } from 'antd';
+import { Layout, Card, Button, Space, Tabs, Input, Tooltip, Switch, Divider } from 'antd';
 import {
   SaveOutlined,
   UndoOutlined,
@@ -112,69 +112,72 @@ const EventSeatMap: React.FC = () => {
       <div className="seat-map-header">
         <Space size="middle">
           <Space>
-            <Tooltip title="Select">
-              <Button
-                type={currentTool === EditorTool.SELECT ? 'primary' : 'default'}
-                icon={<SelectOutlined />}
-                onClick={() => handleToolChange(EditorTool.SELECT)}
-              />
-            </Tooltip>
-            <Tooltip title="Select Row">
-              <Button
-                type={currentTool === EditorTool.SELECT_ROW ? 'primary' : 'default'}
-                icon={<SelectOutlined />}
-                onClick={() => handleToolChange(EditorTool.SELECT_ROW)}
-              />
-            </Tooltip>
-            <Tooltip title="Add Row">
-              <Button
-                type={currentTool === EditorTool.ADD_ROW ? 'primary' : 'default'}
-                icon={<TableOutlined />}
-                onClick={() => handleToolChange(EditorTool.ADD_ROW)}
-              />
-            </Tooltip>
-            <Tooltip title="Add Rectangle Row">
-              <Button
-                type={currentTool === EditorTool.ADD_RECT_ROW ? 'primary' : 'default'}
-                icon={<BorderOutlined />}
-                onClick={() => handleToolChange(EditorTool.ADD_RECT_ROW)}
-              />
-            </Tooltip>
-            <Tooltip title="Add Shape">
-              <Button
-                type={currentTool === EditorTool.ADD_SHAPE ? 'primary' : 'default'}
-                icon={<BorderOutlined />}
-                onClick={() => handleToolChange(EditorTool.ADD_SHAPE)}
-              />
-            </Tooltip>
-            <Tooltip title="Add Circle">
-              <Button
-                type={currentTool === EditorTool.ADD_CIRCLE ? 'primary' : 'default'}
-                icon={<CiCircleFilled />}
-                onClick={() => handleToolChange(EditorTool.ADD_CIRCLE)}
-              />
-            </Tooltip>
-            <Tooltip title="Add Ellipse">
-              <Button
-                type={currentTool === EditorTool.ADD_ELLIPSE ? 'primary' : 'default'}
-                icon={<EllipsisOutlined />}
-                onClick={() => handleToolChange(EditorTool.ADD_ELLIPSE)}
-              />
-            </Tooltip>
-            <Tooltip title="Add Polygon">
-              <Button
-                type={currentTool === EditorTool.ADD_POLYGON ? 'primary' : 'default'}
-                icon={<StarOutlined />}
-                onClick={() => handleToolChange(EditorTool.ADD_POLYGON)}
-              />
-            </Tooltip>
-            <Tooltip title="Add Text">
-              <Button
-                type={currentTool === EditorTool.ADD_TEXT ? 'primary' : 'default'}
-                icon={<FontSizeOutlined />}
-                onClick={() => handleToolChange(EditorTool.ADD_TEXT)}
-              />
-            </Tooltip>
+            <Button
+              type={currentTool === EditorTool.SELECT_SEAT ? 'primary' : 'default'}
+              icon={<SelectOutlined />}
+              onClick={() => handleToolChange(EditorTool.SELECT_SEAT)}
+              title="Select Individual Seats"
+            >
+              Select Seats
+            </Button>
+            <Button
+              type={currentTool === EditorTool.SELECT_ROW ? 'primary' : 'default'}
+              icon={<TableOutlined />}
+              onClick={() => handleToolChange(EditorTool.SELECT_ROW)}
+              title="Select Rows and Shapes"
+            >
+              Select Rows
+            </Button>
+            <Divider type="vertical" />
+            <Button
+              type={currentTool === EditorTool.ADD_ROW ? 'primary' : 'default'}
+              icon={<TableOutlined />}
+              onClick={() => handleToolChange(EditorTool.ADD_ROW)}
+            >
+              Add Row
+            </Button>
+            <Button
+              type={currentTool === EditorTool.ADD_RECT_ROW ? 'primary' : 'default'}
+              icon={<BorderOutlined />}
+              onClick={() => handleToolChange(EditorTool.ADD_RECT_ROW)}
+            >
+              Add Rectangle Row
+            </Button>
+            <Button
+              type={currentTool === EditorTool.ADD_SHAPE ? 'primary' : 'default'}
+              icon={<BorderOutlined />}
+              onClick={() => handleToolChange(EditorTool.ADD_SHAPE)}
+            >
+              Add Shape
+            </Button>
+            <Button
+              type={currentTool === EditorTool.ADD_CIRCLE ? 'primary' : 'default'}
+              icon={<CiCircleFilled />}
+              onClick={() => handleToolChange(EditorTool.ADD_CIRCLE)}
+            >
+              Add Circle
+            </Button>
+            <Button
+              type={currentTool === EditorTool.ADD_ELLIPSE ? 'primary' : 'default'}
+              icon={<EllipsisOutlined />}
+              onClick={() => handleToolChange(EditorTool.ADD_ELLIPSE)}
+            >
+              Add Ellipse
+            </Button>
+            <Button
+              type={currentTool === EditorTool.ADD_POLYGON ? 'primary' : 'default'}
+              icon={<StarOutlined />}
+              onClick={() => handleToolChange(EditorTool.ADD_POLYGON)}
+            >
+              Add Polygon
+            </Button>
+            <Button
+              type={currentTool === EditorTool.ADD_TEXT ? 'primary' : 'default'}
+              icon={<FontSizeOutlined />}
+              onClick={() => handleToolChange(EditorTool.ADD_TEXT)}
+            >
+              Add Text
+            </Button>
           </Space>
 
           <Space>

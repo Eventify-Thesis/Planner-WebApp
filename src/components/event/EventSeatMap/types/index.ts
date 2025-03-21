@@ -85,7 +85,7 @@ export interface SeatingPlan {
 }
 
 export enum EditorTool {
-  SELECT = 'SELECT',
+  SELECT_SEAT = 'SELECT_SEAT',
   SELECT_ROW = 'SELECT_ROW',
   ADD_SHAPE = 'ADD_SHAPE',
   ADD_CIRCLE = 'ADD_CIRCLE',
