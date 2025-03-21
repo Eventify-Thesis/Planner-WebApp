@@ -1,6 +1,11 @@
-export interface Position {
+export interface Point {
   x: number;
   y: number;
+}
+
+export interface Size {
+  width: number;
+  height: number;
 }
 
 export interface Category {
@@ -10,53 +15,54 @@ export interface Category {
 
 export interface Seat {
   uuid: string;
-  seat_number: string;
-  seat_guid: string;
-  position: Position;
-  category: string;
-  radius?: number;
+  position: Point;
+  category?: string;
 }
 
 export interface Row {
   uuid: string;
-  row_number: string;
-  row_number_position: 'left' | 'right' | 'both';
-  position: Position;
   seats: Seat[];
+  type: 'circular' | 'straight' | 'rectangular';
+  position: Point;
+  size?: Size; // For rectangular rows
+  angle?: number; // For circular/straight rows
 }
 
-export interface Area {
+export interface Shape {
   uuid: string;
-  shape: 'rectangle' | 'ellipse';
-  color: string;
-  border_color: string;
-  rotation: number;
-  position: Position;
-  text: {
-    position: Position;
-    color: string;
-    text: string;
-  };
+  type: 'rectangle' | 'circle' | 'ellipse' | 'polygon';
+  position: Point;
+  size?: Size; // For rectangle and ellipse
+  radius?: number; // For circle
+  points?: Point[]; // For polygon
+  fill?: string;
+  stroke?: string;
+}
+
+export interface TextLabel {
+  uuid: string;
+  position: Point;
+  text: string;
+  fontSize?: number;
+  fontFamily?: string;
+  fill?: string;
 }
 
 export interface Zone {
   uuid: string;
   name: string;
   zone_id: string;
-  position: Position;
+  position: Point;
   rows: Row[];
-  areas: Area[];
+  areas: (Shape | TextLabel)[];
 }
 
 export interface SeatingPlan {
   id: string;
   name: string;
+  size: Size;
   categories: Category[];
   zones: Zone[];
-  size: {
-    width: number;
-    height: number;
-  };
   backgroundImage?: string;
 }
 
