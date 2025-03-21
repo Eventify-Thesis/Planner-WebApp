@@ -51,7 +51,10 @@ const Canvas: React.FC<CanvasProps> = ({
   const [startPoint, setStartPoint] = useState<Point | null>(null);
   const [previewShape, setPreviewShape] = useState<any>(null);
   const [draggedSeatId, setDraggedSeatId] = useState<string | null>(null);
-  const [selection, setSelection] = useState<Selection>({ type: 'none', ids: [] });
+  const [selection, setSelection] = useState<Selection>({
+    type: 'none',
+    ids: [],
+  });
 
   useEffect(() => {
     const updateSize = () => {
@@ -425,6 +428,142 @@ const Canvas: React.FC<CanvasProps> = ({
     );
   }, [seatingPlan.zones]);
 
+  const renderRows = useCallback(() => {
+    return seatingPlan.zones.flatMap((zone) =>
+      zone.rows.map((row) => {
+        const isSelected =
+          selection.type === 'row' && selection.ids.includes(row.uuid);
+        const minX = Math.min(...row.seats.map((s) => s.position.x));
+        const maxX = Math.max(...row.seats.map((s) => s.position.x));
+        const minY = Math.min(...row.seats.map((s) => s.position.y));
+        const maxY = Math.max(...row.seats.map((s) => s.position.y));
+        const width = maxX - minX;
+        const height = maxY - minY;
+
+        return (
+          <Group key={row.uuid}>
+            {/* Row highlight/selection box */}
+            {isSelected && (
+              <Rect
+                x={minX - 10}
+                y={minY - 10}
+                width={width + 20}
+                height={height + 20}
+                stroke="#4444ff"
+                strokeWidth={2}
+                dash={[5, 5]}
+                fill="rgba(100, 150, 255, 0.1)"
+              />
+            )}
+
+            {/* Row label */}
+            <Text
+              x={minX}
+              y={minY - 25}
+              text={`Row ${row.rowNumber}`}
+              fontSize={14}
+              fill={isSelected ? '#4444ff' : '#666'}
+            />
+
+            {/* Row seats */}
+            {row.seats.map((seat) => (
+              <Group key={seat.uuid}>
+                <Circle
+                  x={seat.position.x}
+                  y={seat.position.y}
+                  radius={seat.radius || 15}
+                  fill={
+                    selection.ids.includes(seat.uuid) || isSelected
+                      ? 'rgba(100, 150, 255, 0.5)'
+                      : seat.category
+                      ? seatingPlan.categories.find(
+                          (c) => c.name === seat.category,
+                        )?.color || '#ddd'
+                      : '#ddd'
+                  }
+                  stroke={
+                    selection.ids.includes(seat.uuid) || isSelected
+                      ? '#4444ff'
+                      : '#666'
+                  }
+                  strokeWidth={
+                    selection.ids.includes(seat.uuid) || isSelected ? 2 : 1
+                  }
+                  draggable={currentTool === EditorTool.SELECT}
+                  onClick={(e) => {
+                    if (currentTool === EditorTool.SELECT) {
+                      handleSelect('seat', seat.uuid);
+                    } else if (currentTool === EditorTool.SELECT_ROW) {
+                      handleSelect('row', row.uuid);
+                    }
+                    e.cancelBubble = true;
+                  }}
+                  onDragStart={(e) => {
+                    if (currentTool === EditorTool.SELECT_ROW) {
+                      handleSelect('row', row.uuid);
+                      setDraggedSeatId(row.uuid);
+                    } else {
+                      setDraggedSeatId(seat.uuid);
+                    }
+                  }}
+                  onDragEnd={(e) => {
+                    if (draggedSeatId) {
+                      const pos = getMousePosition(e);
+                      const updatedPlan = { ...seatingPlan };
+
+                      if (selection.type === 'row') {
+                        // Move entire row
+                        const rowToMove = updatedPlan.zones[0].rows.find(
+                          (r) => r.uuid === draggedSeatId,
+                        );
+                        if (rowToMove) {
+                          const dx = pos.x - rowToMove.seats[0].position.x;
+                          const dy = pos.y - rowToMove.seats[0].position.y;
+                          rowToMove.seats = rowToMove.seats.map((s) => ({
+                            ...s,
+                            position: {
+                              x: s.position.x + dx,
+                              y: s.position.y + dy,
+                            },
+                          }));
+                        }
+                      } else {
+                        // Move single seat
+                        updatedPlan.zones = updatedPlan.zones.map((z) => ({
+                          ...z,
+                          rows: z.rows.map((r) => ({
+                            ...r,
+                            seats: r.seats.map((s) =>
+                              s.uuid === draggedSeatId
+                                ? { ...s, position: pos }
+                                : s,
+                            ),
+                          })),
+                        }));
+                      }
+
+                      onPlanChange(updatedPlan);
+                      setDraggedSeatId(null);
+                    }
+                  }}
+                />
+                {typeof seat.number === 'number' && (
+                  <Text
+                    x={seat.position.x - 6}
+                    y={seat.position.y - 6}
+                    text={seat.number.toString()}
+                    fontSize={12}
+                    fill="#000"
+                  />
+                )}
+              </Group>
+            ))}
+          </Group>
+        );
+      }),
+    );
+  }, [seatingPlan, selection, currentTool, draggedSeatId, onPlanChange]);
+
   const renderSeats = useCallback(() => {
     return seatingPlan.zones.flatMap((zone) =>
       zone.rows.flatMap((row) =>
@@ -461,20 +600,22 @@ const Canvas: React.FC<CanvasProps> = ({
                 if (draggedSeatId) {
                   const pos = getMousePosition(e);
                   const updatedPlan = { ...seatingPlan };
-                  
+
                   if (selection.type === 'row') {
                     // Move entire row
-                    const rowToMove = updatedPlan.zones[0].rows.find(r => r.uuid === draggedSeatId);
+                    const rowToMove = updatedPlan.zones[0].rows.find(
+                      (r) => r.uuid === draggedSeatId,
+                    );
                     if (rowToMove) {
                       const dx = pos.x - rowToMove.position.x;
                       const dy = pos.y - rowToMove.position.y;
                       rowToMove.position = pos;
-                      rowToMove.seats = rowToMove.seats.map(s => ({
+                      rowToMove.seats = rowToMove.seats.map((s) => ({
                         ...s,
                         position: {
                           x: s.position.x + dx,
-                          y: s.position.y + dy
-                        }
+                          y: s.position.y + dy,
+                        },
                       }));
                     }
                   } else {
@@ -484,12 +625,14 @@ const Canvas: React.FC<CanvasProps> = ({
                       rows: z.rows.map((r) => ({
                         ...r,
                         seats: r.seats.map((s) =>
-                          s.uuid === draggedSeatId ? { ...s, position: pos } : s,
+                          s.uuid === draggedSeatId
+                            ? { ...s, position: pos }
+                            : s,
                         ),
                       })),
                     }));
                   }
-                  
+
                   onPlanChange(updatedPlan);
                   setDraggedSeatId(null);
                 }
@@ -523,7 +666,7 @@ const Canvas: React.FC<CanvasProps> = ({
         <Layer>
           {showGrid && renderGrid()}
           {renderShapes()}
-          {renderSeats()}
+          {renderRows()}
           {previewShape && renderPreviewShape()}
           {/* Background */}
           {seatingPlan.backgroundImage && (

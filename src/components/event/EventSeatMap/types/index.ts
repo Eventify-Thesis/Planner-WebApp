@@ -85,14 +85,15 @@ export interface SeatingPlan {
 }
 
 export enum EditorTool {
-  SELECT = 'select',
-  SELECT_ROW = 'select_row',
-  ADD_ROW = 'add_row',
-  ADD_RECT_ROW = 'add_rect_row',
-  ADD_SHAPE = 'add_shape',
-  ADD_CIRCLE = 'add_circle',
-  ADD_ELLIPSE = 'add_ellipse',
-  ADD_POLYGON = 'add_polygon',
-  ADD_TEXT = 'add_text',
+  SELECT = 'SELECT',
+  SELECT_ROW = 'SELECT_ROW',
+  ADD_SHAPE = 'ADD_SHAPE',
+  ADD_CIRCLE = 'ADD_CIRCLE',
+  ADD_ELLIPSE = 'ADD_ELLIPSE',
+  ADD_TEXT = 'ADD_TEXT',
+  ADD_ROW = 'ADD_ROW',
+  ADD_RECT_ROW = 'ADD_RECT_ROW',
+  ADD_CIRCULAR_ROW = 'ADD_CIRCULAR_ROW',
+  NONE = 'NONE',
   MOVE = 'move',
 }
