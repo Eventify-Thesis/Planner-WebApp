@@ -1,55 +1,52 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
+import { Stage, Layer, Circle, Text, Group, Rect, Ellipse, Line } from 'react-konva';
+import { SeatingPlan, EditorTool, Point, Shape } from '../../types';
 import {
-  Stage,
-  Layer,
-  Rect,
-  Circle,
-  Text,
-  Group,
-  Transformer,
-  Line,
-} from 'react-konva';
-import { v4 as uuidv4 } from 'uuid';
-import {
-  SeatingPlan,
-  EditorTool,
-  Row,
-  Seat,
-  Position,
-  Area,
-} from '../../types';
+  createCircularRow,
+  createStraightRow,
+  createRectangularRow,
+  createShape,
+  createTextLabel,
+  snapToGrid,
+} from './utils';
 import './Canvas.css';
+
+interface PreviewShape extends Partial<Shape> {
+  type: Shape['type'];
+  startPoint: Point;
+  endPoint: Point;
+}
 
 interface CanvasProps {
   seatingPlan: SeatingPlan;
   currentTool: EditorTool;
   zoom: number;
+  showGrid: boolean;
   onPlanChange: (plan: SeatingPlan) => void;
 }
+
+const GRID_SIZE = 20;
 
 const Canvas: React.FC<CanvasProps> = ({
   seatingPlan,
   currentTool,
   zoom,
+  showGrid,
   onPlanChange,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [stageSize, setStageSize] = useState({ width: 1, height: 1 });
-  const stageRef = useRef<any>(null);
-  const layerRef = useRef<any>(null);
-  const transformerRef = useRef<any>(null);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [startPoint, setStartPoint] = useState<Position | null>(null);
-  const [previewShape, setPreviewShape] = useState<any>(null);
+  const [startPoint, setStartPoint] = useState<Point | null>(null);
+  const [previewShape, setPreviewShape] = useState<PreviewShape | null>(null);
+  const [draggedSeatId, setDraggedSeatId] = useState<string | null>(null);
 
   useEffect(() => {
     const updateSize = () => {
       if (containerRef.current) {
-        const container = containerRef.current;
         setStageSize({
-          width: container.offsetWidth,
-          height: container.offsetHeight,
+          width: containerRef.current.offsetWidth,
+          height: containerRef.current.offsetHeight,
         });
       }
     };
@@ -59,183 +56,113 @@ const Canvas: React.FC<CanvasProps> = ({
     return () => window.removeEventListener('resize', updateSize);
   }, []);
 
-  useEffect(() => {
-    if (transformerRef.current && selectedIds.length > 0) {
-      const nodes = selectedIds
-        .map((id) => layerRef.current?.findOne(`#${id}`))
-        .filter(Boolean);
-      transformerRef.current.nodes(nodes);
-      transformerRef.current.getLayer()?.batchDraw();
-    }
-  }, [selectedIds]);
-
-  const createCircularRow = (
-    center: Position,
-    radius: number,
-    numSeats: number,
-  ) => {
-    const seats: Seat[] = [];
-    const angleStep = (2 * Math.PI) / numSeats;
-
-    for (let i = 0; i < numSeats; i++) {
-      const angle = i * angleStep - Math.PI / 2; // Start from top
-      const x = center.x + radius * Math.cos(angle);
-      const y = center.y + radius * Math.sin(angle);
-
-      seats.push({
-        uuid: uuidv4(),
-        seat_number: (i + 1).toString(),
-        seat_guid: uuidv4(),
-        position: { x, y },
-        category: '',
-        radius: 11,
-      });
-    }
-
-    const row: Row = {
-      uuid: uuidv4(),
-      row_number: (seatingPlan.zones[0].rows.length + 1).toString(),
-      row_number_position: 'both',
-      position: center,
-      seats,
-    };
-
-    return row;
-  };
-
-  const createArea = (start: Position, end: Position): Area => {
-    const width = end.x - start.x;
-    const height = end.y - start.y;
-
-    return {
-      uuid: uuidv4(),
-      shape: 'rectangle',
-      color: 'rgba(200, 200, 200, 0.5)',
-      border_color: '#666666',
-      rotation: 0,
-      position: start,
-      text: {
-        position: {
-          x: start.x + width / 2,
-          y: start.y + height / 2,
-        },
-        color: '#000000',
-        text: 'New Area',
-      },
-      rectangle: {
-        width,
-        height,
-      },
-    };
+  const getMousePosition = (event: any): Point => {
+    const stage = event.target.getStage();
+    const point = stage.getPointerPosition();
+    return showGrid
+      ? snapToGrid({
+          x: point.x / zoom,
+          y: point.y / zoom,
+        }, GRID_SIZE)
+      : {
+          x: point.x / zoom,
+          y: point.y / zoom,
+        };
   };
 
   const handleMouseDown = useCallback(
     (e: any) => {
-      const stage = e.target.getStage();
-      const pos = stage.getRelativePointerPosition();
-      const { x, y } = pos;
-
-      if (
-        currentTool === EditorTool.ADD_ROW ||
-        currentTool === EditorTool.ADD_SHAPE
-      ) {
+      if (e.target === e.target.getStage()) {
+        const point = getMousePosition(e);
+        setStartPoint(point);
         setIsDrawing(true);
-        setStartPoint({ x, y });
-      } else if (
-        currentTool === EditorTool.SELECT ||
-        currentTool === EditorTool.SELECT_ROW
-      ) {
-        const clickedOn = e.target;
-        const clickedEmpty = clickedOn === stage;
 
-        if (clickedEmpty) {
-          setSelectedIds([]);
-          return;
-        }
-
-        const id = clickedOn.attrs.id;
-        if (!id) return;
-
-        if (currentTool === EditorTool.SELECT_ROW) {
-          const rowWithSeat = seatingPlan.zones[0].rows.find((row) =>
-            row.seats.some((seat) => seat.uuid === id),
-          );
-          if (rowWithSeat) {
-            setSelectedIds(rowWithSeat.seats.map((seat) => seat.uuid));
-          }
-        } else {
-          setSelectedIds([id]);
+        if (currentTool === EditorTool.ADD_SHAPE || 
+            currentTool === EditorTool.ADD_CIRCLE ||
+            currentTool === EditorTool.ADD_ELLIPSE) {
+          setPreviewShape({
+            type: currentTool === EditorTool.ADD_CIRCLE ? 'circle' :
+                  currentTool === EditorTool.ADD_ELLIPSE ? 'ellipse' : 'rectangle',
+            startPoint: point,
+            endPoint: point,
+          });
         }
       }
     },
-    [currentTool, seatingPlan.zones],
+    [currentTool, showGrid, zoom],
   );
 
   const handleMouseMove = useCallback(
     (e: any) => {
-      if (!isDrawing || !startPoint) return;
+      if (isDrawing && startPoint) {
+        const currentPoint = getMousePosition(e);
 
-      const stage = e.target.getStage();
-      const pos = stage.getRelativePointerPosition();
-      const { x, y } = pos;
-
-      if (currentTool === EditorTool.ADD_ROW) {
-        const dx = x - startPoint.x;
-        const dy = y - startPoint.y;
-        const radius = Math.sqrt(dx * dx + dy * dy);
-
-        setPreviewShape({
-          type: 'circle',
-          x: startPoint.x,
-          y: startPoint.y,
-          radius,
-        });
-      } else if (currentTool === EditorTool.ADD_SHAPE) {
-        setPreviewShape({
-          type: 'rect',
-          x: startPoint.x,
-          y: startPoint.y,
-          width: x - startPoint.x,
-          height: y - startPoint.y,
-        });
+        if (currentTool === EditorTool.ADD_SHAPE ||
+            currentTool === EditorTool.ADD_CIRCLE ||
+            currentTool === EditorTool.ADD_ELLIPSE) {
+          setPreviewShape((prev) =>
+            prev ? { ...prev, endPoint: currentPoint } : null
+          );
+        }
       }
     },
-    [isDrawing, startPoint, currentTool],
+    [isDrawing, startPoint, currentTool, showGrid, zoom],
   );
 
   const handleMouseUp = useCallback(
     (e: any) => {
       if (!isDrawing || !startPoint) return;
 
-      const stage = e.target.getStage();
-      const pos = stage.getRelativePointerPosition();
-      const { x, y } = pos;
+      const endPoint = getMousePosition(e);
+      const width = Math.abs(endPoint.x - startPoint.x);
+      const height = Math.abs(endPoint.y - startPoint.y);
+      const x = Math.min(startPoint.x, endPoint.x);
+      const y = Math.min(startPoint.y, endPoint.y);
 
-      if (currentTool === EditorTool.ADD_ROW) {
-        const dx = x - startPoint.x;
-        const dy = y - startPoint.y;
-        const radius = Math.sqrt(dx * dx + dy * dy);
-        const numSeats = Math.max(Math.floor((2 * Math.PI * radius) / 30), 4);
+      const updatedPlan = { ...seatingPlan };
+      const currentZone = updatedPlan.zones[0]; // For now, we'll work with the first zone
 
-        const newRow = createCircularRow(startPoint, radius, numSeats);
-        const updatedPlan = {
-          ...seatingPlan,
-          zones: seatingPlan.zones.map((zone, idx) =>
-            idx === 0 ? { ...zone, rows: [...zone.rows, newRow] } : zone,
-          ),
-        };
-        onPlanChange(updatedPlan);
-      } else if (currentTool === EditorTool.ADD_SHAPE) {
-        const newArea = createArea(startPoint, { x, y });
-        const updatedPlan = {
-          ...seatingPlan,
-          zones: seatingPlan.zones.map((zone, idx) =>
-            idx === 0 ? { ...zone, areas: [...zone.areas, newArea] } : zone,
-          ),
-        };
-        onPlanChange(updatedPlan);
+      switch (currentTool) {
+        case EditorTool.ADD_SHAPE:
+          const rectangle = createShape('rectangle', { x, y }, {
+            size: { width, height }
+          });
+          currentZone.areas = [...currentZone.areas, rectangle];
+          break;
+
+        case EditorTool.ADD_CIRCLE:
+          const radius = Math.sqrt(width * width + height * height) / 2;
+          const circle = createShape('circle', startPoint, { radius });
+          currentZone.areas = [...currentZone.areas, circle];
+          break;
+
+        case EditorTool.ADD_ELLIPSE:
+          const ellipse = createShape('ellipse', { x: x + width / 2, y: y + height / 2 }, {
+            size: { width, height }
+          });
+          currentZone.areas = [...currentZone.areas, ellipse];
+          break;
+
+        case EditorTool.ADD_ROW:
+          const numSeats = Math.max(Math.round(width / 30), 1); // Approximate seat width of 30
+          const straightRow = createStraightRow(startPoint, endPoint, numSeats);
+          currentZone.rows = [...currentZone.rows, straightRow];
+          break;
+
+        case EditorTool.ADD_RECT_ROW:
+          const seatsPerRow = Math.max(Math.round(width / 30), 1);
+          const numRows = Math.max(Math.round(height / 30), 1);
+          const rectRow = createRectangularRow(
+            { x, y },
+            { width, height },
+            numRows,
+            seatsPerRow
+          );
+          currentZone.rows = [...currentZone.rows, rectRow];
+          break;
       }
 
+      onPlanChange(updatedPlan);
       setIsDrawing(false);
       setStartPoint(null);
       setPreviewShape(null);
@@ -243,50 +170,212 @@ const Canvas: React.FC<CanvasProps> = ({
     [isDrawing, startPoint, currentTool, seatingPlan, onPlanChange],
   );
 
-  const handleDragEnd = useCallback(
-    (e: any) => {
-      const id = e.target.attrs.id;
-      if (!id) return;
+  const renderGrid = () => {
+    if (!showGrid) return null;
 
-      const newPos = e.target.position();
-      const updatedPlan = { ...seatingPlan };
+    const gridLines = [];
+    const width = seatingPlan.size.width;
+    const height = seatingPlan.size.height;
 
-      // Update seat position
-      updatedPlan.zones = updatedPlan.zones.map((zone) => ({
-        ...zone,
-        rows: zone.rows.map((row) => ({
-          ...row,
-          seats: row.seats.map((seat) =>
-            seat.uuid === id ? { ...seat, position: newPos } : seat,
-          ),
-        })),
-      }));
+    // Vertical lines
+    for (let x = 0; x <= width; x += GRID_SIZE) {
+      gridLines.push(
+        <Line
+          key={`v${x}`}
+          points={[x, 0, x, height]}
+          stroke="#ddd"
+          strokeWidth={0.5}
+        />
+      );
+    }
 
-      onPlanChange(updatedPlan);
-    },
-    [seatingPlan, onPlanChange],
-  );
+    // Horizontal lines
+    for (let y = 0; y <= height; y += GRID_SIZE) {
+      gridLines.push(
+        <Line
+          key={`h${y}`}
+          points={[0, y, width, y]}
+          stroke="#ddd"
+          strokeWidth={0.5}
+        />
+      );
+    }
 
-  // Calculate stage scale to fit the seating plan
-  const scale =
-    Math.min(
-      stageSize.width / seatingPlan.size.width,
-      stageSize.height / seatingPlan.size.height,
-    ) * 0.9;
+    return gridLines;
+  };
+
+  const renderPreviewShape = () => {
+    if (!previewShape || !startPoint) return null;
+
+    const width = Math.abs(previewShape.endPoint.x - previewShape.startPoint.x);
+    const height = Math.abs(previewShape.endPoint.y - previewShape.startPoint.y);
+    const x = Math.min(previewShape.startPoint.x, previewShape.endPoint.x);
+    const y = Math.min(previewShape.startPoint.y, previewShape.endPoint.y);
+
+    switch (previewShape.type) {
+      case 'rectangle':
+        return (
+          <Rect
+            x={x}
+            y={y}
+            width={width}
+            height={height}
+            fill="rgba(200, 200, 200, 0.5)"
+            stroke="#666"
+            strokeWidth={1}
+            dash={[5, 5]}
+          />
+        );
+      case 'circle':
+        const radius = Math.sqrt(width * width + height * height) / 2;
+        return (
+          <Circle
+            x={startPoint.x}
+            y={startPoint.y}
+            radius={radius}
+            fill="rgba(200, 200, 200, 0.5)"
+            stroke="#666"
+            strokeWidth={1}
+            dash={[5, 5]}
+          />
+        );
+      case 'ellipse':
+        return (
+          <Ellipse
+            x={x + width / 2}
+            y={y + height / 2}
+            radiusX={width / 2}
+            radiusY={height / 2}
+            fill="rgba(200, 200, 200, 0.5)"
+            stroke="#666"
+            strokeWidth={1}
+            dash={[5, 5]}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
+  const renderShapes = useCallback(() => {
+    return seatingPlan.zones.flatMap((zone) =>
+      zone.areas.map((area) => {
+        if ('text' in area) {
+          return (
+            <Text
+              key={area.uuid}
+              x={area.position.x}
+              y={area.position.y}
+              text={area.text}
+              fontSize={area.fontSize}
+              fontFamily={area.fontFamily}
+              fill={area.fill}
+            />
+          );
+        }
+
+        switch (area.type) {
+          case 'rectangle':
+            return (
+              <Rect
+                key={area.uuid}
+                x={area.position.x}
+                y={area.position.y}
+                width={area.size?.width || 0}
+                height={area.size?.height || 0}
+                fill={area.fill}
+                stroke={area.stroke}
+              />
+            );
+          case 'circle':
+            return (
+              <Circle
+                key={area.uuid}
+                x={area.position.x}
+                y={area.position.y}
+                radius={area.radius || 0}
+                fill={area.fill}
+                stroke={area.stroke}
+              />
+            );
+          case 'ellipse':
+            return (
+              <Ellipse
+                key={area.uuid}
+                x={area.position.x}
+                y={area.position.y}
+                radiusX={area.size?.width ? area.size.width / 2 : 0}
+                radiusY={area.size?.height ? area.size.height / 2 : 0}
+                fill={area.fill}
+                stroke={area.stroke}
+              />
+            );
+          default:
+            return null;
+        }
+      }),
+    );
+  }, [seatingPlan.zones]);
+
+  const renderSeats = useCallback(() => {
+    return seatingPlan.zones.flatMap((zone) =>
+      zone.rows.flatMap((row) =>
+        row.seats.map((seat) => (
+          <Circle
+            key={seat.uuid}
+            x={seat.position.x}
+            y={seat.position.y}
+            radius={15}
+            fill={
+              seat.category
+                ? seatingPlan.categories.find((c) => c.name === seat.category)?.color
+                : '#ddd'
+            }
+            stroke="#666"
+            draggable
+            onDragStart={(e) => {
+              setDraggedSeatId(seat.uuid);
+            }}
+            onDragEnd={(e) => {
+              if (draggedSeatId) {
+                const pos = getMousePosition(e);
+                const updatedPlan = { ...seatingPlan };
+                updatedPlan.zones = updatedPlan.zones.map((z) => ({
+                  ...z,
+                  rows: z.rows.map((r) => ({
+                    ...r,
+                    seats: r.seats.map((s) =>
+                      s.uuid === draggedSeatId
+                        ? { ...s, position: pos }
+                        : s
+                    ),
+                  })),
+                }));
+                onPlanChange(updatedPlan);
+                setDraggedSeatId(null);
+              }
+            }}
+          />
+        )),
+      ),
+    );
+  }, [seatingPlan, draggedSeatId, onPlanChange]);
 
   return (
     <div ref={containerRef} className="canvas-container">
       <Stage
-        ref={stageRef}
         width={stageSize.width}
         height={stageSize.height}
-        scaleX={zoom}
-        scaleY={zoom}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        scale={{ x: zoom, y: zoom }}
       >
-        <Layer ref={layerRef}>
+        <Layer>
+          {showGrid && renderGrid()}
+          {renderShapes()}
+          {renderSeats()}
+          {previewShape && renderPreviewShape()}
           {/* Background */}
           {seatingPlan.backgroundImage && (
             <Rect
@@ -297,98 +386,6 @@ const Canvas: React.FC<CanvasProps> = ({
               fillPatternScaleY={1 / zoom}
             />
           )}
-
-          {/* Areas */}
-          {seatingPlan.zones[0].areas.map((area) => (
-            <Group key={area.uuid} draggable>
-              {area.shape === 'rectangle' ? (
-                <Rect
-                  id={area.uuid}
-                  x={area.position.x}
-                  y={area.position.y}
-                  width={area.rectangle?.width || 0}
-                  height={area.rectangle?.height || 0}
-                  fill={area.color}
-                  stroke={area.border_color}
-                  rotation={area.rotation}
-                />
-              ) : (
-                <Circle
-                  id={area.uuid}
-                  x={area.position.x}
-                  y={area.position.y}
-                  radius={50}
-                  fill={area.color}
-                  stroke={area.border_color}
-                />
-              )}
-              {area.text && (
-                <Text
-                  x={area.text.position.x}
-                  y={area.text.position.y}
-                  text={area.text.text}
-                  fill={area.text.color}
-                  fontSize={14}
-                />
-              )}
-            </Group>
-          ))}
-
-          {/* Rows and Seats */}
-          {seatingPlan.zones[0].rows.map((row) => (
-            <Group key={row.uuid}>
-              {row.seats.map((seat) => (
-                <Circle
-                  key={seat.uuid}
-                  id={seat.uuid}
-                  x={seat.position.x}
-                  y={seat.position.y}
-                  radius={seat.radius || 11}
-                  fill={
-                    seat.category
-                      ? seatingPlan.categories.find(
-                          (c) => c.name === seat.category,
-                        )?.color || '#cccccc'
-                      : '#cccccc'
-                  }
-                  stroke="#666666"
-                  draggable
-                  onDragEnd={handleDragEnd}
-                />
-              ))}
-              <Text
-                text={`Row ${row.row_number}`}
-                x={row.position.x - 30}
-                y={row.position.y - 20}
-                fontSize={12}
-              />
-            </Group>
-          ))}
-
-          {/* Preview Shape */}
-          {isDrawing &&
-            previewShape &&
-            (previewShape.type === 'circle' ? (
-              <Circle
-                x={previewShape.x}
-                y={previewShape.y}
-                radius={previewShape.radius}
-                stroke="#666666"
-                dash={[5, 5]}
-              />
-            ) : (
-              <Rect
-                x={previewShape.x}
-                y={previewShape.y}
-                width={previewShape.width}
-                height={previewShape.height}
-                stroke="#666666"
-                dash={[5, 5]}
-              />
-            ))}
-
-          {/* Selection Transformer */}
-          <Transformer ref={transformerRef} />
         </Layer>
       </Stage>
     </div>
