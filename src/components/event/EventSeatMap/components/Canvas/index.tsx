@@ -15,6 +15,8 @@ import {
   createRectangularRow,
   createShape,
   createTextLabel,
+  renderRowPreview,
+  renderRectRowPreview,
 } from './utils';
 import {
   getMousePosition,
@@ -142,7 +144,7 @@ const Canvas: React.FC<CanvasProps> = ({
         const newSelection = updateSelection(
           seatingPlan,
           { ...selectionBox, endPoint: point },
-          currentTool === EditorTool.SELECT_SEAT ? 'seat' : 'row'
+          currentTool === EditorTool.SELECT_SEAT ? 'seat' : 'row',
         );
         setSelection(newSelection);
       } else if (isDragging && dragPreview) {
@@ -320,7 +322,12 @@ const Canvas: React.FC<CanvasProps> = ({
       if (!draggedSeatId || !isDragging || !dragPreview) return;
 
       const pos = getMousePosition(e, zoom);
-      const updatedPlan = updateItemPosition(seatingPlan, draggedSeatId, pos, type);
+      const updatedPlan = updateItemPosition(
+        seatingPlan,
+        draggedSeatId,
+        pos,
+        type,
+      );
 
       onPlanChange(updatedPlan);
       setDraggedSeatId(null);
@@ -657,13 +664,6 @@ const Canvas: React.FC<CanvasProps> = ({
   const renderPreviewShape = useCallback(() => {
     if (!previewShape || !startPoint) return null;
 
-    const width = Math.abs(previewShape.endPoint.x - previewShape.startPoint.x);
-    const height = Math.abs(
-      previewShape.endPoint.y - previewShape.startPoint.y,
-    );
-    const x = Math.min(previewShape.startPoint.x, previewShape.endPoint.x);
-    const y = Math.min(previewShape.startPoint.y, previewShape.endPoint.y);
-
     const commonProps = {
       fill: 'rgba(200, 200, 200, 0.5)',
       stroke: '#666',
@@ -673,12 +673,19 @@ const Canvas: React.FC<CanvasProps> = ({
 
     switch (currentTool) {
       case EditorTool.ADD_SHAPE:
+        const width = Math.abs(previewShape.endPoint.x - startPoint.x);
+        const height = Math.abs(previewShape.endPoint.y - startPoint.y);
+        const x = Math.min(startPoint.x, previewShape.endPoint.x);
+        const y = Math.min(startPoint.y, previewShape.endPoint.y);
         return (
           <Rect x={x} y={y} width={width} height={height} {...commonProps} />
         );
 
       case EditorTool.ADD_CIRCLE: {
-        const radius = Math.sqrt(width * width + height * height) / 2;
+        const radius = Math.sqrt(
+          Math.pow(previewShape.endPoint.x - startPoint.x, 2) +
+          Math.pow(previewShape.endPoint.y - startPoint.y, 2)
+        ) / 2;
         return (
           <Circle
             x={startPoint.x}
@@ -689,7 +696,11 @@ const Canvas: React.FC<CanvasProps> = ({
         );
       }
 
-      case EditorTool.ADD_ELLIPSE:
+      case EditorTool.ADD_ELLIPSE: {
+        const width = Math.abs(previewShape.endPoint.x - startPoint.x);
+        const height = Math.abs(previewShape.endPoint.y - startPoint.y);
+        const x = Math.min(startPoint.x, previewShape.endPoint.x);
+        const y = Math.min(startPoint.y, previewShape.endPoint.y);
         return (
           <Ellipse
             x={x + width / 2}
@@ -699,30 +710,32 @@ const Canvas: React.FC<CanvasProps> = ({
             {...commonProps}
           />
         );
+      }
 
       case EditorTool.ADD_ROW: {
-        const numSeats = Math.max(Math.round(width / 30), 2);
-        const dx =
-          (previewShape.endPoint.x - startPoint.x) / (numSeats - 1 || 1);
-        const dy =
-          (previewShape.endPoint.y - startPoint.y) / (numSeats - 1 || 1);
-
+        const preview = renderRowPreview(startPoint, previewShape.endPoint, commonProps);
         return (
           <Group>
-            <Line
-              points={[
-                startPoint.x,
-                startPoint.y,
-                previewShape.endPoint.x,
-                previewShape.endPoint.y,
-              ]}
-              {...commonProps}
-            />
-            {Array.from({ length: numSeats }).map((_, i) => (
+            <Line points={preview.linePoints} {...commonProps} />
+            {preview.seatPositions.map((pos, i) => (
+              <Circle key={i} x={pos.x} y={pos.y} radius={15} {...commonProps} />
+            ))}
+          </Group>
+        );
+      }
+
+      case EditorTool.ADD_RECT_ROW: {
+        const preview = renderRectRowPreview(startPoint, previewShape.endPoint);
+        return (
+          <Group>
+            {preview.rowLines.map((line, row) => (
+              <Line key={`row-${row}`} points={line.points} {...commonProps} />
+            ))}
+            {preview.seatPositions.map((pos) => (
               <Circle
-                key={i}
-                x={startPoint.x + dx * i}
-                y={startPoint.y + dy * i}
+                key={pos.key}
+                x={pos.x}
+                y={pos.y}
                 radius={15}
                 {...commonProps}
               />
@@ -731,40 +744,10 @@ const Canvas: React.FC<CanvasProps> = ({
         );
       }
 
-      case EditorTool.ADD_RECT_ROW: {
-        const seatsPerRow = Math.max(Math.round(width / 30), 2);
-        const numRows = Math.max(Math.round(height / 30), 2);
-        const dx = width / (seatsPerRow - 1 || 1);
-        const dy = height / (numRows - 1 || 1);
-
-        return (
-          <Group>
-            {Array.from({ length: numRows + 1 }).map((_, row) => (
-              <Line
-                key={`row-${row}`}
-                points={[x, y + dy * row, x + width, y + dy * row]}
-                {...commonProps}
-              />
-            ))}
-            {Array.from({ length: numRows }).map((_, row) =>
-              Array.from({ length: seatsPerRow }).map((_, col) => (
-                <Circle
-                  key={`${row}-${col}`}
-                  x={x + dx * col}
-                  y={y + dy * row}
-                  radius={15}
-                  {...commonProps}
-                />
-              )),
-            )}
-          </Group>
-        );
-      }
-
       default:
         return null;
     }
-  }, [previewShape, startPoint, currentTool, zoom]);
+  }, [previewShape, startPoint, currentTool]);
 
   const renderSelectionBox = () => {
     if (!selectionBox) return null;
