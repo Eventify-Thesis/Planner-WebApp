@@ -10,21 +10,28 @@ import {
   Line,
 } from 'react-konva';
 import { v4 as uuidv4 } from 'uuid';
-import { SeatingPlan, EditorTool, Row, Seat, Position, Area } from '../../types';
+import {
+  SeatingPlan,
+  EditorTool,
+  Row,
+  Seat,
+  Position,
+  Area,
+} from '../../types';
 import './Canvas.css';
 
 interface CanvasProps {
   seatingPlan: SeatingPlan;
   currentTool: EditorTool;
   zoom: number;
-  onChange: (plan: SeatingPlan) => void;
+  onPlanChange: (plan: SeatingPlan) => void;
 }
 
 const Canvas: React.FC<CanvasProps> = ({
   seatingPlan,
   currentTool,
   zoom,
-  onChange,
+  onPlanChange,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [stageSize, setStageSize] = useState({ width: 1, height: 1 });
@@ -54,9 +61,9 @@ const Canvas: React.FC<CanvasProps> = ({
 
   useEffect(() => {
     if (transformerRef.current && selectedIds.length > 0) {
-      const nodes = selectedIds.map(
-        (id) => layerRef.current?.findOne(`#${id}`),
-      ).filter(Boolean);
+      const nodes = selectedIds
+        .map((id) => layerRef.current?.findOne(`#${id}`))
+        .filter(Boolean);
       transformerRef.current.nodes(nodes);
       transformerRef.current.getLayer()?.batchDraw();
     }
@@ -128,10 +135,16 @@ const Canvas: React.FC<CanvasProps> = ({
       const pos = stage.getRelativePointerPosition();
       const { x, y } = pos;
 
-      if (currentTool === EditorTool.ADD_ROW || currentTool === EditorTool.ADD_SHAPE) {
+      if (
+        currentTool === EditorTool.ADD_ROW ||
+        currentTool === EditorTool.ADD_SHAPE
+      ) {
         setIsDrawing(true);
         setStartPoint({ x, y });
-      } else if (currentTool === EditorTool.SELECT || currentTool === EditorTool.SELECT_ROW) {
+      } else if (
+        currentTool === EditorTool.SELECT ||
+        currentTool === EditorTool.SELECT_ROW
+      ) {
         const clickedOn = e.target;
         const clickedEmpty = clickedOn === stage;
 
@@ -202,46 +215,64 @@ const Canvas: React.FC<CanvasProps> = ({
         const dx = x - startPoint.x;
         const dy = y - startPoint.y;
         const radius = Math.sqrt(dx * dx + dy * dy);
+        const numSeats = Math.max(Math.floor((2 * Math.PI * radius) / 30), 4);
 
-        if (radius > 20) { // Minimum radius check
-          const newRow = createCircularRow(startPoint, radius, 12);
-          const updatedZones = seatingPlan.zones.map((zone) =>
-            zone.uuid === seatingPlan.zones[0].uuid
-              ? { ...zone, rows: [...zone.rows, newRow] }
-              : zone,
-          );
-
-          onChange({
-            ...seatingPlan,
-            zones: updatedZones,
-          });
-        }
+        const newRow = createCircularRow(startPoint, radius, numSeats);
+        const updatedPlan = {
+          ...seatingPlan,
+          zones: seatingPlan.zones.map((zone, idx) =>
+            idx === 0 ? { ...zone, rows: [...zone.rows, newRow] } : zone,
+          ),
+        };
+        onPlanChange(updatedPlan);
       } else if (currentTool === EditorTool.ADD_SHAPE) {
         const newArea = createArea(startPoint, { x, y });
-        const updatedZones = seatingPlan.zones.map((zone) =>
-          zone.uuid === seatingPlan.zones[0].uuid
-            ? { ...zone, areas: [...zone.areas, newArea] }
-            : zone,
-        );
-
-        onChange({
+        const updatedPlan = {
           ...seatingPlan,
-          zones: updatedZones,
-        });
+          zones: seatingPlan.zones.map((zone, idx) =>
+            idx === 0 ? { ...zone, areas: [...zone.areas, newArea] } : zone,
+          ),
+        };
+        onPlanChange(updatedPlan);
       }
 
       setIsDrawing(false);
       setStartPoint(null);
       setPreviewShape(null);
     },
-    [isDrawing, startPoint, currentTool, seatingPlan, onChange],
+    [isDrawing, startPoint, currentTool, seatingPlan, onPlanChange],
+  );
+
+  const handleDragEnd = useCallback(
+    (e: any) => {
+      const id = e.target.attrs.id;
+      if (!id) return;
+
+      const newPos = e.target.position();
+      const updatedPlan = { ...seatingPlan };
+
+      // Update seat position
+      updatedPlan.zones = updatedPlan.zones.map((zone) => ({
+        ...zone,
+        rows: zone.rows.map((row) => ({
+          ...row,
+          seats: row.seats.map((seat) =>
+            seat.uuid === id ? { ...seat, position: newPos } : seat,
+          ),
+        })),
+      }));
+
+      onPlanChange(updatedPlan);
+    },
+    [seatingPlan, onPlanChange],
   );
 
   // Calculate stage scale to fit the seating plan
-  const scale = Math.min(
-    stageSize.width / seatingPlan.size.width,
-    stageSize.height / seatingPlan.size.height,
-  ) * 0.9;
+  const scale =
+    Math.min(
+      stageSize.width / seatingPlan.size.width,
+      stageSize.height / seatingPlan.size.height,
+    ) * 0.9;
 
   return (
     <div ref={containerRef} className="canvas-container">
@@ -249,107 +280,100 @@ const Canvas: React.FC<CanvasProps> = ({
         ref={stageRef}
         width={stageSize.width}
         height={stageSize.height}
-        scaleX={scale * zoom}
-        scaleY={scale * zoom}
-        x={stageSize.width / 2}
-        y={stageSize.height / 2}
-        offsetX={seatingPlan.size.width / 2}
-        offsetY={seatingPlan.size.height / 2}
+        scaleX={zoom}
+        scaleY={zoom}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
       >
         <Layer ref={layerRef}>
           {/* Background */}
-          <Rect
-            width={seatingPlan.size.width}
-            height={seatingPlan.size.height}
-            fill="#ffffff"
-            stroke="#dddddd"
-          />
-
-          {/* Background image if exists */}
           {seatingPlan.backgroundImage && (
             <Rect
               width={seatingPlan.size.width}
               height={seatingPlan.size.height}
-              fillPatternImage={new window.Image()}
-              fillPatternScaleX={1}
-              fillPatternScaleY={1}
+              fillPatternImage={new Image()}
+              fillPatternScaleX={1 / zoom}
+              fillPatternScaleY={1 / zoom}
             />
           )}
 
           {/* Areas */}
-          {seatingPlan.zones.map((zone) =>
-            zone.areas.map((area) => (
-              <Group key={area.uuid}>
-                {area.shape === 'rectangle' && area.rectangle && (
-                  <Rect
-                    id={area.uuid}
-                    x={area.position.x}
-                    y={area.position.y}
-                    width={area.rectangle.width}
-                    height={area.rectangle.height}
-                    fill={area.color}
-                    stroke={area.border_color}
-                    draggable={currentTool === EditorTool.SELECT}
-                  />
-                )}
+          {seatingPlan.zones[0].areas.map((area) => (
+            <Group key={area.uuid} draggable>
+              {area.shape === 'rectangle' ? (
+                <Rect
+                  id={area.uuid}
+                  x={area.position.x}
+                  y={area.position.y}
+                  width={area.rectangle?.width || 0}
+                  height={area.rectangle?.height || 0}
+                  fill={area.color}
+                  stroke={area.border_color}
+                  rotation={area.rotation}
+                />
+              ) : (
+                <Circle
+                  id={area.uuid}
+                  x={area.position.x}
+                  y={area.position.y}
+                  radius={50}
+                  fill={area.color}
+                  stroke={area.border_color}
+                />
+              )}
+              {area.text && (
                 <Text
                   x={area.text.position.x}
                   y={area.text.position.y}
                   text={area.text.text}
                   fill={area.text.color}
                   fontSize={14}
-                  align="center"
-                  verticalAlign="middle"
                 />
-              </Group>
-            )),
-          )}
+              )}
+            </Group>
+          ))}
 
           {/* Rows and Seats */}
-          {seatingPlan.zones.map((zone) =>
-            zone.rows.map((row) => (
-              <Group key={row.uuid}>
-                <Text
-                  text={row.row_number}
-                  x={row.position.x - 20}
-                  y={row.position.y}
-                  fontSize={12}
+          {seatingPlan.zones[0].rows.map((row) => (
+            <Group key={row.uuid}>
+              {row.seats.map((seat) => (
+                <Circle
+                  key={seat.uuid}
+                  id={seat.uuid}
+                  x={seat.position.x}
+                  y={seat.position.y}
+                  radius={seat.radius || 11}
+                  fill={
+                    seat.category
+                      ? seatingPlan.categories.find(
+                          (c) => c.name === seat.category,
+                        )?.color || '#cccccc'
+                      : '#cccccc'
+                  }
+                  stroke="#666666"
+                  draggable
+                  onDragEnd={handleDragEnd}
                 />
-                {row.seats.map((seat) => (
-                  <Circle
-                    key={seat.uuid}
-                    id={seat.uuid}
-                    x={seat.position.x}
-                    y={seat.position.y}
-                    radius={seat.radius || 11}
-                    fill={
-                      seat.category
-                        ? seatingPlan.categories.find(
-                            (c) => c.name === seat.category,
-                          )?.color || '#ffffff'
-                        : '#ffffff'
-                    }
-                    stroke="#000000"
-                    strokeWidth={1}
-                    draggable={currentTool === EditorTool.SELECT}
-                  />
-                ))}
-              </Group>
-            )),
-          )}
+              ))}
+              <Text
+                text={`Row ${row.row_number}`}
+                x={row.position.x - 30}
+                y={row.position.y - 20}
+                fontSize={12}
+              />
+            </Group>
+          ))}
 
-          {/* Preview shapes */}
-          {previewShape && (
-            previewShape.type === 'circle' ? (
+          {/* Preview Shape */}
+          {isDrawing &&
+            previewShape &&
+            (previewShape.type === 'circle' ? (
               <Circle
                 x={previewShape.x}
                 y={previewShape.y}
                 radius={previewShape.radius}
-                stroke="#666"
-                strokeWidth={1}
+                stroke="#666666"
                 dash={[5, 5]}
               />
             ) : (
@@ -358,20 +382,13 @@ const Canvas: React.FC<CanvasProps> = ({
                 y={previewShape.y}
                 width={previewShape.width}
                 height={previewShape.height}
-                stroke="#666"
-                strokeWidth={1}
+                stroke="#666666"
                 dash={[5, 5]}
               />
-            )
-          )}
+            ))}
 
-          {/* Selection transformer */}
-          {selectedIds.length > 0 && (
-            <Transformer
-              ref={transformerRef}
-              boundBoxFunc={(oldBox, newBox) => newBox}
-            />
-          )}
+          {/* Selection Transformer */}
+          <Transformer ref={transformerRef} />
         </Layer>
       </Stage>
     </div>

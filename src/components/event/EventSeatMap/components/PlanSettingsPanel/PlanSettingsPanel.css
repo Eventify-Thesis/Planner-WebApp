@@ -2,14 +2,21 @@
   padding: 16px;
   height: 100%;
   overflow-y: auto;
+  background: #fff;
 }
 
 .plan-settings .ant-form-item {
   margin-bottom: 16px;
 }
 
+.plan-settings .ant-list {
+  border: 1px solid #f0f0f0;
+  border-radius: 4px;
+  padding: 8px;
+}
+
 .plan-settings .ant-list-item {
-  padding: 8px 0;
+  padding: 8px;
 }
 
 .plan-settings .ant-space {
@@ -19,9 +26,4 @@
 .plan-settings .ant-input[type="color"] {
   padding: 0;
   height: 32px;
-}
-
-.plan-settings .ant-list-footer {
-  padding: 8px 0;
-  border-top: none;
 }

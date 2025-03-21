@@ -10,6 +10,7 @@ import {
   TableOutlined,
   FontSizeOutlined,
 } from '@ant-design/icons';
+import { Stage, Layer, Circle, Text, Group, Rect } from 'react-konva';
 import { SeatingPlan, EditorTool } from './types';
 import PlanSettingsPanel from './components/PlanSettingsPanel';
 import Canvas from './components/Canvas';
@@ -45,8 +46,7 @@ const DEFAULT_SEATING_PLAN: SeatingPlan = {
 };
 
 const EventSeatMap: React.FC = () => {
-  const [seatingPlan, setSeatingPlan] =
-    useState<SeatingPlan>(DEFAULT_SEATING_PLAN);
+  const [seatingPlan, setSeatingPlan] = useState<SeatingPlan>(DEFAULT_SEATING_PLAN);
   const {
     currentTool,
     setCurrentTool,
@@ -62,8 +62,7 @@ const EventSeatMap: React.FC = () => {
   const handleSave = useCallback(() => {
     console.log('Saving seating plan:', seatingPlan);
     const dataStr = JSON.stringify(seatingPlan, null, 2);
-    const dataUri =
-      'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
     const exportFileDefaultName = 'seating-plan.json';
 
     const linkElement = document.createElement('a');
@@ -72,13 +71,10 @@ const EventSeatMap: React.FC = () => {
     linkElement.click();
   }, [seatingPlan]);
 
-  const handlePlanChange = useCallback(
-    (updatedPlan: SeatingPlan) => {
-      setSeatingPlan(updatedPlan);
-      addToHistory(updatedPlan);
-    },
-    [addToHistory],
-  );
+  const handlePlanChange = useCallback((updatedPlan: SeatingPlan) => {
+    setSeatingPlan(updatedPlan);
+    addToHistory(updatedPlan);
+  }, [addToHistory]);
 
   const handleUndo = useCallback(() => {
     const previousState = undo();
@@ -102,12 +98,9 @@ const EventSeatMap: React.FC = () => {
     setZoom((prev) => Math.max(prev - 0.1, 0.5));
   }, [setZoom]);
 
-  const handleToolChange = useCallback(
-    (tool: EditorTool) => {
-      setCurrentTool(tool);
-    },
-    [setCurrentTool],
-  );
+  const handleToolChange = useCallback((tool: EditorTool) => {
+    setCurrentTool(tool);
+  }, [setCurrentTool]);
 
   return (
     <Layout className="seat-map-layout">
@@ -123,27 +116,21 @@ const EventSeatMap: React.FC = () => {
             </Tooltip>
             <Tooltip title="Add Row">
               <Button
-                type={
-                  currentTool === EditorTool.ADD_ROW ? 'primary' : 'default'
-                }
+                type={currentTool === EditorTool.ADD_ROW ? 'primary' : 'default'}
                 icon={<TableOutlined />}
                 onClick={() => handleToolChange(EditorTool.ADD_ROW)}
               />
             </Tooltip>
             <Tooltip title="Add Shape">
               <Button
-                type={
-                  currentTool === EditorTool.ADD_SHAPE ? 'primary' : 'default'
-                }
+                type={currentTool === EditorTool.ADD_SHAPE ? 'primary' : 'default'}
                 icon={<TableOutlined />}
                 onClick={() => handleToolChange(EditorTool.ADD_SHAPE)}
               />
             </Tooltip>
             <Tooltip title="Add Text">
               <Button
-                type={
-                  currentTool === EditorTool.ADD_TEXT ? 'primary' : 'default'
-                }
+                type={currentTool === EditorTool.ADD_TEXT ? 'primary' : 'default'}
                 icon={<FontSizeOutlined />}
                 onClick={() => handleToolChange(EditorTool.ADD_TEXT)}
               />
@@ -199,10 +186,10 @@ const EventSeatMap: React.FC = () => {
             seatingPlan={seatingPlan}
             currentTool={currentTool}
             zoom={zoom}
-            onChange={handlePlanChange}
+            onPlanChange={handlePlanChange}
           />
         </Content>
-        <Sider width={300} theme="light" className="plan-settings-panel">
+        <Sider width={300} className="plan-settings-panel">
           <PlanSettingsPanel
             seatingPlan={seatingPlan}
             onPlanChange={handlePlanChange}
