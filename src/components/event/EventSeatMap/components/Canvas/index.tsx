@@ -11,15 +11,21 @@ import {
 } from 'react-konva';
 import { SeatingPlan, EditorTool, Point, Shape, Selection } from '../../types';
 import {
-  createCircularRow,
   createStraightRow,
   createRectangularRow,
   createShape,
   createTextLabel,
-  snapToGrid,
 } from './utils';
+import {
+  getMousePosition,
+  getSelectionBox,
+  isPointInBox,
+} from './utils/mouseUtils';
+import GridLayer from './components/GridLayer';
 import './Canvas.css';
 import { v4 as uuidv4 } from 'uuid';
+import { updateItemPosition, createDragPreview } from './utils/dragUtils';
+import { updateSelection } from './utils/selectionUtils';
 
 interface PreviewShape extends Partial<Shape> {
   type: Shape['type'];
@@ -88,25 +94,19 @@ const Canvas: React.FC<CanvasProps> = ({
     return () => window.removeEventListener('resize', updateSize);
   }, []);
 
-  const getMousePosition = (event: any): Point => {
-    const stage = event.target.getStage();
-    const point = stage.getPointerPosition();
-    return {
-      x: point.x / zoom,
-      y: point.y / zoom,
-    };
-  };
-
   const handleMouseDown = useCallback(
     (e: any) => {
-      if (currentTool === EditorTool.SELECT_ROW || currentTool === EditorTool.SELECT_SEAT) {
-        const point = getMousePosition(e);
+      if (
+        currentTool === EditorTool.SELECT_ROW ||
+        currentTool === EditorTool.SELECT_SEAT
+      ) {
+        const point = getMousePosition(e, zoom);
         if (e.target === e.target.getStage()) {
           setSelectionBox({ startPoint: point, endPoint: point });
           setSelection({ type: 'none', ids: [] });
         }
       } else {
-        const point = getMousePosition(e);
+        const point = getMousePosition(e, zoom);
         if (point) {
           setStartPoint(point);
           setIsDrawing(true);
@@ -130,108 +130,23 @@ const Canvas: React.FC<CanvasProps> = ({
         }
       }
     },
-    [currentTool, getMousePosition],
+    [currentTool, zoom],
   );
 
   const handleMouseMove = useCallback(
     (e: any) => {
       if (selectionBox) {
-        const point = getMousePosition(e);
+        const point = getMousePosition(e, zoom);
         setSelectionBox((prev) => ({ ...prev!, endPoint: point }));
 
-        const box = {
-          x: Math.min(selectionBox.startPoint.x, point.x),
-          y: Math.min(selectionBox.startPoint.y, point.y),
-          width: Math.abs(selectionBox.startPoint.x - point.x),
-          height: Math.abs(selectionBox.startPoint.y - point.y),
-        };
-
-        const selectedIds: string[] = [];
-        const selectionType = currentTool === EditorTool.SELECT_SEAT ? 'seat' : 'row';
-
-        if (selectionType === 'seat') {
-          seatingPlan.zones[0].rows.forEach((row) => {
-            row.seats.forEach((seat) => {
-              const seatBounds = {
-                x: seat.position.x - (seat.radius || 15),
-                y: seat.position.y - (seat.radius || 15),
-                width: (seat.radius || 15) * 2,
-                height: (seat.radius || 15) * 2,
-              };
-
-              if (
-                seatBounds.x <= box.x + box.width &&
-                seatBounds.x + seatBounds.width >= box.x &&
-                seatBounds.y <= box.y + box.height &&
-                seatBounds.y + seatBounds.height >= box.y
-              ) {
-                selectedIds.push(seat.uuid);
-              }
-            });
-          });
-
-          if (selectedIds.length) {
-            setSelection({ type: 'seat', ids: selectedIds });
-          }
-        } else {
-          seatingPlan.zones[0].rows.forEach((row) => {
-            const rowBounds = row.seats.reduce(
-              (bounds, seat) => {
-                bounds.minX = Math.min(bounds.minX, seat.position.x);
-                bounds.maxX = Math.max(bounds.maxX, seat.position.x);
-                bounds.minY = Math.min(bounds.minY, seat.position.y);
-                bounds.maxY = Math.max(bounds.maxY, seat.position.y);
-                return bounds;
-              },
-              { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity },
-            );
-
-            if (
-              rowBounds.minX <= box.x + box.width &&
-              rowBounds.maxX >= box.x &&
-              rowBounds.minY <= box.y + box.height &&
-              rowBounds.maxY >= box.y
-            ) {
-              selectedIds.push(row.uuid);
-            }
-          });
-
-          seatingPlan.zones[0].areas.forEach((area) => {
-            if ('position' in area) {
-              const areaBox = {
-                x: area.position.x,
-                y: area.position.y,
-                width: area.size?.width || 0,
-                height: area.size?.height || 0,
-              };
-
-              if (area.type === 'circle' && 'radius' in area) {
-                areaBox.x = area.position.x - area.radius;
-                areaBox.y = area.position.y - area.radius;
-                areaBox.width = area.radius * 2;
-                areaBox.height = area.radius * 2;
-              } else if (area.type === 'ellipse' && area.size) {
-                areaBox.x = area.position.x - area.size.width / 2;
-                areaBox.y = area.position.y - area.size.height / 2;
-              }
-
-              if (
-                areaBox.x <= box.x + box.width &&
-                areaBox.x + areaBox.width >= box.x &&
-                areaBox.y <= box.y + box.height &&
-                areaBox.y + areaBox.height >= box.y
-              ) {
-                selectedIds.push(area.uuid);
-              }
-            }
-          });
-
-          if (selectedIds.length) {
-            setSelection({ type: 'row', ids: selectedIds });
-          }
-        }
+        const newSelection = updateSelection(
+          seatingPlan,
+          { ...selectionBox, endPoint: point },
+          currentTool === EditorTool.SELECT_SEAT ? 'seat' : 'row'
+        );
+        setSelection(newSelection);
       } else if (isDragging && dragPreview) {
-        const pos = getMousePosition(e);
+        const pos = getMousePosition(e, zoom);
         const dx = pos.x - dragPreview.position.x;
         const dy = pos.y - dragPreview.position.y;
 
@@ -250,7 +165,7 @@ const Canvas: React.FC<CanvasProps> = ({
           };
         });
       } else if (isDrawing && startPoint) {
-        const currentPoint = getMousePosition(e);
+        const currentPoint = getMousePosition(e, zoom);
         if (!currentPoint) return;
 
         if (
@@ -285,7 +200,7 @@ const Canvas: React.FC<CanvasProps> = ({
       dragPreview,
       isDrawing,
       startPoint,
-      getMousePosition,
+      zoom,
     ],
   );
 
@@ -295,7 +210,7 @@ const Canvas: React.FC<CanvasProps> = ({
         setSelectionBox(null);
       } else if (!isDrawing || !startPoint) return;
 
-      const endPoint = getMousePosition(e);
+      const endPoint = getMousePosition(e, zoom);
       if (!endPoint) return;
 
       const width = Math.abs(endPoint.x - startPoint.x);
@@ -360,14 +275,7 @@ const Canvas: React.FC<CanvasProps> = ({
       setStartPoint(null);
       setPreviewShape(null);
     },
-    [
-      isDrawing,
-      startPoint,
-      currentTool,
-      seatingPlan,
-      onPlanChange,
-      getMousePosition,
-    ],
+    [isDrawing, startPoint, currentTool, seatingPlan, onPlanChange, zoom],
   );
 
   const handleSelect = (
@@ -395,159 +303,32 @@ const Canvas: React.FC<CanvasProps> = ({
     onSelectionChange(newSelection);
   };
 
-  const handleDragStart = (id: string, type: 'seat' | 'row' | 'shape') => {
-    switch (currentTool) {
-      case EditorTool.SELECT_SEAT:
-        if (type !== 'seat') return;
-        break;
-      case EditorTool.SELECT_ROW:
-        if (type !== 'row' && type !== 'shape') return;
-        break;
-      default:
-        return;
-    }
-
-    setDraggedSeatId(id);
-    setIsDragging(true);
-
-    if (type === 'seat') {
-      const seat = seatingPlan.zones[0].rows
-        .flatMap((row) => row.seats)
-        .find((seat) => seat.uuid === id);
-      if (seat) {
-        setDragPreview({
-          type: 'seat',
-          position: seat.position,
-          seats: [{ uuid: seat.uuid, position: seat.position }],
-        });
+  const handleDragStart = useCallback(
+    (id: string, type: 'seat' | 'row' | 'shape') => {
+      setDraggedSeatId(id);
+      setIsDragging(true);
+      const preview = createDragPreview(seatingPlan, id, type);
+      if (preview) {
+        setDragPreview(preview);
       }
-    } else if (type === 'row') {
-      const row = seatingPlan.zones[0].rows.find((row) => row.uuid === id);
-      if (row) {
-        setDragPreview({
-          type: 'row',
-          position: row.seats[0].position,
-          seats: row.seats.map((seat) => ({
-            uuid: seat.uuid,
-            position: seat.position,
-          })),
-        });
-      }
-    }
-
-    if (!selection.ids.includes(id) || selection.type !== type) {
-      handleSelect(type, id);
-    }
-  };
-
-  const handleDragMove = useCallback(
-    (e: any) => {
-      if (!isDragging || !dragPreview) return;
-
-      const pos = getMousePosition(e);
-      const dx = pos.x - dragPreview.position.x;
-      const dy = pos.y - dragPreview.position.y;
-
-      setDragPreview((prev) => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          position: pos,
-          seats: prev.seats.map((seat) => ({
-            ...seat,
-            position: {
-              x: seat.position.x + dx,
-              y: seat.position.y + dy,
-            },
-          })),
-        };
-      });
     },
-    [isDragging, dragPreview, getMousePosition],
+    [seatingPlan],
   );
 
-  const handleDragEnd = useCallback((e: any, type: 'seat' | 'row' | 'shape') => {
-    if (!draggedSeatId || !isDragging || !dragPreview) return;
+  const handleDragEnd = useCallback(
+    (e: any, type: 'seat' | 'row' | 'shape') => {
+      if (!draggedSeatId || !isDragging || !dragPreview) return;
 
-    const pos = getMousePosition(e);
-    const updatedPlan = { ...seatingPlan };
+      const pos = getMousePosition(e, zoom);
+      const updatedPlan = updateItemPosition(seatingPlan, draggedSeatId, pos, type);
 
-    switch (type) {
-      case 'seat': {
-        const dx = pos.x - dragPreview.position.x;
-        const dy = pos.y - dragPreview.position.y;
-
-        updatedPlan.zones = updatedPlan.zones.map((zone) => ({
-          ...zone,
-          rows: zone.rows.map((row) => ({
-            ...row,
-            seats: row.seats.map((seat) =>
-              seat.uuid === draggedSeatId
-                ? {
-                    ...seat,
-                    position: {
-                      x: seat.position.x + dx,
-                      y: seat.position.y + dy,
-                    },
-                  }
-                : seat,
-            ),
-          })),
-        }));
-        break;
-      }
-
-      case 'row': {
-        const dx = pos.x - dragPreview.position.x;
-        const dy = pos.y - dragPreview.position.y;
-
-        updatedPlan.zones = updatedPlan.zones.map((zone) => ({
-          ...zone,
-          rows: zone.rows.map((row) =>
-            row.uuid === draggedSeatId
-              ? {
-                  ...row,
-                  seats: row.seats.map((seat) => ({
-                    ...seat,
-                    position: {
-                      x: seat.position.x + dx,
-                      y: seat.position.y + dy,
-                    },
-                  })),
-                }
-              : row,
-          ),
-        }));
-        break;
-      }
-
-      case 'shape': {
-        const dx = pos.x - dragPreview.position.x;
-        const dy = pos.y - dragPreview.position.y;
-
-        updatedPlan.zones = updatedPlan.zones.map((zone) => ({
-          ...zone,
-          areas: zone.areas.map((area) =>
-            area.uuid === draggedSeatId
-              ? {
-                  ...area,
-                  position: {
-                    x: area.position.x + dx,
-                    y: area.position.y + dy,
-                  },
-                }
-              : area,
-          ),
-        }));
-        break;
-      }
-    }
-
-    onPlanChange(updatedPlan);
-    setDraggedSeatId(null);
-    setIsDragging(false);
-    setDragPreview(null);
-  }, [draggedSeatId, isDragging, dragPreview, seatingPlan, onPlanChange]);
+      onPlanChange(updatedPlan);
+      setDraggedSeatId(null);
+      setIsDragging(false);
+      setDragPreview(null);
+    },
+    [draggedSeatId, isDragging, dragPreview, seatingPlan, onPlanChange, zoom],
+  );
 
   const handleSeatDoubleClick = useCallback(
     (e: any) => {
@@ -558,141 +339,6 @@ const Canvas: React.FC<CanvasProps> = ({
     },
     [currentTool, setCurrentTool],
   );
-
-  const renderGrid = () => {
-    if (!showGrid) return null;
-
-    const gridLines = [];
-    const width = seatingPlan.size.width;
-    const height = seatingPlan.size.height;
-
-    for (let x = 0; x <= width; x += GRID_SIZE) {
-      gridLines.push(
-        <Line
-          key={`v${x}`}
-          points={[x, 0, x, height]}
-          stroke="#ddd"
-          strokeWidth={0.5}
-        />,
-      );
-    }
-
-    for (let y = 0; y <= height; y += GRID_SIZE) {
-      gridLines.push(
-        <Line
-          key={`h${y}`}
-          points={[0, y, width, y]}
-          stroke="#ddd"
-          strokeWidth={0.5}
-        />,
-      );
-    }
-
-    return gridLines;
-  };
-
-  const renderPreviewShape = useCallback(() => {
-    if (!previewShape || !startPoint) return null;
-
-    const width = Math.abs(previewShape.endPoint.x - previewShape.startPoint.x);
-    const height = Math.abs(
-      previewShape.endPoint.y - previewShape.startPoint.y,
-    );
-    const x = Math.min(previewShape.startPoint.x, previewShape.endPoint.x);
-    const y = Math.min(previewShape.startPoint.y, previewShape.endPoint.y);
-
-    const commonProps = {
-      fill: 'rgba(200, 200, 200, 0.5)',
-      stroke: '#666',
-      strokeWidth: 1,
-      dash: [5, 5],
-    };
-
-    switch (currentTool) {
-      case EditorTool.ADD_SHAPE:
-        return <Rect x={x} y={y} width={width} height={height} {...commonProps} />;
-
-      case EditorTool.ADD_CIRCLE: {
-        const radius = Math.sqrt(width * width + height * height) / 2;
-        return (
-          <Circle x={startPoint.x} y={startPoint.y} radius={radius} {...commonProps} />
-        );
-      }
-
-      case EditorTool.ADD_ELLIPSE:
-        return (
-          <Ellipse
-            x={x + width / 2}
-            y={y + height / 2}
-            radiusX={width / 2}
-            radiusY={height / 2}
-            {...commonProps}
-          />
-        );
-
-      case EditorTool.ADD_ROW: {
-        const numSeats = Math.max(Math.round(width / 30), 2);
-        const dx = (previewShape.endPoint.x - startPoint.x) / (numSeats - 1 || 1);
-        const dy = (previewShape.endPoint.y - startPoint.y) / (numSeats - 1 || 1);
-
-        return (
-          <Group>
-            <Line
-              points={[
-                startPoint.x,
-                startPoint.y,
-                previewShape.endPoint.x,
-                previewShape.endPoint.y,
-              ]}
-              {...commonProps}
-            />
-            {Array.from({ length: numSeats }).map((_, i) => (
-              <Circle
-                key={i}
-                x={startPoint.x + dx * i}
-                y={startPoint.y + dy * i}
-                radius={15}
-                {...commonProps}
-              />
-            ))}
-          </Group>
-        );
-      }
-
-      case EditorTool.ADD_RECT_ROW: {
-        const seatsPerRow = Math.max(Math.round(width / 30), 2);
-        const numRows = Math.max(Math.round(height / 30), 2);
-        const dx = width / (seatsPerRow - 1 || 1);
-        const dy = height / (numRows - 1 || 1);
-
-        return (
-          <Group>
-            {Array.from({ length: numRows + 1 }).map((_, row) => (
-              <Line
-                key={`row-${row}`}
-                points={[x, y + dy * row, x + width, y + dy * row]}
-                {...commonProps}
-              />
-            ))}
-            {Array.from({ length: numRows }).map((_, row) =>
-              Array.from({ length: seatsPerRow }).map((_, col) => (
-                <Circle
-                  key={`${row}-${col}`}
-                  x={x + dx * col}
-                  y={y + dy * row}
-                  radius={15}
-                  {...commonProps}
-                />
-              )),
-            )}
-          </Group>
-        );
-      }
-
-      default:
-        return null;
-    }
-  }, [previewShape, startPoint, currentTool]);
 
   const renderShapes = useCallback(() => {
     return seatingPlan.zones.flatMap((zone) =>
@@ -719,7 +365,7 @@ const Canvas: React.FC<CanvasProps> = ({
               onDragStart={() => setDraggedSeatId(area.uuid)}
               onDragEnd={(e) => {
                 if (draggedSeatId) {
-                  const pos = getMousePosition(e);
+                  const pos = getMousePosition(e, zoom);
                   const updatedPlan = { ...seatingPlan };
                   updatedPlan.zones = updatedPlan.zones.map((z) => ({
                     ...z,
@@ -745,7 +391,7 @@ const Canvas: React.FC<CanvasProps> = ({
           onDragStart: () => setDraggedSeatId(area.uuid),
           onDragEnd: (e: any) => {
             if (draggedSeatId) {
-              const pos = getMousePosition(e);
+              const pos = getMousePosition(e, zoom);
               const updatedPlan = { ...seatingPlan };
               updatedPlan.zones = updatedPlan.zones.map((z) => ({
                 ...z,
@@ -800,7 +446,14 @@ const Canvas: React.FC<CanvasProps> = ({
         }
       }),
     );
-  }, [seatingPlan.zones, selection, currentTool, draggedSeatId, onPlanChange]);
+  }, [
+    seatingPlan.zones,
+    selection,
+    currentTool,
+    draggedSeatId,
+    onPlanChange,
+    zoom,
+  ]);
 
   const renderRows = useCallback(() => {
     return seatingPlan.zones.flatMap((zone) =>
@@ -905,7 +558,14 @@ const Canvas: React.FC<CanvasProps> = ({
         );
       }),
     );
-  }, [seatingPlan.zones, selection, currentTool, draggedSeatId, onPlanChange]);
+  }, [
+    seatingPlan.zones,
+    selection,
+    currentTool,
+    draggedSeatId,
+    onPlanChange,
+    zoom,
+  ]);
 
   const renderSeats = useCallback(() => {
     return seatingPlan.zones.flatMap((zone) =>
@@ -941,7 +601,7 @@ const Canvas: React.FC<CanvasProps> = ({
               }}
               onDragEnd={(e) => {
                 if (draggedSeatId) {
-                  const pos = getMousePosition(e);
+                  const pos = getMousePosition(e, zoom);
                   const updatedPlan = { ...seatingPlan };
 
                   if (selection.type === 'row') {
@@ -992,7 +652,137 @@ const Canvas: React.FC<CanvasProps> = ({
         )),
       ),
     );
-  }, [seatingPlan, selection, currentTool, draggedSeatId, onPlanChange]);
+  }, [seatingPlan, selection, currentTool, draggedSeatId, onPlanChange, zoom]);
+
+  const renderPreviewShape = useCallback(() => {
+    if (!previewShape || !startPoint) return null;
+
+    const width = Math.abs(previewShape.endPoint.x - previewShape.startPoint.x);
+    const height = Math.abs(
+      previewShape.endPoint.y - previewShape.startPoint.y,
+    );
+    const x = Math.min(previewShape.startPoint.x, previewShape.endPoint.x);
+    const y = Math.min(previewShape.startPoint.y, previewShape.endPoint.y);
+
+    const commonProps = {
+      fill: 'rgba(200, 200, 200, 0.5)',
+      stroke: '#666',
+      strokeWidth: 1,
+      dash: [5, 5],
+    };
+
+    switch (currentTool) {
+      case EditorTool.ADD_SHAPE:
+        return (
+          <Rect x={x} y={y} width={width} height={height} {...commonProps} />
+        );
+
+      case EditorTool.ADD_CIRCLE: {
+        const radius = Math.sqrt(width * width + height * height) / 2;
+        return (
+          <Circle
+            x={startPoint.x}
+            y={startPoint.y}
+            radius={radius}
+            {...commonProps}
+          />
+        );
+      }
+
+      case EditorTool.ADD_ELLIPSE:
+        return (
+          <Ellipse
+            x={x + width / 2}
+            y={y + height / 2}
+            radiusX={width / 2}
+            radiusY={height / 2}
+            {...commonProps}
+          />
+        );
+
+      case EditorTool.ADD_ROW: {
+        const numSeats = Math.max(Math.round(width / 30), 2);
+        const dx =
+          (previewShape.endPoint.x - startPoint.x) / (numSeats - 1 || 1);
+        const dy =
+          (previewShape.endPoint.y - startPoint.y) / (numSeats - 1 || 1);
+
+        return (
+          <Group>
+            <Line
+              points={[
+                startPoint.x,
+                startPoint.y,
+                previewShape.endPoint.x,
+                previewShape.endPoint.y,
+              ]}
+              {...commonProps}
+            />
+            {Array.from({ length: numSeats }).map((_, i) => (
+              <Circle
+                key={i}
+                x={startPoint.x + dx * i}
+                y={startPoint.y + dy * i}
+                radius={15}
+                {...commonProps}
+              />
+            ))}
+          </Group>
+        );
+      }
+
+      case EditorTool.ADD_RECT_ROW: {
+        const seatsPerRow = Math.max(Math.round(width / 30), 2);
+        const numRows = Math.max(Math.round(height / 30), 2);
+        const dx = width / (seatsPerRow - 1 || 1);
+        const dy = height / (numRows - 1 || 1);
+
+        return (
+          <Group>
+            {Array.from({ length: numRows + 1 }).map((_, row) => (
+              <Line
+                key={`row-${row}`}
+                points={[x, y + dy * row, x + width, y + dy * row]}
+                {...commonProps}
+              />
+            ))}
+            {Array.from({ length: numRows }).map((_, row) =>
+              Array.from({ length: seatsPerRow }).map((_, col) => (
+                <Circle
+                  key={`${row}-${col}`}
+                  x={x + dx * col}
+                  y={y + dy * row}
+                  radius={15}
+                  {...commonProps}
+                />
+              )),
+            )}
+          </Group>
+        );
+      }
+
+      default:
+        return null;
+    }
+  }, [previewShape, startPoint, currentTool, zoom]);
+
+  const renderSelectionBox = () => {
+    if (!selectionBox) return null;
+
+    const { startPoint, endPoint } = selectionBox;
+    return (
+      <Rect
+        x={Math.min(startPoint.x, endPoint.x)}
+        y={Math.min(startPoint.y, endPoint.y)}
+        width={Math.abs(endPoint.x - startPoint.x)}
+        height={Math.abs(endPoint.y - startPoint.y)}
+        fill="rgba(0, 100, 255, 0.1)"
+        stroke="#0066ff"
+        strokeWidth={1}
+        dash={[5, 5]}
+      />
+    );
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -1005,10 +795,14 @@ const Canvas: React.FC<CanvasProps> = ({
 
         switch (selection.type) {
           case 'seat':
-            updatedPlan.zones[0].rows = updatedPlan.zones[0].rows.map((row) => ({
-              ...row,
-              seats: row.seats.filter((seat) => !selection.ids.includes(seat.uuid)),
-            }));
+            updatedPlan.zones[0].rows = updatedPlan.zones[0].rows.map(
+              (row) => ({
+                ...row,
+                seats: row.seats.filter(
+                  (seat) => !selection.ids.includes(seat.uuid),
+                ),
+              }),
+            );
             break;
           case 'row':
             updatedPlan.zones[0].rows = updatedPlan.zones[0].rows.filter(
@@ -1032,17 +826,24 @@ const Canvas: React.FC<CanvasProps> = ({
             const selectedSeats = seatingPlan.zones[0].rows.flatMap((row) =>
               row.seats.filter((seat) => selection.ids.includes(seat.uuid)),
             );
-            setClipboard({ type: 'seats', items: JSON.parse(JSON.stringify(selectedSeats)) });
+            setClipboard({
+              type: 'seats',
+              items: JSON.parse(JSON.stringify(selectedSeats)),
+            });
             break;
           }
           case 'row': {
             const selectedItems = [
-              ...seatingPlan.zones[0].rows.filter((row) => selection.ids.includes(row.uuid)),
-              ...seatingPlan.zones[0].areas.filter((area) => selection.ids.includes(area.uuid)),
+              ...seatingPlan.zones[0].rows.filter((row) =>
+                selection.ids.includes(row.uuid),
+              ),
+              ...seatingPlan.zones[0].areas.filter((area) =>
+                selection.ids.includes(area.uuid),
+              ),
             ];
-            setClipboard({ 
-              type: selection.type, 
-              items: JSON.parse(JSON.stringify(selectedItems))
+            setClipboard({
+              type: selection.type,
+              items: JSON.parse(JSON.stringify(selectedItems)),
             });
             break;
           }
@@ -1059,24 +860,35 @@ const Canvas: React.FC<CanvasProps> = ({
             const selectedSeats = seatingPlan.zones[0].rows.flatMap((row) =>
               row.seats.filter((seat) => selection.ids.includes(seat.uuid)),
             );
-            setClipboard({ type: 'seats', items: JSON.parse(JSON.stringify(selectedSeats)) });
-            
-            updatedPlan.zones[0].rows = updatedPlan.zones[0].rows.map((row) => ({
-              ...row,
-              seats: row.seats.filter((seat) => !selection.ids.includes(seat.uuid)),
-            }));
+            setClipboard({
+              type: 'seats',
+              items: JSON.parse(JSON.stringify(selectedSeats)),
+            });
+
+            updatedPlan.zones[0].rows = updatedPlan.zones[0].rows.map(
+              (row) => ({
+                ...row,
+                seats: row.seats.filter(
+                  (seat) => !selection.ids.includes(seat.uuid),
+                ),
+              }),
+            );
             break;
           }
           case 'row': {
             const selectedItems = [
-              ...seatingPlan.zones[0].rows.filter((row) => selection.ids.includes(row.uuid)),
-              ...seatingPlan.zones[0].areas.filter((area) => selection.ids.includes(area.uuid)),
+              ...seatingPlan.zones[0].rows.filter((row) =>
+                selection.ids.includes(row.uuid),
+              ),
+              ...seatingPlan.zones[0].areas.filter((area) =>
+                selection.ids.includes(area.uuid),
+              ),
             ];
-            setClipboard({ 
-              type: selection.type, 
-              items: JSON.parse(JSON.stringify(selectedItems))
+            setClipboard({
+              type: selection.type,
+              items: JSON.parse(JSON.stringify(selectedItems)),
             });
-            
+
             updatedPlan.zones[0].rows = updatedPlan.zones[0].rows.filter(
               (row) => !selection.ids.includes(row.uuid),
             );
@@ -1109,11 +921,15 @@ const Canvas: React.FC<CanvasProps> = ({
                 y: seat.position.y + offset.y,
               },
             }));
-            
+
             // Create a new row for the pasted seats
             const newRow = {
               uuid: uuidv4(),
-              rowNumber: Math.max(...updatedPlan.zones[0].rows.map((r) => r.rowNumber), 0) + 1,
+              rowNumber:
+                Math.max(
+                  ...updatedPlan.zones[0].rows.map((r) => r.rowNumber),
+                  0,
+                ) + 1,
               seats: newSeats,
             };
             updatedPlan.zones[0].rows.push(newRow);
@@ -1164,28 +980,10 @@ const Canvas: React.FC<CanvasProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selection, seatingPlan, onPlanChange, clipboard]);
-
-  const renderSelectionBox = () => {
-    if (!selectionBox) return null;
-
-    const { startPoint, endPoint } = selectionBox;
-    return (
-      <Rect
-        x={Math.min(startPoint.x, endPoint.x)}
-        y={Math.min(startPoint.y, endPoint.y)}
-        width={Math.abs(endPoint.x - startPoint.x)}
-        height={Math.abs(endPoint.y - startPoint.y)}
-        fill="rgba(0, 100, 255, 0.1)"
-        stroke="#0066ff"
-        strokeWidth={1}
-        dash={[5, 5]}
-      />
-    );
-  };
+  }, [selection, seatingPlan, onPlanChange, clipboard, zoom]);
 
   return (
-    <div ref={containerRef} style={{ width: '100%', height: '100%' }}>
+    <div ref={containerRef} className="canvas-container">
       <Stage
         width={stageSize.width}
         height={stageSize.height}
@@ -1194,12 +992,24 @@ const Canvas: React.FC<CanvasProps> = ({
         onMouseUp={handleMouseUp}
         scale={{ x: zoom, y: zoom }}
       >
+        <GridLayer
+          stageSize={stageSize}
+          gridSize={GRID_SIZE}
+          zoom={zoom}
+          visible={showGrid}
+        />
+
+        {/* Main drawing layer */}
         <Layer>
-          {renderGrid()}
+          {/* Render shapes */}
           {renderShapes()}
+          {/* Render rows */}
           {renderRows()}
+          {/* Render preview shape */}
           {renderPreviewShape()}
+          {/* Render selection box */}
           {renderSelectionBox()}
+          {/* Render drag preview */}
           {dragPreview && (
             <Group opacity={0.6}>
               {dragPreview.seats.map((seat) => (
