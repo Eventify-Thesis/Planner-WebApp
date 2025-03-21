@@ -82,24 +82,16 @@ const Canvas: React.FC<CanvasProps> = ({
   const getMousePosition = (event: any): Point => {
     const stage = event.target.getStage();
     const point = stage.getPointerPosition();
-    return showGrid
-      ? snapToGrid(
-          {
-            x: point.x / zoom,
-            y: point.y / zoom,
-          },
-          GRID_SIZE,
-        )
-      : {
-          x: point.x / zoom,
-          y: point.y / zoom,
-        };
+    return {
+      x: point.x / zoom,
+      y: point.y / zoom,
+    };
   };
 
   const handleMouseDown = useCallback(
     (e: any) => {
-      if (e.target === e.target.getStage()) {
-        const point = getMousePosition(e);
+      const point = getMousePosition(e);
+      if (point) {
         setStartPoint(point);
         setIsDrawing(true);
 
@@ -121,13 +113,14 @@ const Canvas: React.FC<CanvasProps> = ({
         }
       }
     },
-    [currentTool, showGrid, zoom],
+    [currentTool, getMousePosition],
   );
 
   const handleMouseMove = useCallback(
     (e: any) => {
       if (isDrawing && startPoint) {
         const currentPoint = getMousePosition(e);
+        if (!currentPoint) return;
 
         if (
           currentTool === EditorTool.ADD_SHAPE ||
@@ -145,9 +138,7 @@ const Canvas: React.FC<CanvasProps> = ({
                       ? 'circle'
                       : currentTool === EditorTool.ADD_ELLIPSE
                       ? 'ellipse'
-                      : currentTool === EditorTool.ADD_SHAPE
-                      ? 'rectangle'
-                      : 'rectangle', // For rows, we'll use the type in renderPreviewShape
+                      : 'rectangle',
                   startPoint,
                   endPoint: currentPoint,
                 },
@@ -155,7 +146,7 @@ const Canvas: React.FC<CanvasProps> = ({
         }
       }
     },
-    [isDrawing, startPoint, currentTool, showGrid, zoom],
+    [isDrawing, startPoint, currentTool, getMousePosition],
   );
 
   const handleMouseUp = useCallback(
@@ -163,13 +154,15 @@ const Canvas: React.FC<CanvasProps> = ({
       if (!isDrawing || !startPoint) return;
 
       const endPoint = getMousePosition(e);
+      if (!endPoint) return;
+
       const width = Math.abs(endPoint.x - startPoint.x);
       const height = Math.abs(endPoint.y - startPoint.y);
       const x = Math.min(startPoint.x, endPoint.x);
       const y = Math.min(startPoint.y, endPoint.y);
 
       const updatedPlan = { ...seatingPlan };
-      const currentZone = updatedPlan.zones[0]; // For now, we'll work with the first zone
+      const currentZone = updatedPlan.zones[0];
 
       switch (currentTool) {
         case EditorTool.ADD_SHAPE:
@@ -201,14 +194,14 @@ const Canvas: React.FC<CanvasProps> = ({
           break;
 
         case EditorTool.ADD_ROW:
-          const numSeats = Math.max(Math.round(width / 30), 1); // Approximate seat width of 30
+          const numSeats = Math.max(Math.round(width / 30), 2); // Ensure at least 2 seats
           const straightRow = createStraightRow(startPoint, endPoint, numSeats);
           currentZone.rows = [...currentZone.rows, straightRow];
           break;
 
         case EditorTool.ADD_RECT_ROW: {
-          const seatsPerRow = Math.max(Math.round(width / 30), 1);
-          const numRows = Math.max(Math.round(height / 30), 1);
+          const seatsPerRow = Math.max(Math.round(width / 30), 2); // Ensure at least 2 seats
+          const numRows = Math.max(Math.round(height / 30), 2); // Ensure at least 2 rows
           const newRows = createRectangularRow(
             { x, y },
             { width, height },
@@ -225,7 +218,14 @@ const Canvas: React.FC<CanvasProps> = ({
       setStartPoint(null);
       setPreviewShape(null);
     },
-    [isDrawing, startPoint, currentTool, seatingPlan, onPlanChange],
+    [
+      isDrawing,
+      startPoint,
+      currentTool,
+      seatingPlan,
+      onPlanChange,
+      getMousePosition,
+    ],
   );
 
   const handleSelect = (

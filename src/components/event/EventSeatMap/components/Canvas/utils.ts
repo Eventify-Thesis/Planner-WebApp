@@ -12,13 +12,17 @@ export const createStraightRow = (
   endPoint: Point,
   numSeats: number,
 ): Row => {
-  const seats: Seat[] = [];
   const rowId = uuidv4();
+  numSeats = Math.max(2, numSeats);
+  
   const dx = (endPoint.x - startPoint.x) / (numSeats - 1);
   const dy = (endPoint.y - startPoint.y) / (numSeats - 1);
+  const seatSpacing = Math.sqrt(dx * dx + dy * dy);
 
+  // Pre-allocate seats array for better performance
+  const seats = new Array(numSeats);
   for (let i = 0; i < numSeats; i++) {
-    seats.push({
+    seats[i] = {
       uuid: uuidv4(),
       position: {
         x: startPoint.x + dx * i,
@@ -27,14 +31,14 @@ export const createStraightRow = (
       number: i + 1,
       radius: 15,
       rowId,
-    });
+    };
   }
 
   return {
     uuid: rowId,
     position: startPoint,
     rowNumber: 1,
-    seatSpacing: Math.sqrt(dx * dx + dy * dy),
+    seatSpacing,
     seatRadius: 15,
     seats,
     type: 'straight',
@@ -50,16 +54,22 @@ export const createRectangularRow = (
   numRows: number,
   seatsPerRow: number,
 ): Row[] => {
-  const rows: Row[] = [];
-  const dx = size.width / (seatsPerRow - 1 || 1);
-  const dy = size.height / (numRows - 1 || 1);
-
+  seatsPerRow = Math.max(2, seatsPerRow);
+  numRows = Math.max(2, numRows);
+  
+  const dx = size.width / (seatsPerRow - 1);
+  const dy = size.height / (numRows - 1);
+  
+  // Pre-allocate rows array for better performance
+  const rows = new Array(numRows);
+  
   for (let rowIndex = 0; rowIndex < numRows; rowIndex++) {
-    const seats: Seat[] = [];
     const rowUuid = uuidv4();
-
+    // Pre-allocate seats array for better performance
+    const seats = new Array(seatsPerRow);
+    
     for (let seatIndex = 0; seatIndex < seatsPerRow; seatIndex++) {
-      seats.push({
+      seats[seatIndex] = {
         uuid: uuidv4(),
         rowId: rowUuid,
         position: {
@@ -68,18 +78,21 @@ export const createRectangularRow = (
         },
         number: seatIndex + 1,
         radius: 15,
-      });
+      };
     }
 
-    rows.push({
+    rows[rowIndex] = {
       uuid: rowUuid,
+      position: { x: position.x, y: position.y + dy * rowIndex },
       rowNumber: rowIndex + 1,
+      seatSpacing: dx,
+      seatRadius: 15,
       seats,
       type: 'rectangular',
       startNumber: 1,
       numberingType: 'continuous',
       numberFormat: 'numeric',
-    });
+    };
   }
 
   return rows;
@@ -134,6 +147,7 @@ export const createShape = (
   position,
   fill: 'rgba(200, 200, 200, 0.5)',
   stroke: '#666',
+  strokeWidth: 1,
   ...props,
 });
 
