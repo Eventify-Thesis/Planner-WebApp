@@ -269,34 +269,30 @@ const Canvas: React.FC<CanvasProps> = ({
     const x = Math.min(previewShape.startPoint.x, previewShape.endPoint.x);
     const y = Math.min(previewShape.startPoint.y, previewShape.endPoint.y);
 
+    const commonProps = {
+      fill: 'rgba(200, 200, 200, 0.5)',
+      stroke: '#666',
+      strokeWidth: 1,
+      dash: [5, 5],
+    };
+
     switch (currentTool) {
       case EditorTool.ADD_SHAPE:
         return (
-          <Rect
-            x={x}
-            y={y}
-            width={width}
-            height={height}
-            fill="rgba(200, 200, 200, 0.5)"
-            stroke="#666"
-            strokeWidth={1}
-            dash={[5, 5]}
-          />
+          <Rect x={x} y={y} width={width} height={height} {...commonProps} />
         );
 
-      case EditorTool.ADD_CIRCLE:
+      case EditorTool.ADD_CIRCLE: {
         const radius = Math.sqrt(width * width + height * height) / 2;
         return (
           <Circle
             x={startPoint.x}
             y={startPoint.y}
             radius={radius}
-            fill="rgba(200, 200, 200, 0.5)"
-            stroke="#666"
-            strokeWidth={1}
-            dash={[5, 5]}
+            {...commonProps}
           />
         );
+      }
 
       case EditorTool.ADD_ELLIPSE:
         return (
@@ -305,62 +301,63 @@ const Canvas: React.FC<CanvasProps> = ({
             y={y + height / 2}
             radiusX={width / 2}
             radiusY={height / 2}
-            fill="rgba(200, 200, 200, 0.5)"
-            stroke="#666"
-            strokeWidth={1}
-            dash={[5, 5]}
+            {...commonProps}
           />
         );
 
       case EditorTool.ADD_ROW: {
         const numSeats = Math.max(Math.round(width / 30), 1);
-        const dx = (previewShape.endPoint.x - startPoint.x) / (numSeats - 1);
-        const dy = (previewShape.endPoint.y - startPoint.y) / (numSeats - 1);
-        const seats = [];
+        const dx =
+          (previewShape.endPoint.x - startPoint.x) / (numSeats - 1 || 1);
+        const dy =
+          (previewShape.endPoint.y - startPoint.y) / (numSeats - 1 || 1);
 
-        for (let i = 0; i < numSeats; i++) {
-          seats.push(
-            <Circle
-              key={i}
-              x={startPoint.x + dx * i}
-              y={startPoint.y + dy * i}
-              radius={15}
-              fill="rgba(200, 200, 200, 0.5)"
-              stroke="#666"
-              strokeWidth={1}
-              dash={[5, 5]}
-            />,
-          );
-        }
-
-        return <Group>{seats}</Group>;
+        return (
+          <Group>
+            <Line
+              points={[
+                startPoint.x,
+                startPoint.y,
+                previewShape.endPoint.x,
+                previewShape.endPoint.y,
+              ]}
+              {...commonProps}
+            />
+            {Array.from({ length: numSeats }).map((_, i) => (
+              <Circle
+                key={i}
+                x={startPoint.x + dx * i}
+                y={startPoint.y + dy * i}
+                radius={15}
+                {...commonProps}
+              />
+            ))}
+          </Group>
+        );
       }
 
       case EditorTool.ADD_RECT_ROW: {
         const seatsPerRow = Math.max(Math.round(width / 30), 1);
         const numRows = Math.max(Math.round(height / 30), 1);
-        const seats = [];
-        const dx = width / (seatsPerRow - 1);
-        const dy = height / (numRows - 1);
+        const dx = width / (seatsPerRow - 1 || 1);
+        const dy = height / (numRows - 1 || 1);
 
-        for (let row = 0; row < numRows; row++) {
-          for (let col = 0; col < seatsPerRow; col++) {
-            seats.push(
-              <Circle
-                key={`${row}-${col}`}
-                x={x + dx * col}
-                y={y + dy * row}
-                radius={15}
-                fill="rgba(200, 200, 200, 0.5)"
-                stroke="#666"
-                strokeWidth={1}
-                dash={[5, 5]}
-              />,
-            );
-          }
-        }
-
-        return <Group>{seats}</Group>;
+        return (
+          <Group>
+            <Rect x={x} y={y} width={width} height={height} {...commonProps} />
+            {Array.from({ length: numRows }).map((_, row) =>
+              Array.from({ length: seatsPerRow }).map((_, col) => (
+                <Circle
+                  key={`${row}-${col}`}
+                  x={x + dx * col}
+                  y={y + dy * row}
+                  radius={15}
+                  {...commonProps}
+                />
+              )),
+            )}
+          </Group>
+        );
       }
 
       default:
@@ -371,6 +368,9 @@ const Canvas: React.FC<CanvasProps> = ({
   const renderShapes = useCallback(() => {
     return seatingPlan.zones.flatMap((zone) =>
       zone.areas.map((area) => {
+        const isSelected =
+          selection.type === 'shape' && selection.ids.includes(area.uuid);
+
         if ('text' in area) {
           return (
             <Text
@@ -381,9 +381,57 @@ const Canvas: React.FC<CanvasProps> = ({
               fontSize={area.fontSize}
               fontFamily={area.fontFamily}
               fill={area.fill}
+              draggable={currentTool === EditorTool.SELECT}
+              onClick={() => {
+                if (currentTool === EditorTool.SELECT) {
+                  handleSelect('shape', area.uuid);
+                }
+              }}
+              onDragStart={() => setDraggedSeatId(area.uuid)}
+              onDragEnd={(e) => {
+                if (draggedSeatId) {
+                  const pos = getMousePosition(e);
+                  const updatedPlan = { ...seatingPlan };
+                  updatedPlan.zones = updatedPlan.zones.map((z) => ({
+                    ...z,
+                    areas: z.areas.map((a) =>
+                      a.uuid === draggedSeatId ? { ...a, position: pos } : a,
+                    ),
+                  }));
+                  onPlanChange(updatedPlan);
+                  setDraggedSeatId(null);
+                }
+              }}
             />
           );
         }
+
+        const commonProps = {
+          draggable: currentTool === EditorTool.SELECT,
+          onClick: () => {
+            if (currentTool === EditorTool.SELECT) {
+              handleSelect('shape', area.uuid);
+            }
+          },
+          onDragStart: () => setDraggedSeatId(area.uuid),
+          onDragEnd: (e: any) => {
+            if (draggedSeatId) {
+              const pos = getMousePosition(e);
+              const updatedPlan = { ...seatingPlan };
+              updatedPlan.zones = updatedPlan.zones.map((z) => ({
+                ...z,
+                areas: z.areas.map((a) =>
+                  a.uuid === draggedSeatId ? { ...a, position: pos } : a,
+                ),
+              }));
+              onPlanChange(updatedPlan);
+              setDraggedSeatId(null);
+            }
+          },
+          fill: isSelected ? 'rgba(100, 150, 255, 0.5)' : area.fill || '#ddd',
+          stroke: isSelected ? '#4444ff' : area.stroke || '#666',
+          strokeWidth: isSelected ? 2 : 1,
+        };
 
         switch (area.type) {
           case 'rectangle':
@@ -394,8 +442,7 @@ const Canvas: React.FC<CanvasProps> = ({
                 y={area.position.y}
                 width={area.size?.width || 0}
                 height={area.size?.height || 0}
-                fill={area.fill}
-                stroke={area.stroke}
+                {...commonProps}
               />
             );
           case 'circle':
@@ -405,8 +452,7 @@ const Canvas: React.FC<CanvasProps> = ({
                 x={area.position.x}
                 y={area.position.y}
                 radius={area.radius || 0}
-                fill={area.fill}
-                stroke={area.stroke}
+                {...commonProps}
               />
             );
           case 'ellipse':
@@ -417,8 +463,7 @@ const Canvas: React.FC<CanvasProps> = ({
                 y={area.position.y}
                 radiusX={area.size?.width ? area.size.width / 2 : 0}
                 radiusY={area.size?.height ? area.size.height / 2 : 0}
-                fill={area.fill}
-                stroke={area.stroke}
+                {...commonProps}
               />
             );
           default:
@@ -426,7 +471,7 @@ const Canvas: React.FC<CanvasProps> = ({
         }
       }),
     );
-  }, [seatingPlan.zones]);
+  }, [seatingPlan.zones, selection, currentTool, draggedSeatId, onPlanChange]);
 
   const renderRows = useCallback(() => {
     return seatingPlan.zones.flatMap((zone) =>
@@ -441,7 +486,23 @@ const Canvas: React.FC<CanvasProps> = ({
         const height = maxY - minY;
 
         return (
-          <Group key={row.uuid}>
+          <Group
+            key={row.uuid}
+            onClick={(e) => {
+              if (currentTool === EditorTool.SELECT_ROW) {
+                handleSelect('row', row.uuid);
+                e.cancelBubble = true;
+              }
+            }}
+            onMouseEnter={(e) => {
+              if (currentTool === EditorTool.SELECT_ROW) {
+                e.target.getStage().container().style.cursor = 'pointer';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.target.getStage().container().style.cursor = 'default';
+            }}
+          >
             {/* Row highlight/selection box */}
             {isSelected && (
               <Rect
@@ -453,6 +514,33 @@ const Canvas: React.FC<CanvasProps> = ({
                 strokeWidth={2}
                 dash={[5, 5]}
                 fill="rgba(100, 150, 255, 0.1)"
+                draggable={currentTool === EditorTool.SELECT_ROW}
+                onDragStart={() => {
+                  setDraggedSeatId(row.uuid);
+                }}
+                onDragEnd={(e) => {
+                  if (draggedSeatId) {
+                    const pos = getMousePosition(e);
+                    const updatedPlan = { ...seatingPlan };
+                    const rowToMove = updatedPlan.zones[0].rows.find(
+                      (r) => r.uuid === draggedSeatId,
+                    );
+
+                    if (rowToMove) {
+                      const dx = pos.x - minX;
+                      const dy = pos.y - minY;
+                      rowToMove.seats = rowToMove.seats.map((s) => ({
+                        ...s,
+                        position: {
+                          x: s.position.x + dx,
+                          y: s.position.y + dy,
+                        },
+                      }));
+                      onPlanChange(updatedPlan);
+                    }
+                    setDraggedSeatId(null);
+                  }
+                }}
               />
             )}
 
