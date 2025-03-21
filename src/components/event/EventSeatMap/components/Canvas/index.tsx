@@ -678,6 +678,22 @@ const Canvas: React.FC<CanvasProps> = ({
                 onDragEnd={(e) => handleDragEnd(e, 'seat')}
               />
             ))}
+
+            {/* Seat numbers */}
+            {row.seats.map((seat) => (
+              <Text
+                key={`${seat.uuid}-number`}
+                x={seat.position.x}
+                y={seat.position.y}
+                text={seat.number.toString()}
+                fontSize={12}
+                fill="#000"
+                align="center"
+                verticalAlign="middle"
+                offsetX={4}
+                offsetY={6}
+              />
+            ))}
           </Group>
         );
       }),
