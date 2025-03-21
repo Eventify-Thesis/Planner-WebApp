@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { Point, Row, Seat, Shape, TextLabel } from '../../types';
+import { Point, Row, Seat, Shape, TextLabel, Size } from '../../types';
 
 export const createSeat = (position: Point, category?: string): Seat => ({
   uuid: uuidv4(),
@@ -7,79 +7,119 @@ export const createSeat = (position: Point, category?: string): Seat => ({
   category,
 });
 
-export const createCircularRow = (
-  center: Point,
-  radius: number,
-  numSeats: number,
-): Row => {
-  const seats: Seat[] = [];
-  const angleStep = (2 * Math.PI) / numSeats;
-
-  for (let i = 0; i < numSeats; i++) {
-    const angle = i * angleStep;
-    const x = center.x + radius * Math.cos(angle);
-    const y = center.y + radius * Math.sin(angle);
-    seats.push(createSeat({ x, y }));
-  }
-
-  return {
-    uuid: uuidv4(),
-    type: 'circular',
-    position: center,
-    angle: 0,
-    seats,
-  };
-};
-
 export const createStraightRow = (
-  start: Point,
-  end: Point,
+  startPoint: Point,
+  endPoint: Point,
   numSeats: number,
 ): Row => {
   const seats: Seat[] = [];
-  const dx = (end.x - start.x) / (numSeats - 1);
-  const dy = (end.y - start.y) / (numSeats - 1);
-  const angle = Math.atan2(dy, dx);
+  const rowId = uuidv4();
+  const dx = (endPoint.x - startPoint.x) / (numSeats - 1);
+  const dy = (endPoint.y - startPoint.y) / (numSeats - 1);
 
   for (let i = 0; i < numSeats; i++) {
-    const x = start.x + dx * i;
-    const y = start.y + dy * i;
-    seats.push(createSeat({ x, y }));
+    seats.push({
+      uuid: uuidv4(),
+      position: {
+        x: startPoint.x + dx * i,
+        y: startPoint.y + dy * i,
+      },
+      number: i + 1,
+      radius: 15,
+      rowId,
+    });
   }
 
   return {
-    uuid: uuidv4(),
-    type: 'straight',
-    position: start,
-    angle,
+    uuid: rowId,
+    position: startPoint,
+    rowNumber: 1,
+    seatSpacing: Math.sqrt(dx * dx + dy * dy),
+    seatRadius: 15,
     seats,
+    type: 'straight',
+    startNumber: 1,
+    numberingType: 'continuous',
+    numberFormat: 'numeric',
   };
 };
 
 export const createRectangularRow = (
-  start: Point,
-  size: { width: number; height: number },
-  rows: number,
+  startPoint: Point,
+  size: Size,
+  numRows: number,
   seatsPerRow: number,
 ): Row => {
   const seats: Seat[] = [];
+  const rowId = uuidv4();
   const dx = size.width / (seatsPerRow - 1);
-  const dy = size.height / (rows - 1);
+  const dy = size.height / (numRows - 1);
 
-  for (let row = 0; row < rows; row++) {
+  for (let row = 0; row < numRows; row++) {
     for (let col = 0; col < seatsPerRow; col++) {
-      const x = start.x + dx * col;
-      const y = start.y + dy * row;
-      seats.push(createSeat({ x, y }));
+      seats.push({
+        uuid: uuidv4(),
+        position: {
+          x: startPoint.x + dx * col,
+          y: startPoint.y + dy * row,
+        },
+        number: row * seatsPerRow + col + 1,
+        radius: 15,
+        rowId,
+      });
     }
   }
 
   return {
-    uuid: uuidv4(),
-    type: 'rectangular',
-    position: start,
-    size,
+    uuid: rowId,
+    position: startPoint,
+    rowNumber: 1,
+    seatSpacing: dx,
+    seatRadius: 15,
     seats,
+    type: 'rectangular',
+    startNumber: 1,
+    numberingType: 'continuous',
+    numberFormat: 'numeric',
+  };
+};
+
+export const createCircularRow = (
+  center: Point,
+  radius: number,
+  numSeats: number,
+  startAngle: number = 0,
+  endAngle: number = Math.PI * 2,
+): Row => {
+  const seats: Seat[] = [];
+  const rowId = uuidv4();
+  const angleStep = (endAngle - startAngle) / numSeats;
+
+  for (let i = 0; i < numSeats; i++) {
+    const angle = startAngle + angleStep * i;
+    seats.push({
+      uuid: uuidv4(),
+      position: {
+        x: center.x + radius * Math.cos(angle),
+        y: center.y + radius * Math.sin(angle),
+      },
+      number: i + 1,
+      radius: 15,
+      rowId,
+    });
+  }
+
+  return {
+    uuid: rowId,
+    position: center,
+    rowNumber: 1,
+    seatSpacing: (2 * Math.PI * radius) / numSeats,
+    seatRadius: 15,
+    seats,
+    type: 'circular',
+    startNumber: 1,
+    numberingType: 'continuous',
+    numberFormat: 'numeric',
   };
 };
 

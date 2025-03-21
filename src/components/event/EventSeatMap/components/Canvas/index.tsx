@@ -9,7 +9,7 @@ import {
   Ellipse,
   Line,
 } from 'react-konva';
-import { SeatingPlan, EditorTool, Point, Shape } from '../../types';
+import { SeatingPlan, EditorTool, Point, Shape, Selection } from '../../types';
 import {
   createCircularRow,
   createStraightRow,
@@ -32,6 +32,7 @@ interface CanvasProps {
   zoom: number;
   showGrid: boolean;
   onPlanChange: (plan: SeatingPlan) => void;
+  onSelectionChange: (selection: Selection) => void;
 }
 
 const GRID_SIZE = 20;
@@ -42,13 +43,15 @@ const Canvas: React.FC<CanvasProps> = ({
   zoom,
   showGrid,
   onPlanChange,
+  onSelectionChange,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [stageSize, setStageSize] = useState({ width: 1, height: 1 });
   const [isDrawing, setIsDrawing] = useState(false);
   const [startPoint, setStartPoint] = useState<Point | null>(null);
-  const [previewShape, setPreviewShape] = useState<PreviewShape | null>(null);
+  const [previewShape, setPreviewShape] = useState<any>(null);
   const [draggedSeatId, setDraggedSeatId] = useState<string | null>(null);
+  const [selection, setSelection] = useState<Selection>({ type: 'none', ids: [] });
 
   useEffect(() => {
     const updateSize = () => {
@@ -212,6 +215,12 @@ const Canvas: React.FC<CanvasProps> = ({
     },
     [isDrawing, startPoint, currentTool, seatingPlan, onPlanChange],
   );
+
+  const handleSelect = (type: 'seat' | 'row' | 'shape', id: string) => {
+    const newSelection = { type, ids: [id] };
+    setSelection(newSelection);
+    onSelectionChange(newSelection);
+  };
 
   const renderGrid = () => {
     if (!showGrid) return null;
@@ -420,44 +429,86 @@ const Canvas: React.FC<CanvasProps> = ({
     return seatingPlan.zones.flatMap((zone) =>
       zone.rows.flatMap((row) =>
         row.seats.map((seat) => (
-          <Circle
-            key={seat.uuid}
-            x={seat.position.x}
-            y={seat.position.y}
-            radius={15}
-            fill={
-              seat.category
-                ? seatingPlan.categories.find((c) => c.name === seat.category)
-                    ?.color
-                : '#ddd'
-            }
-            stroke="#666"
-            draggable
-            onDragStart={(e) => {
-              setDraggedSeatId(seat.uuid);
-            }}
-            onDragEnd={(e) => {
-              if (draggedSeatId) {
-                const pos = getMousePosition(e);
-                const updatedPlan = { ...seatingPlan };
-                updatedPlan.zones = updatedPlan.zones.map((z) => ({
-                  ...z,
-                  rows: z.rows.map((r) => ({
-                    ...r,
-                    seats: r.seats.map((s) =>
-                      s.uuid === draggedSeatId ? { ...s, position: pos } : s,
-                    ),
-                  })),
-                }));
-                onPlanChange(updatedPlan);
-                setDraggedSeatId(null);
+          <Group key={seat.uuid}>
+            <Circle
+              x={seat.position.x}
+              y={seat.position.y}
+              radius={seat.radius || 15}
+              fill={
+                selection.ids.includes(seat.uuid)
+                  ? 'rgba(100, 150, 255, 0.5)'
+                  : seat.category
+                  ? seatingPlan.categories.find((c) => c.name === seat.category)
+                      ?.color
+                  : '#ddd'
               }
-            }}
-          />
+              stroke={selection.ids.includes(seat.uuid) ? '#4444ff' : '#666'}
+              strokeWidth={selection.ids.includes(seat.uuid) ? 2 : 1}
+              draggable={currentTool === EditorTool.SELECT}
+              onClick={() => {
+                if (currentTool === EditorTool.SELECT) {
+                  handleSelect('seat', seat.uuid);
+                }
+              }}
+              onDragStart={(e) => {
+                if (selection.type === 'row') {
+                  setDraggedSeatId(row.uuid);
+                } else {
+                  setDraggedSeatId(seat.uuid);
+                }
+              }}
+              onDragEnd={(e) => {
+                if (draggedSeatId) {
+                  const pos = getMousePosition(e);
+                  const updatedPlan = { ...seatingPlan };
+                  
+                  if (selection.type === 'row') {
+                    // Move entire row
+                    const rowToMove = updatedPlan.zones[0].rows.find(r => r.uuid === draggedSeatId);
+                    if (rowToMove) {
+                      const dx = pos.x - rowToMove.position.x;
+                      const dy = pos.y - rowToMove.position.y;
+                      rowToMove.position = pos;
+                      rowToMove.seats = rowToMove.seats.map(s => ({
+                        ...s,
+                        position: {
+                          x: s.position.x + dx,
+                          y: s.position.y + dy
+                        }
+                      }));
+                    }
+                  } else {
+                    // Move single seat
+                    updatedPlan.zones = updatedPlan.zones.map((z) => ({
+                      ...z,
+                      rows: z.rows.map((r) => ({
+                        ...r,
+                        seats: r.seats.map((s) =>
+                          s.uuid === draggedSeatId ? { ...s, position: pos } : s,
+                        ),
+                      })),
+                    }));
+                  }
+                  
+                  onPlanChange(updatedPlan);
+                  setDraggedSeatId(null);
+                }
+              }}
+            />
+            {typeof seat.number === 'number' && (
+              <Text
+                x={seat.position.x - 6}
+                y={seat.position.y - 6}
+                text={seat.number.toString()}
+                fontSize={12}
+                fill="#000"
+              />
+            )}
+          </Group>
         )),
       ),
     );
-  }, [seatingPlan, draggedSeatId, onPlanChange]);
+  }, [seatingPlan, selection, currentTool, draggedSeatId, onPlanChange]);
 
   return (
     <div ref={containerRef} className="canvas-container">

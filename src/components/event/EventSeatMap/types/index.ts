@@ -11,21 +11,32 @@ export interface Size {
 export interface Category {
   name: string;
   color: string;
+  seatCount: number;
 }
 
 export interface Seat {
   uuid: string;
   position: Point;
+  number: number;
   category?: string;
+  radius: number;
+  label?: string;
+  rowId: string; // Reference to parent row
 }
 
 export interface Row {
   uuid: string;
-  seats: Seat[];
-  type: 'circular' | 'straight' | 'rectangular';
   position: Point;
-  size?: Size; // For rectangular rows
-  angle?: number; // For circular/straight rows
+  rowNumber: number;
+  label?: string;
+  seatSpacing: number;
+  seatRadius: number;
+  defaultCategory?: string;
+  seats: Seat[];
+  type: 'straight' | 'circular' | 'rectangular';
+  startNumber: number;
+  numberingType: 'continuous' | 'perRow';
+  numberFormat: string;
 }
 
 export interface Shape {
@@ -51,19 +62,26 @@ export interface TextLabel {
 export interface Zone {
   uuid: string;
   name: string;
-  zone_id: string;
-  position: Point;
+  areas: Shape[];
   rows: Row[];
-  areas: (Shape | TextLabel)[];
+}
+
+export interface Selection {
+  type: 'none' | 'seat' | 'row' | 'shape';
+  ids: string[];
 }
 
 export interface SeatingPlan {
-  id: string;
+  uuid: string;
   name: string;
-  size: Size;
+  size: {
+    width: number;
+    height: number;
+  };
+  backgroundImage?: string;
   categories: Category[];
   zones: Zone[];
-  backgroundImage?: string;
+  totalSeats: number;
 }
 
 export enum EditorTool {
