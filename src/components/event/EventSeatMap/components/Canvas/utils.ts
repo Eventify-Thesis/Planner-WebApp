@@ -45,43 +45,41 @@ export const createStraightRow = (
 };
 
 export const createRectangularRow = (
-  startPoint: Point,
-  size: Size,
+  position: Point,
+  size: { width: number; height: number },
   numRows: number,
   seatsPerRow: number,
-): Row => {
-  const seats: Seat[] = [];
-  const rowId = uuidv4();
-  const dx = size.width / (seatsPerRow - 1);
-  const dy = size.height / (numRows - 1);
+): Row[] => {
+  const rows: Row[] = [];
+  const dx = size.width / (seatsPerRow - 1 || 1);
+  const dy = size.height / (numRows - 1 || 1);
 
-  for (let row = 0; row < numRows; row++) {
-    for (let col = 0; col < seatsPerRow; col++) {
+  for (let rowIndex = 0; rowIndex < numRows; rowIndex++) {
+    const seats: Seat[] = [];
+    const rowUuid = uuidv4();
+    
+    for (let seatIndex = 0; seatIndex < seatsPerRow; seatIndex++) {
       seats.push({
         uuid: uuidv4(),
+        rowId: rowUuid,
         position: {
-          x: startPoint.x + dx * col,
-          y: startPoint.y + dy * row,
+          x: position.x + dx * seatIndex,
+          y: position.y + dy * rowIndex,
         },
-        number: row * seatsPerRow + col + 1,
+        number: seatIndex + 1, // Each row starts from 1
         radius: 15,
-        rowId,
       });
     }
+
+    rows.push({
+      uuid: rowUuid,
+      rowNumber: rowIndex + 1,
+      seats,
+      type: 'straight',
+    });
   }
 
-  return {
-    uuid: rowId,
-    position: startPoint,
-    rowNumber: 1,
-    seatSpacing: dx,
-    seatRadius: 15,
-    seats,
-    type: 'rectangular',
-    startNumber: 1,
-    numberingType: 'continuous',
-    numberFormat: 'numeric',
-  };
+  return rows;
 };
 
 export const createCircularRow = (

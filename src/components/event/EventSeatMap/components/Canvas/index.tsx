@@ -198,17 +198,18 @@ const Canvas: React.FC<CanvasProps> = ({
           currentZone.rows = [...currentZone.rows, straightRow];
           break;
 
-        case EditorTool.ADD_RECT_ROW:
+        case EditorTool.ADD_RECT_ROW: {
           const seatsPerRow = Math.max(Math.round(width / 30), 1);
           const numRows = Math.max(Math.round(height / 30), 1);
-          const rectRow = createRectangularRow(
+          const newRows = createRectangularRow(
             { x, y },
             { width, height },
             numRows,
             seatsPerRow,
           );
-          currentZone.rows = [...currentZone.rows, rectRow];
+          currentZone.rows = [...currentZone.rows, ...newRows];
           break;
+        }
       }
 
       onPlanChange(updatedPlan);
@@ -344,7 +345,16 @@ const Canvas: React.FC<CanvasProps> = ({
 
         return (
           <Group>
-            <Rect x={x} y={y} width={width} height={height} {...commonProps} />
+            {/* Preview grid lines */}
+            {Array.from({ length: numRows + 1 }).map((_, row) => (
+              <Line
+                key={`row-${row}`}
+                points={[x, y + dy * row, x + width, y + dy * row]}
+                {...commonProps}
+              />
+            ))}
+            
+            {/* Preview seats */}
             {Array.from({ length: numRows }).map((_, row) =>
               Array.from({ length: seatsPerRow }).map((_, col) => (
                 <Circle
@@ -354,7 +364,7 @@ const Canvas: React.FC<CanvasProps> = ({
                   radius={15}
                   {...commonProps}
                 />
-              )),
+              ))
             )}
           </Group>
         );
