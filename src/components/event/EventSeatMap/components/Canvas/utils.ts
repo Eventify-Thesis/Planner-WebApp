@@ -57,7 +57,7 @@ export const createRectangularRow = (
   for (let rowIndex = 0; rowIndex < numRows; rowIndex++) {
     const seats: Seat[] = [];
     const rowUuid = uuidv4();
-    
+
     for (let seatIndex = 0; seatIndex < seatsPerRow; seatIndex++) {
       seats.push({
         uuid: uuidv4(),
@@ -66,7 +66,7 @@ export const createRectangularRow = (
           x: position.x + dx * seatIndex,
           y: position.y + dy * rowIndex,
         },
-        number: seatIndex + 1, // Each row starts from 1
+        number: seatIndex + 1,
         radius: 15,
       });
     }
@@ -75,7 +75,10 @@ export const createRectangularRow = (
       uuid: rowUuid,
       rowNumber: rowIndex + 1,
       seats,
-      type: 'straight',
+      type: 'rectangular',
+      startNumber: 1,
+      numberingType: 'continuous',
+      numberFormat: 'numeric',
     });
   }
 

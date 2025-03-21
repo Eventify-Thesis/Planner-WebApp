@@ -353,7 +353,7 @@ const Canvas: React.FC<CanvasProps> = ({
                 {...commonProps}
               />
             ))}
-            
+
             {/* Preview seats */}
             {Array.from({ length: numRows }).map((_, row) =>
               Array.from({ length: seatsPerRow }).map((_, col) => (
@@ -364,7 +364,7 @@ const Canvas: React.FC<CanvasProps> = ({
                   radius={15}
                   {...commonProps}
                 />
-              ))
+              )),
             )}
           </Group>
         );
@@ -496,63 +496,58 @@ const Canvas: React.FC<CanvasProps> = ({
         const height = maxY - minY;
 
         return (
-          <Group
-            key={row.uuid}
-            onClick={(e) => {
-              if (currentTool === EditorTool.SELECT_ROW) {
-                handleSelect('row', row.uuid);
-                e.cancelBubble = true;
-              }
-            }}
-            onMouseEnter={(e) => {
-              if (currentTool === EditorTool.SELECT_ROW) {
-                e.target.getStage().container().style.cursor = 'pointer';
-              }
-            }}
-            onMouseLeave={(e) => {
-              e.target.getStage().container().style.cursor = 'default';
-            }}
-          >
-            {/* Row highlight/selection box */}
-            {isSelected && (
-              <Rect
-                x={minX - 10}
-                y={minY - 10}
-                width={width + 20}
-                height={height + 20}
-                stroke="#4444ff"
-                strokeWidth={2}
-                dash={[5, 5]}
-                fill="rgba(100, 150, 255, 0.1)"
-                draggable={currentTool === EditorTool.SELECT_ROW}
-                onDragStart={() => {
-                  setDraggedSeatId(row.uuid);
-                }}
-                onDragEnd={(e) => {
-                  if (draggedSeatId) {
-                    const pos = getMousePosition(e);
-                    const updatedPlan = { ...seatingPlan };
-                    const rowToMove = updatedPlan.zones[0].rows.find(
-                      (r) => r.uuid === draggedSeatId,
-                    );
+          <Group key={row.uuid}>
+            {/* Row selection area */}
+            <Rect
+              x={minX - 10}
+              y={minY - 30}
+              width={width + 20}
+              height={height + 40}
+              fill={isSelected ? 'rgba(100, 150, 255, 0.1)' : 'transparent'}
+              stroke={isSelected ? '#4444ff' : 'transparent'}
+              strokeWidth={2}
+              onClick={(e) => {
+                if (currentTool === EditorTool.SELECT) {
+                  handleSelect('row', row.uuid);
+                  e.cancelBubble = true;
+                }
+              }}
+              onMouseEnter={(e) => {
+                if (currentTool === EditorTool.SELECT) {
+                  e.target.getStage().container().style.cursor = 'pointer';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.target.getStage().container().style.cursor = 'default';
+              }}
+              draggable={currentTool === EditorTool.SELECT && isSelected}
+              onDragStart={() => {
+                setDraggedSeatId(row.uuid);
+              }}
+              onDragEnd={(e) => {
+                if (draggedSeatId) {
+                  const pos = getMousePosition(e);
+                  const updatedPlan = { ...seatingPlan };
+                  const rowToMove = updatedPlan.zones[0].rows.find(
+                    (r) => r.uuid === draggedSeatId,
+                  );
 
-                    if (rowToMove) {
-                      const dx = pos.x - minX;
-                      const dy = pos.y - minY;
-                      rowToMove.seats = rowToMove.seats.map((s) => ({
-                        ...s,
-                        position: {
-                          x: s.position.x + dx,
-                          y: s.position.y + dy,
-                        },
-                      }));
-                      onPlanChange(updatedPlan);
-                    }
-                    setDraggedSeatId(null);
+                  if (rowToMove) {
+                    const dx = pos.x - minX;
+                    const dy = pos.y - minY;
+                    rowToMove.seats = rowToMove.seats.map((s) => ({
+                      ...s,
+                      position: {
+                        x: s.position.x + dx,
+                        y: s.position.y + dy,
+                      },
+                    }));
+                    onPlanChange(updatedPlan);
                   }
-                }}
-              />
-            )}
+                  setDraggedSeatId(null);
+                }
+              }}
+            />
 
             {/* Row label */}
             <Text
@@ -565,96 +560,84 @@ const Canvas: React.FC<CanvasProps> = ({
 
             {/* Row seats */}
             {row.seats.map((seat) => (
-              <Group key={seat.uuid}>
-                <Circle
-                  x={seat.position.x}
-                  y={seat.position.y}
-                  radius={seat.radius || 15}
-                  fill={
-                    selection.ids.includes(seat.uuid) || isSelected
-                      ? 'rgba(100, 150, 255, 0.5)'
-                      : seat.category
-                      ? seatingPlan.categories.find(
-                          (c) => c.name === seat.category,
-                        )?.color || '#ddd'
-                      : '#ddd'
-                  }
-                  stroke={
-                    selection.ids.includes(seat.uuid) || isSelected
-                      ? '#4444ff'
-                      : '#666'
-                  }
-                  strokeWidth={
-                    selection.ids.includes(seat.uuid) || isSelected ? 2 : 1
-                  }
-                  draggable={currentTool === EditorTool.SELECT}
-                  onClick={(e) => {
-                    if (currentTool === EditorTool.SELECT) {
-                      handleSelect('seat', seat.uuid);
-                    } else if (currentTool === EditorTool.SELECT_ROW) {
-                      handleSelect('row', row.uuid);
-                    }
+              <Circle
+                key={seat.uuid}
+                x={seat.position.x}
+                y={seat.position.y}
+                radius={seat.radius || 15}
+                fill={
+                  selection.type === 'seat' && selection.ids.includes(seat.uuid)
+                    ? 'rgba(100, 150, 255, 0.5)'
+                    : isSelected
+                    ? 'rgba(100, 150, 255, 0.3)'
+                    : seat.category
+                    ? seatingPlan.categories.find(
+                        (c) => c.name === seat.category,
+                      )?.color || '#ddd'
+                    : '#ddd'
+                }
+                stroke={
+                  selection.type === 'seat' && selection.ids.includes(seat.uuid)
+                    ? '#4444ff'
+                    : isSelected
+                    ? '#4444ff'
+                    : '#666'
+                }
+                strokeWidth={1}
+                draggable={currentTool === EditorTool.SELECT}
+                onClick={(e) => {
+                  if (currentTool === EditorTool.SELECT) {
+                    handleSelect('seat', seat.uuid);
                     e.cancelBubble = true;
-                  }}
-                  onDragStart={(e) => {
-                    if (currentTool === EditorTool.SELECT_ROW) {
-                      handleSelect('row', row.uuid);
-                      setDraggedSeatId(row.uuid);
-                    } else {
-                      setDraggedSeatId(seat.uuid);
-                    }
-                  }}
-                  onDragEnd={(e) => {
-                    if (draggedSeatId) {
-                      const pos = getMousePosition(e);
-                      const updatedPlan = { ...seatingPlan };
+                  }
+                }}
+                onMouseEnter={(e) => {
+                  if (currentTool === EditorTool.SELECT) {
+                    e.target.getStage().container().style.cursor = 'pointer';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.target.getStage().container().style.cursor = 'default';
+                }}
+                onDragStart={() => {
+                  setDraggedSeatId(seat.uuid);
+                }}
+                onDragEnd={(e) => {
+                  if (draggedSeatId) {
+                    const pos = getMousePosition(e);
+                    const updatedPlan = { ...seatingPlan };
+                    updatedPlan.zones = updatedPlan.zones.map((z) => ({
+                      ...z,
+                      rows: z.rows.map((r) => ({
+                        ...r,
+                        seats: r.seats.map((s) =>
+                          s.uuid === draggedSeatId
+                            ? { ...s, position: pos }
+                            : s,
+                        ),
+                      })),
+                    }));
+                    onPlanChange(updatedPlan);
+                    setDraggedSeatId(null);
+                  }
+                }}
+              />
+            ))}
 
-                      if (selection.type === 'row') {
-                        // Move entire row
-                        const rowToMove = updatedPlan.zones[0].rows.find(
-                          (r) => r.uuid === draggedSeatId,
-                        );
-                        if (rowToMove) {
-                          const dx = pos.x - rowToMove.seats[0].position.x;
-                          const dy = pos.y - rowToMove.seats[0].position.y;
-                          rowToMove.seats = rowToMove.seats.map((s) => ({
-                            ...s,
-                            position: {
-                              x: s.position.x + dx,
-                              y: s.position.y + dy,
-                            },
-                          }));
-                        }
-                      } else {
-                        // Move single seat
-                        updatedPlan.zones = updatedPlan.zones.map((z) => ({
-                          ...z,
-                          rows: z.rows.map((r) => ({
-                            ...r,
-                            seats: r.seats.map((s) =>
-                              s.uuid === draggedSeatId
-                                ? { ...s, position: pos }
-                                : s,
-                            ),
-                          })),
-                        }));
-                      }
-
-                      onPlanChange(updatedPlan);
-                      setDraggedSeatId(null);
-                    }
-                  }}
-                />
-                {typeof seat.number === 'number' && (
-                  <Text
-                    x={seat.position.x - 6}
-                    y={seat.position.y - 6}
-                    text={seat.number.toString()}
-                    fontSize={12}
-                    fill="#000"
-                  />
-                )}
-              </Group>
+            {/* Seat numbers */}
+            {row.seats.map((seat) => (
+              <Text
+                key={`${seat.uuid}-number`}
+                x={seat.position.x}
+                y={seat.position.y}
+                text={seat.number.toString()}
+                fontSize={12}
+                fill="#000"
+                align="center"
+                verticalAlign="middle"
+                offsetX={4}
+                offsetY={6}
+              />
             ))}
           </Group>
         );
@@ -676,7 +659,7 @@ const Canvas: React.FC<CanvasProps> = ({
                   ? 'rgba(100, 150, 255, 0.5)'
                   : seat.category
                   ? seatingPlan.categories.find((c) => c.name === seat.category)
-                      ?.color
+                      ?.color || '#ddd'
                   : '#ddd'
               }
               stroke={selection.ids.includes(seat.uuid) ? '#4444ff' : '#666'}
