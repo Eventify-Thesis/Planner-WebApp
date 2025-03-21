@@ -33,6 +33,7 @@ interface CanvasProps {
   showGrid: boolean;
   onPlanChange: (plan: SeatingPlan) => void;
   onSelectionChange: (selection: Selection) => void;
+  setCurrentTool: (tool: EditorTool) => void;
 }
 
 const GRID_SIZE = 20;
@@ -44,6 +45,7 @@ const Canvas: React.FC<CanvasProps> = ({
   showGrid,
   onPlanChange,
   onSelectionChange,
+  setCurrentTool,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [stageSize, setStageSize] = useState({ width: 1, height: 1 });
@@ -56,6 +58,11 @@ const Canvas: React.FC<CanvasProps> = ({
     ids: [],
   });
   const [isDragging, setIsDragging] = useState(false);
+  const [dragPreview, setDragPreview] = useState<{
+    type: 'seat' | 'row';
+    position: Point;
+    seats: { uuid: string; position: Point }[];
+  } | null>(null);
 
   useEffect(() => {
     const updateSize = () => {
@@ -263,11 +270,63 @@ const Canvas: React.FC<CanvasProps> = ({
     setDraggedSeatId(id);
     setIsDragging(true);
 
+    // Create drag preview
+    if (type === 'seat') {
+      const seat = seatingPlan.zones[0].rows
+        .flatMap((row) => row.seats)
+        .find((seat) => seat.uuid === id);
+      if (seat) {
+        setDragPreview({
+          type: 'seat',
+          position: seat.position,
+          seats: [{ uuid: seat.uuid, position: seat.position }],
+        });
+      }
+    } else if (type === 'row') {
+      const row = seatingPlan.zones[0].rows.find((row) => row.uuid === id);
+      if (row) {
+        setDragPreview({
+          type: 'row',
+          position: row.seats[0].position,
+          seats: row.seats.map((seat) => ({
+            uuid: seat.uuid,
+            position: seat.position,
+          })),
+        });
+      }
+    }
+
     // If the dragged item isn't selected, select it
     if (!selection.ids.includes(id) || selection.type !== type) {
       handleSelect(type, id);
     }
   };
+
+  const handleDragMove = useCallback(
+    (e: any) => {
+      if (!isDragging || !dragPreview) return;
+
+      const pos = getMousePosition(e);
+      const dx = pos.x - dragPreview.position.x;
+      const dy = pos.y - dragPreview.position.y;
+
+      setDragPreview((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          position: pos,
+          seats: prev.seats.map((seat) => ({
+            ...seat,
+            position: {
+              x: seat.position.x + dx,
+              y: seat.position.y + dy,
+            },
+          })),
+        };
+      });
+    },
+    [isDragging, dragPreview, getMousePosition],
+  );
 
   const handleDragEnd = (e: any, type: 'seat' | 'row' | 'shape') => {
     if (!draggedSeatId || !isDragging) return;
@@ -318,22 +377,23 @@ const Canvas: React.FC<CanvasProps> = ({
           }));
         }
         break;
-
-      case 'shape':
-        // Update shape position
-        updatedPlan.zones = updatedPlan.zones.map((zone) => ({
-          ...zone,
-          areas: zone.areas.map((area) =>
-            area.uuid === draggedSeatId ? { ...area, position: pos } : area,
-          ),
-        }));
-        break;
     }
 
     onPlanChange(updatedPlan);
     setDraggedSeatId(null);
     setIsDragging(false);
+    setDragPreview(null);
   };
+
+  const handleSeatDoubleClick = useCallback(
+    (e: any) => {
+      if (currentTool === EditorTool.SELECT_ROW) {
+        e.cancelBubble = true;
+        setCurrentTool(EditorTool.SELECT_SEAT);
+      }
+    },
+    [currentTool, setCurrentTool],
+  );
 
   const renderGrid = () => {
     if (!showGrid) return null;
@@ -666,6 +726,7 @@ const Canvas: React.FC<CanvasProps> = ({
                 strokeWidth={1}
                 draggable={currentTool === EditorTool.SELECT_SEAT}
                 onClick={(e) => handleSelect('seat', seat.uuid, e)}
+                onDblClick={handleSeatDoubleClick}
                 onMouseEnter={(e) => {
                   if (currentTool === EditorTool.SELECT_SEAT) {
                     e.target.getStage().container().style.cursor = 'pointer';
@@ -790,29 +851,57 @@ const Canvas: React.FC<CanvasProps> = ({
   }, [seatingPlan, selection, currentTool, draggedSeatId, onPlanChange]);
 
   return (
-    <div ref={containerRef} className="canvas-container">
+    <div ref={containerRef} style={{ width: '100%', height: '100%' }}>
       <Stage
         width={stageSize.width}
         height={stageSize.height}
         onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
+        onMouseMove={(e) => {
+          handleMouseMove(e);
+          if (isDragging) {
+            handleDragMove(e);
+          }
+        }}
         onMouseUp={handleMouseUp}
         scale={{ x: zoom, y: zoom }}
       >
         <Layer>
-          {showGrid && renderGrid()}
+          {renderGrid()}
           {renderShapes()}
           {renderRows()}
-          {previewShape && renderPreviewShape()}
-          {/* Background */}
-          {seatingPlan.backgroundImage && (
-            <Rect
-              width={seatingPlan.size.width}
-              height={seatingPlan.size.height}
-              fillPatternImage={new Image()}
-              fillPatternScaleX={1 / zoom}
-              fillPatternScaleY={1 / zoom}
-            />
+          {renderPreviewShape()}
+          {/* Render drag preview */}
+          {dragPreview && (
+            <Group opacity={0.6}>
+              {dragPreview.seats.map((seat) => (
+                <React.Fragment key={seat.uuid}>
+                  <Circle
+                    x={seat.position.x}
+                    y={seat.position.y}
+                    radius={15}
+                    fill="rgba(100, 150, 255, 0.5)"
+                    stroke="#4444ff"
+                    strokeWidth={1}
+                  />
+                  <Text
+                    x={seat.position.x}
+                    y={seat.position.y}
+                    text={
+                      seatingPlan.zones[0].rows
+                        .flatMap((row) => row.seats)
+                        .find((s) => s.uuid === seat.uuid)
+                        ?.number.toString() || ''
+                    }
+                    fontSize={12}
+                    fill="#000"
+                    align="center"
+                    verticalAlign="middle"
+                    offsetX={4}
+                    offsetY={6}
+                  />
+                </React.Fragment>
+              ))}
+            </Group>
           )}
         </Layer>
       </Stage>

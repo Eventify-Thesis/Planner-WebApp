@@ -107,6 +107,10 @@ const EventSeatMap: React.FC = () => {
     setCurrentTool(tool);
   }, [setCurrentTool]);
 
+  const handleSelectionChange = useCallback((selection: any) => {
+    console.log('Selection changed:', selection);
+  }, []);
+
   return (
     <Layout className="seat-map-layout">
       <div className="seat-map-header">
@@ -238,8 +242,10 @@ const EventSeatMap: React.FC = () => {
             seatingPlan={seatingPlan}
             currentTool={currentTool}
             zoom={zoom}
-            onPlanChange={handlePlanChange}
             showGrid={showGrid}
+            onPlanChange={handlePlanChange}
+            onSelectionChange={handleSelectionChange}
+            setCurrentTool={setCurrentTool}
           />
         </Content>
         <Sider width={300} className="plan-settings-panel">
