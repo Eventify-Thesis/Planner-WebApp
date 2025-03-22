@@ -1,11 +1,6 @@
 import { useCallback, useState, useEffect } from 'react';
 import { EditorTool, Point, SeatingPlan, Selection } from '../types';
 import { v4 as uuidv4 } from 'uuid';
-import {
-  createShape,
-  createStraightRow,
-  createRectangularRow,
-} from '../components/Canvas/utils';
 import { getMousePosition } from '../components/Canvas/utils/mouseUtils';
 import { updateSelection } from '../components/Canvas/utils/selectionUtils';
 import { createDragPreview } from '../components/Canvas/utils/dragUtils';
@@ -20,13 +15,6 @@ export const useCanvasHandlers = (
   canvasSetters: any,
   canvasActions: any,
 ) => {
-  // Add clipboard state
-  const [clipboardItems, setClipboardItems] = useState<{
-    seats: any[];
-    rows: any[];
-    shapes: any[];
-  } | null>(null);
-
   const handleCopy = useCallback(
     (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
@@ -56,16 +44,16 @@ export const useCanvasHandlers = (
           copiedItems.rows.length ||
           copiedItems.shapes.length
         ) {
-          setClipboardItems(copiedItems);
+          canvasSetters.setClipboard(copiedItems);
         }
       }
     },
-    [canvasState, seatingPlan],
+    [canvasState, seatingPlan, canvasSetters],
   );
 
   const handlePaste = useCallback(
     (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'v' && clipboardItems) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'v' && canvasState.clipboard) {
         const updatedPlan = { ...seatingPlan };
         const currentZone = updatedPlan.zones[0];
         const newSelection = {
@@ -77,8 +65,8 @@ export const useCanvasHandlers = (
         const offset = 30; // Offset for pasted items
 
         // Paste rows
-        if (clipboardItems.rows?.length) {
-          clipboardItems.rows.forEach((row: any) => {
+        if (canvasState.clipboard.rows?.length) {
+          canvasState.clipboard.rows.forEach((row: any) => {
             const newRow = {
               ...row,
               uuid: uuidv4(),
@@ -97,10 +85,10 @@ export const useCanvasHandlers = (
         }
 
         // Paste individual seats as a new row
-        if (clipboardItems.seats?.length) {
+        if (canvasState.clipboard.seats?.length) {
           const newRow = {
             uuid: uuidv4(),
-            seats: clipboardItems.seats.map((seat: any) => ({
+            seats: canvasState.clipboard.seats.map((seat: any) => ({
               ...seat,
               uuid: uuidv4(),
               position: {
@@ -115,8 +103,8 @@ export const useCanvasHandlers = (
         }
 
         // Paste shapes
-        if (clipboardItems.shapes?.length) {
-          clipboardItems.shapes.forEach((shape: any) => {
+        if (canvasState.clipboard.shapes?.length) {
+          canvasState.clipboard.shapes.forEach((shape: any) => {
             const newShape = {
               ...shape,
               uuid: uuidv4(),
@@ -150,7 +138,7 @@ export const useCanvasHandlers = (
         }
       }
     },
-    [clipboardItems, seatingPlan, onPlanChange, canvasSetters],
+    [canvasState, seatingPlan, onPlanChange, canvasSetters],
   );
 
   useEffect(() => {
@@ -594,11 +582,17 @@ export const useCanvasHandlers = (
 
   const handleDragStart = useCallback(
     (id: string, type: 'seat' | 'row' | 'shape') => {
-      canvasSetters.setDraggedSeatId(id);
-      canvasSetters.setIsDragging(true);
-      const preview = createDragPreview(seatingPlan, id, type);
-      if (preview) {
-        canvasSetters.setDragPreview(preview);
+      const { selection } = canvasState;
+      if (
+        selection.selectedItems.seats.length == 1 ||
+        selection.selectedItems.rows.length == 1
+      ) {
+        canvasSetters.setDraggedSeatId(id);
+        canvasSetters.setIsDragging(true);
+        const preview = createDragPreview(seatingPlan, id, type);
+        if (preview) {
+          canvasSetters.setDragPreview(preview);
+        }
       }
     },
     [seatingPlan, canvasSetters],
