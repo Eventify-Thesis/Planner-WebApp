@@ -295,7 +295,7 @@ export const useCanvasHandlers = (
           const row = {
             uuid: uuidv4(),
             seats,
-            rowNumber: seatingPlan.zones[0].rows.length + 1,
+            rowNumber: 1, // Each new row starts with 1
           };
           currentZone.rows.push(row);
           canvasSetters.setSelection({ type: 'row', ids: [row.uuid] });
@@ -322,7 +322,7 @@ export const useCanvasHandlers = (
             return {
               uuid: uuidv4(),
               seats,
-              rowNumber: seatingPlan.zones[0].rows.length + rowIndex + 1,
+              rowNumber: rowIndex + 1, // Each row in the rectangle gets sequential numbers starting from 1
             };
           });
 
