@@ -140,7 +140,85 @@ const Canvas: React.FC<CanvasProps> = ({
             });
             break;
           }
+          case 'shape': {
+            const selectedShapes = seatingPlan.zones[0].areas.filter((area) =>
+              state.selection.ids.includes(area.uuid),
+            );
+            setters.setClipboard({
+              type: 'shape',
+              items: JSON.parse(JSON.stringify(selectedShapes)),
+            });
+            break;
+          }
         }
+      }
+
+      // Handle paste
+      if ((e.ctrlKey || e.metaKey) && e.key === 'v' && state.clipboard) {
+        e.preventDefault();
+        const updatedPlan = { ...seatingPlan };
+        const offset = { x: 20, y: 20 }; // Offset for pasted items
+
+        switch (state.clipboard.type) {
+          case 'seats': {
+            // Existing seats paste logic
+            break;
+          }
+          case 'row': {
+            // Existing row paste logic
+            const newItems = state.clipboard.items.map((item: any) => ({
+              ...item,
+              uuid: crypto.randomUUID(),
+              position: {
+                x: item.position.x + offset.x,
+                y: item.position.y + offset.y,
+              },
+              seats: (item.seats || []).map((seat: any) => ({
+                ...seat,
+                uuid: crypto.randomUUID(),
+              })),
+            }));
+
+            updatedPlan.zones[0].rows = [
+              ...updatedPlan.zones[0].rows,
+              ...newItems.filter((item: any) => item.seats),
+            ];
+            updatedPlan.zones[0].areas = [
+              ...updatedPlan.zones[0].areas,
+              ...newItems.filter((item: any) => !item.seats),
+            ];
+            break;
+          }
+          case 'shape': {
+            const newShapes = state.clipboard.items.map((shape: any) => ({
+              ...shape,
+              uuid: crypto.randomUUID(),
+              position: {
+                x: shape.position.x + offset.x,
+                y: shape.position.y + offset.y,
+              },
+              // Handle different shape types
+              ...(shape.size && {
+                size: { ...shape.size },
+              }),
+              ...(shape.points && {
+                points: shape.points.map((point: any) => ({
+                  x: point.x + offset.x,
+                  y: point.y + offset.y,
+                })),
+              }),
+            }));
+
+            updatedPlan.zones[0].areas = [
+              ...updatedPlan.zones[0].areas,
+              ...newShapes,
+            ];
+            break;
+          }
+        }
+
+        actions.addToHistory(updatedPlan);
+        onPlanChange(updatedPlan);
       }
 
       // Handle undo/redo

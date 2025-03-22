@@ -1,23 +1,9 @@
 import React, { useState, useCallback } from 'react';
-import { Layout, Card, Button, Space, Tabs, Input, Tooltip, Switch, Divider } from 'antd';
-import {
-  SaveOutlined,
-  UndoOutlined,
-  RedoOutlined,
-  ZoomInOutlined,
-  ZoomOutOutlined,
-  SelectOutlined,
-  TableOutlined,
-  FontSizeOutlined,
-  BorderOutlined,
-  EllipsisOutlined,
-  StarOutlined,
-  CiCircleFilled,
-} from '@ant-design/icons';
-import { Stage, Layer, Circle, Text, Group, Rect } from 'react-konva';
+import { Layout } from 'antd';
 import { SeatingPlan, EditorTool } from './types';
 import PlanSettingsPanel from './components/PlanSettingsPanel';
 import Canvas from './components/Canvas';
+import SeatMapHeader from './components/SeatMapHeader/';
 import useEditorState from './hooks/useEditorState';
 import './EventSeatMap.css';
 
@@ -50,7 +36,8 @@ const DEFAULT_SEATING_PLAN: SeatingPlan = {
 };
 
 const EventSeatMap: React.FC = () => {
-  const [seatingPlan, setSeatingPlan] = useState<SeatingPlan>(DEFAULT_SEATING_PLAN);
+  const [seatingPlan, setSeatingPlan] =
+    useState<SeatingPlan>(DEFAULT_SEATING_PLAN);
   const [showGrid, setShowGrid] = useState(true);
   const {
     currentTool,
@@ -67,7 +54,8 @@ const EventSeatMap: React.FC = () => {
   const handleSave = useCallback(() => {
     console.log('Saving seating plan:', seatingPlan);
     const dataStr = JSON.stringify(seatingPlan, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+    const dataUri =
+      'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
     const exportFileDefaultName = 'seating-plan.json';
 
     const linkElement = document.createElement('a');
@@ -76,10 +64,13 @@ const EventSeatMap: React.FC = () => {
     linkElement.click();
   }, [seatingPlan]);
 
-  const handlePlanChange = useCallback((updatedPlan: SeatingPlan) => {
-    setSeatingPlan(updatedPlan);
-    addToHistory(updatedPlan);
-  }, [addToHistory]);
+  const handlePlanChange = useCallback(
+    (updatedPlan: SeatingPlan) => {
+      setSeatingPlan(updatedPlan);
+      addToHistory(updatedPlan);
+    },
+    [addToHistory],
+  );
 
   const handleUndo = useCallback(() => {
     const previousState = undo();
@@ -103,9 +94,12 @@ const EventSeatMap: React.FC = () => {
     setZoom((prev) => Math.max(prev - 0.1, 0.5));
   }, [setZoom]);
 
-  const handleToolChange = useCallback((tool: EditorTool) => {
-    setCurrentTool(tool);
-  }, [setCurrentTool]);
+  const handleToolChange = useCallback(
+    (tool: EditorTool) => {
+      setCurrentTool(tool);
+    },
+    [setCurrentTool],
+  );
 
   const handleSelectionChange = useCallback((selection: any) => {
     console.log('Selection changed:', selection);
@@ -113,128 +107,21 @@ const EventSeatMap: React.FC = () => {
 
   return (
     <Layout className="seat-map-layout">
-      <div className="seat-map-header">
-        <Space size="middle">
-          <Space>
-            <Button
-              type={currentTool === EditorTool.SELECT_SEAT ? 'primary' : 'default'}
-              icon={<SelectOutlined />}
-              onClick={() => handleToolChange(EditorTool.SELECT_SEAT)}
-              title="Select Individual Seats"
-            >
-              Select Seats
-            </Button>
-            <Button
-              type={currentTool === EditorTool.SELECT_ROW ? 'primary' : 'default'}
-              icon={<TableOutlined />}
-              onClick={() => handleToolChange(EditorTool.SELECT_ROW)}
-              title="Select Rows and Shapes"
-            >
-              Select Rows
-            </Button>
-            <Divider type="vertical" />
-            <Button
-              type={currentTool === EditorTool.ADD_ROW ? 'primary' : 'default'}
-              icon={<TableOutlined />}
-              onClick={() => handleToolChange(EditorTool.ADD_ROW)}
-            >
-              Add Row
-            </Button>
-            <Button
-              type={currentTool === EditorTool.ADD_RECT_ROW ? 'primary' : 'default'}
-              icon={<BorderOutlined />}
-              onClick={() => handleToolChange(EditorTool.ADD_RECT_ROW)}
-            >
-              Add Rectangle Row
-            </Button>
-            <Button
-              type={currentTool === EditorTool.ADD_SHAPE ? 'primary' : 'default'}
-              icon={<BorderOutlined />}
-              onClick={() => handleToolChange(EditorTool.ADD_SHAPE)}
-            >
-              Add Shape
-            </Button>
-            <Button
-              type={currentTool === EditorTool.ADD_CIRCLE ? 'primary' : 'default'}
-              icon={<CiCircleFilled />}
-              onClick={() => handleToolChange(EditorTool.ADD_CIRCLE)}
-            >
-              Add Circle
-            </Button>
-            <Button
-              type={currentTool === EditorTool.ADD_ELLIPSE ? 'primary' : 'default'}
-              icon={<EllipsisOutlined />}
-              onClick={() => handleToolChange(EditorTool.ADD_ELLIPSE)}
-            >
-              Add Ellipse
-            </Button>
-            <Button
-              type={currentTool === EditorTool.ADD_POLYGON ? 'primary' : 'default'}
-              icon={<StarOutlined />}
-              onClick={() => handleToolChange(EditorTool.ADD_POLYGON)}
-            >
-              Add Polygon
-            </Button>
-            <Button
-              type={currentTool === EditorTool.ADD_TEXT ? 'primary' : 'default'}
-              icon={<FontSizeOutlined />}
-              onClick={() => handleToolChange(EditorTool.ADD_TEXT)}
-            >
-              Add Text
-            </Button>
-          </Space>
-
-          <Space>
-            <Tooltip title="Zoom Out">
-              <Button icon={<ZoomOutOutlined />} onClick={handleZoomOut} />
-            </Tooltip>
-            <Input
-              style={{ width: 70 }}
-              suffix="%"
-              value={Math.round(zoom * 100)}
-              onChange={(e) => {
-                const value = parseInt(e.target.value);
-                if (!isNaN(value)) {
-                  setZoom(value / 100);
-                }
-              }}
-            />
-            <Tooltip title="Zoom In">
-              <Button icon={<ZoomInOutlined />} onClick={handleZoomIn} />
-            </Tooltip>
-          </Space>
-
-          <Space>
-            <Tooltip title="Undo">
-              <Button
-                icon={<UndoOutlined />}
-                onClick={handleUndo}
-                disabled={!canUndo}
-              />
-            </Tooltip>
-            <Tooltip title="Redo">
-              <Button
-                icon={<RedoOutlined />}
-                onClick={handleRedo}
-                disabled={!canRedo}
-              />
-            </Tooltip>
-          </Space>
-
-          <Space>
-            <Switch
-              checkedChildren="Grid On"
-              unCheckedChildren="Grid Off"
-              checked={showGrid}
-              onChange={setShowGrid}
-            />
-          </Space>
-
-          <Button type="primary" icon={<SaveOutlined />} onClick={handleSave}>
-            Save Changes
-          </Button>
-        </Space>
-      </div>
+      <SeatMapHeader
+        currentTool={currentTool}
+        zoom={zoom}
+        showGrid={showGrid}
+        canUndo={canUndo}
+        canRedo={canRedo}
+        onToolChange={handleToolChange}
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
+        onZoomChange={setZoom}
+        onShowGridChange={setShowGrid}
+        onSave={handleSave}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+      />
 
       <Layout>
         <Content className="seat-map-content">

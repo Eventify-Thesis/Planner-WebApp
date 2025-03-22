@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { EditorTool, Point, SeatingPlan, Selection } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -20,6 +20,124 @@ export const useCanvasHandlers = (
   canvasSetters: any,
   canvasActions: any,
 ) => {
+  // Add clipboard state
+  const [clipboardItems, setClipboardItems] = useState<{
+    type: 'seat' | 'row' | 'shape';
+    items: any[];
+  } | null>(null);
+
+  const handleCopy = useCallback(
+    (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+        const { selection } = canvasState;
+        if (!selection || !selection.ids.length) return;
+
+        const items = selection.ids
+          .map((id) => {
+            if (selection.type === 'row') {
+              return seatingPlan.zones[0].rows.find((r) => r.uuid === id);
+            } else if (selection.type === 'seat') {
+              let foundSeat;
+              seatingPlan.zones[0].rows.some((row) => {
+                foundSeat = row.seats.find((s) => s.uuid === id);
+                return !!foundSeat;
+              });
+              return foundSeat;
+            } else if (selection.type === 'shape') {
+              return seatingPlan.zones[0].areas.find((a) => a.uuid === id);
+            }
+            return null;
+          })
+          .filter(Boolean);
+
+        if (items.length) {
+          setClipboardItems({
+            type: selection.type,
+            items: items,
+          });
+        }
+      }
+    },
+    [canvasState, seatingPlan],
+  );
+
+  const handlePaste = useCallback(
+    (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'v' && clipboardItems) {
+        const updatedPlan = { ...seatingPlan };
+        const currentZone = updatedPlan.zones[0];
+        const newIds: string[] = [];
+
+        const offset = 30; // Offset for pasted items
+
+        if (clipboardItems.type === 'row') {
+          clipboardItems.items.forEach((row: any) => {
+            const newRow = {
+              ...row,
+              uuid: uuidv4(),
+              seats: row.seats.map((seat: any) => ({
+                ...seat,
+                uuid: uuidv4(),
+                position: {
+                  x: seat.position.x + offset,
+                  y: seat.position.y + offset,
+                },
+              })),
+            };
+            currentZone.rows.push(newRow);
+            newIds.push(newRow.uuid);
+          });
+        } else if (clipboardItems.type === 'seat') {
+          const newRow = {
+            uuid: uuidv4(),
+            seats: clipboardItems.items.map((seat: any) => ({
+              ...seat,
+              uuid: uuidv4(),
+              position: {
+                x: seat.position.x + offset,
+                y: seat.position.y + offset,
+              },
+            })),
+            rowNumber: currentZone.rows.length + 1,
+          };
+          currentZone.rows.push(newRow);
+          newIds.push(...newRow.seats.map((s) => s.uuid));
+        } else if (clipboardItems.type === 'shape') {
+          clipboardItems.items.forEach((shape: any) => {
+            const newShape = {
+              ...shape,
+              uuid: uuidv4(),
+              position: {
+                x: shape.position.x + offset,
+                y: shape.position.y + offset,
+              },
+            };
+            currentZone.areas.push(newShape);
+            newIds.push(newShape.uuid);
+          });
+        }
+
+        if (newIds.length) {
+          onPlanChange(updatedPlan);
+          canvasSetters.setSelection({
+            type: clipboardItems.type,
+            ids: newIds,
+          });
+        }
+      }
+    },
+    [clipboardItems, seatingPlan, onPlanChange, canvasSetters],
+  );
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleCopy);
+    window.addEventListener('keydown', handlePaste);
+    return () => {
+      window.removeEventListener('keydown', handleCopy);
+      window.removeEventListener('keydown', handlePaste);
+    };
+  }, [handleCopy, handlePaste]);
+
   const initializePreviewShape = useCallback(
     (point: Point) => {
       if (
@@ -261,10 +379,14 @@ export const useCanvasHandlers = (
 
         case EditorTool.ADD_POLYGON: {
           const points = [
-            x, y,
-            x + width, y,
-            x + width, y + height,
-            x, y + height,
+            x,
+            y,
+            x + width,
+            y,
+            x + width,
+            y + height,
+            x,
+            y + height,
           ];
           const shape = {
             uuid: uuidv4(),
@@ -281,7 +403,7 @@ export const useCanvasHandlers = (
           const numSeats = Math.max(Math.round(width / 30), 2);
           const dx = (endPoint.x - startPoint.x) / (numSeats - 1);
           const dy = (endPoint.y - startPoint.y) / (numSeats - 1);
-          
+
           const seats = Array.from({ length: numSeats }, (_, i) => ({
             uuid: uuidv4(),
             position: {
@@ -309,15 +431,18 @@ export const useCanvasHandlers = (
           const dy = height / (numRows - 1);
 
           const rows = Array.from({ length: numRows }, (_, rowIndex) => {
-            const seats = Array.from({ length: seatsPerRow }, (_, seatIndex) => ({
-              uuid: uuidv4(),
-              position: {
-                x: x + seatIndex * dx,
-                y: y + rowIndex * dy,
-              },
-              status: 'available',
-              number: seatIndex + 1,
-            }));
+            const seats = Array.from(
+              { length: seatsPerRow },
+              (_, seatIndex) => ({
+                uuid: uuidv4(),
+                position: {
+                  x: x + seatIndex * dx,
+                  y: y + rowIndex * dy,
+                },
+                status: 'available',
+                number: seatIndex + 1,
+              }),
+            );
 
             return {
               uuid: uuidv4(),
@@ -327,7 +452,10 @@ export const useCanvasHandlers = (
           });
 
           currentZone.rows.push(...rows);
-          canvasSetters.setSelection({ type: 'row', ids: rows.map(r => r.uuid) });
+          canvasSetters.setSelection({
+            type: 'row',
+            ids: rows.map((r) => r.uuid),
+          });
           break;
         }
       }
@@ -396,9 +524,14 @@ export const useCanvasHandlers = (
           (r) => r.uuid === draggedSeatId,
         );
         if (rowToMove) {
-          const dx = pos.x - rowToMove.position.x;
-          const dy = pos.y - rowToMove.position.y;
-          rowToMove.position = pos;
+          // Calculate offset based on first seat position since row doesn't have direct position
+          const firstSeat = rowToMove.seats[0];
+          if (!firstSeat) return;
+
+          const dx = pos.x - firstSeat.position.x;
+          const dy = pos.y - firstSeat.position.y;
+
+          // Update all seats in the row
           rowToMove.seats = rowToMove.seats.map((s) => ({
             ...s,
             position: {
