@@ -1,7 +1,10 @@
 import React, { useState, useCallback } from 'react';
+import { Grid } from '@mantine/core';
 import { Layout } from 'antd';
-import { SeatingPlan, EditorTool } from './types';
+import { SeatingPlan, Selection, EditorTool } from './types';
 import PlanSettingsPanel from './components/PlanSettingsPanel';
+import SeatSettingsPanel from './components/SeatSettingsPanel';
+import RowSettingsPanel from './components/RowSettingsPanel';
 import Canvas from './components/Canvas';
 import SeatMapHeader from './components/SeatMapHeader/';
 import useEditorState from './hooks/useEditorState';
@@ -50,6 +53,9 @@ const EventSeatMap: React.FC = () => {
     canUndo,
     canRedo,
   } = useEditorState();
+  const [selection, setSelection] = useState<Selection>({
+    selectedItems: { seats: [], rows: [], shapes: [] },
+  });
 
   const handleSave = useCallback(() => {
     console.log('Saving seating plan:', seatingPlan);
@@ -101,9 +107,48 @@ const EventSeatMap: React.FC = () => {
     [setCurrentTool],
   );
 
-  const handleSelectionChange = useCallback((selection: any) => {
-    console.log('Selection changed:', selection);
-  }, []);
+  const handleSeatUpdate = (updatedSeat: any) => {
+    const updatedPlan = { ...seatingPlan };
+    const rowIndex = updatedPlan.zones[0].rows.findIndex((row) =>
+      row.seats.some((seat) => seat.uuid === updatedSeat.uuid),
+    );
+    if (rowIndex !== -1) {
+      const seatIndex = updatedPlan.zones[0].rows[rowIndex].seats.findIndex(
+        (seat) => seat.uuid === updatedSeat.uuid,
+      );
+      if (seatIndex !== -1) {
+        updatedPlan.zones[0].rows[rowIndex].seats[seatIndex] = updatedSeat;
+        handlePlanChange(updatedPlan);
+      }
+    }
+  };
+
+  const handleRowUpdate = (updatedRow: any) => {
+    const updatedPlan = { ...seatingPlan };
+    const rowIndex = updatedPlan.zones[0].rows.findIndex(
+      (row) => row.uuid === updatedRow.uuid,
+    );
+    if (rowIndex !== -1) {
+      updatedPlan.zones[0].rows[rowIndex] = updatedRow;
+      handlePlanChange(updatedPlan);
+    }
+  };
+
+  const selectedSeat = selection.selectedItems.seats[0]
+    ? seatingPlan.zones[0].rows
+        .find((row) =>
+          row.seats.some(
+            (seat) => seat.uuid === selection.selectedItems.seats[0],
+          ),
+        )
+        ?.seats.find((seat) => seat.uuid === selection.selectedItems.seats[0])
+    : undefined;
+
+  const selectedRow = selection.selectedItems.rows[0]
+    ? seatingPlan.zones[0].rows.find(
+        (row) => row.uuid === selection.selectedItems.rows[0],
+      )
+    : undefined;
 
   return (
     <Layout className="seat-map-layout">
@@ -122,7 +167,6 @@ const EventSeatMap: React.FC = () => {
         onUndo={handleUndo}
         onRedo={handleRedo}
       />
-
       <Layout>
         <Content className="seat-map-content">
           <Canvas
@@ -131,25 +175,29 @@ const EventSeatMap: React.FC = () => {
             zoom={zoom}
             showGrid={showGrid}
             onPlanChange={handlePlanChange}
-            onSelectionChange={handleSelectionChange}
+            onSelectionChange={setSelection}
             setCurrentTool={setCurrentTool}
           />
         </Content>
         <Sider width={300} className="plan-settings-panel">
-          <PlanSettingsPanel
-            seatingPlan={seatingPlan}
-            onPlanChange={handlePlanChange}
-            currentTool={currentTool}
-            onToolChange={handleToolChange}
-            onUndo={handleUndo}
-            onRedo={handleRedo}
-            canUndo={canUndo}
-            canRedo={canRedo}
-            zoom={zoom}
-            onZoomChange={setZoom}
-            showGrid={showGrid}
-            onShowGridChange={setShowGrid}
-          />
+          {selectedSeat ? (
+            <SeatSettingsPanel
+              seat={selectedSeat}
+              categories={seatingPlan.categories}
+              onUpdate={handleSeatUpdate}
+            />
+          ) : selectedRow ? (
+            <RowSettingsPanel
+              row={selectedRow}
+              categories={seatingPlan.categories}
+              onUpdate={handleRowUpdate}
+            />
+          ) : (
+            <PlanSettingsPanel
+              seatingPlan={seatingPlan}
+              onUpdate={handlePlanChange}
+            />
+          )}
         </Sider>
       </Layout>
     </Layout>
