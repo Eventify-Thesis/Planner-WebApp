@@ -22,39 +22,41 @@ export const useCanvasHandlers = (
 ) => {
   // Add clipboard state
   const [clipboardItems, setClipboardItems] = useState<{
-    type: 'seat' | 'row' | 'shape';
-    items: any[];
+    seats: any[];
+    rows: any[];
+    shapes: any[];
   } | null>(null);
 
   const handleCopy = useCallback(
     (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
         const { selection } = canvasState;
-        if (!selection || !selection.ids.length) return;
+        const { seats, rows, shapes } = selection.selectedItems;
 
-        const items = selection.ids
-          .map((id) => {
-            if (selection.type === 'row') {
-              return seatingPlan.zones[0].rows.find((r) => r.uuid === id);
-            } else if (selection.type === 'seat') {
-              let foundSeat;
-              seatingPlan.zones[0].rows.some((row) => {
-                foundSeat = row.seats.find((s) => s.uuid === id);
-                return !!foundSeat;
-              });
-              return foundSeat;
-            } else if (selection.type === 'shape') {
-              return seatingPlan.zones[0].areas.find((a) => a.uuid === id);
-            }
-            return null;
-          })
-          .filter(Boolean);
+        if (!seats.length && !rows.length && !shapes.length) return;
 
-        if (items.length) {
-          setClipboardItems({
-            type: selection.type,
-            items: items,
-          });
+        const copiedItems = {
+          seats: seats.length
+            ? seatingPlan.zones[0].rows.flatMap((row) =>
+                row.seats.filter((seat) => seats.includes(seat.uuid)),
+              )
+            : [],
+          rows: rows.length
+            ? seatingPlan.zones[0].rows.filter((row) => rows.includes(row.uuid))
+            : [],
+          shapes: shapes.length
+            ? seatingPlan.zones[0].areas.filter((area) =>
+                shapes.includes(area.uuid),
+              )
+            : [],
+        };
+
+        if (
+          copiedItems.seats.length ||
+          copiedItems.rows.length ||
+          copiedItems.shapes.length
+        ) {
+          setClipboardItems(copiedItems);
         }
       }
     },
@@ -66,12 +68,17 @@ export const useCanvasHandlers = (
       if ((e.ctrlKey || e.metaKey) && e.key === 'v' && clipboardItems) {
         const updatedPlan = { ...seatingPlan };
         const currentZone = updatedPlan.zones[0];
-        const newIds: string[] = [];
+        const newSelection = {
+          seats: [] as string[],
+          rows: [] as string[],
+          shapes: [] as string[],
+        };
 
         const offset = 30; // Offset for pasted items
 
-        if (clipboardItems.type === 'row') {
-          clipboardItems.items.forEach((row: any) => {
+        // Paste rows
+        if (clipboardItems.rows?.length) {
+          clipboardItems.rows.forEach((row: any) => {
             const newRow = {
               ...row,
               uuid: uuidv4(),
@@ -85,12 +92,15 @@ export const useCanvasHandlers = (
               })),
             };
             currentZone.rows.push(newRow);
-            newIds.push(newRow.uuid);
+            newSelection.rows.push(newRow.uuid);
           });
-        } else if (clipboardItems.type === 'seat') {
+        }
+
+        // Paste individual seats as a new row
+        if (clipboardItems.seats?.length) {
           const newRow = {
             uuid: uuidv4(),
-            seats: clipboardItems.items.map((seat: any) => ({
+            seats: clipboardItems.seats.map((seat: any) => ({
               ...seat,
               uuid: uuidv4(),
               position: {
@@ -101,9 +111,12 @@ export const useCanvasHandlers = (
             rowNumber: currentZone.rows.length + 1,
           };
           currentZone.rows.push(newRow);
-          newIds.push(...newRow.seats.map((s) => s.uuid));
-        } else if (clipboardItems.type === 'shape') {
-          clipboardItems.items.forEach((shape: any) => {
+          newSelection.seats.push(...newRow.seats.map((s) => s.uuid));
+        }
+
+        // Paste shapes
+        if (clipboardItems.shapes?.length) {
+          clipboardItems.shapes.forEach((shape: any) => {
             const newShape = {
               ...shape,
               uuid: uuidv4(),
@@ -111,22 +124,29 @@ export const useCanvasHandlers = (
                 x: shape.position.x + offset,
                 y: shape.position.y + offset,
               },
+              // Handle different shape types
+              ...(shape.size && {
+                size: { ...shape.size },
+              }),
+              ...(shape.points && {
+                points: shape.points.map((point: any) => ({
+                  x: point.x + offset,
+                  y: point.y + offset,
+                })),
+              }),
             };
             currentZone.areas.push(newShape);
-            newIds.push(newShape.uuid);
+            newSelection.shapes.push(newShape.uuid);
           });
         }
 
-        if (newIds.length) {
+        if (
+          newSelection.seats.length ||
+          newSelection.rows.length ||
+          newSelection.shapes.length
+        ) {
           onPlanChange(updatedPlan);
-          canvasSetters.setSelection({
-            selectedItems: {
-              seats: [],
-              rows: [],
-              shapes: [],
-            },
-            ids: newIds,
-          });
+          canvasSetters.setSelection({ selectedItems: newSelection });
         }
       }
     },

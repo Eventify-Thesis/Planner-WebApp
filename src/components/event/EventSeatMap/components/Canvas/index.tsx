@@ -407,24 +407,14 @@ const Canvas: React.FC<CanvasProps> = ({
         {state.selectionBox && (
           <Layer>
             <Rect
-              x={Math.min(
-                state.selectionBox.startPoint.x,
-                state.selectionBox.endPoint.x,
-              )}
-              y={Math.min(
-                state.selectionBox.startPoint.y,
-                state.selectionBox.endPoint.y,
-              )}
-              width={Math.abs(
-                state.selectionBox.endPoint.x - state.selectionBox.startPoint.x,
-              )}
-              height={Math.abs(
-                state.selectionBox.endPoint.y - state.selectionBox.startPoint.y,
-              )}
-              fill="rgba(0, 100, 255, 0.1)"
-              stroke="#0066ff"
+              x={Math.min(state.selectionBox.startPoint.x, state.selectionBox.endPoint.x)}
+              y={Math.min(state.selectionBox.startPoint.y, state.selectionBox.endPoint.y)}
+              width={Math.abs(state.selectionBox.endPoint.x - state.selectionBox.startPoint.x)}
+              height={Math.abs(state.selectionBox.endPoint.y - state.selectionBox.startPoint.y)}
+              stroke="#4444ff"
               strokeWidth={1}
               dash={[5, 5]}
+              fill="rgba(100, 150, 255, 0.1)"
             />
           </Layer>
         )}

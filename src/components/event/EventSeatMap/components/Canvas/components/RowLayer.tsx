@@ -28,8 +28,7 @@ export const RowLayer = memo(
       <Layer>
         {seatingPlan.zones.flatMap((zone) =>
           zone.rows.map((row) => {
-            const isSelected =
-              selection.type === 'row' && selection.ids.includes(row.uuid);
+            const isSelected = selection.selectedItems.rows.includes(row.uuid);
             const minX = Math.min(...row.seats.map((s) => s.position.x));
             const maxX = Math.max(...row.seats.map((s) => s.position.x));
             const minY = Math.min(...row.seats.map((s) => s.position.y));

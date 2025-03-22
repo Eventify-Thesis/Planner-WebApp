@@ -41,8 +41,7 @@ export const ShapeLayer = memo(
         {seatingPlan.zones.flatMap((zone) =>
           zone.areas.map((area) => {
             const isSelected =
-              (selection.type === 'shape' || selection.type === 'row') &&
-              selection.ids.includes(area.uuid);
+              selection.selectedItems.shapes.includes(area.uuid);
 
             const commonProps = {
               draggable:
