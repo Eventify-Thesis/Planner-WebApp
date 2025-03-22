@@ -8,6 +8,7 @@ import { RowLayer } from './components/RowLayer';
 import { renderRowPreview, renderRectRowPreview } from './utils/rowUtils';
 import './Canvas.css';
 import GridLayer from './components/GridLayer';
+import TransformerLayer from './components/TransformerLayer';
 
 interface CanvasProps {
   seatingPlan: SeatingPlan;
@@ -72,7 +73,9 @@ const Canvas: React.FC<CanvasProps> = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Handle delete/backspace
-      const hasSelection = Object.values(state.selection.selectedItems).some(arr => arr.length > 0);
+      const hasSelection = Object.values(state.selection.selectedItems).some(
+        (arr) => arr.length > 0,
+      );
       if (!hasSelection && e.key !== 'z') return;
 
       if (e.key === 'Delete' || e.key === 'Backspace') {
@@ -104,7 +107,9 @@ const Canvas: React.FC<CanvasProps> = ({
 
         actions.addToHistory(updatedPlan);
         onPlanChange(updatedPlan);
-        setters.setSelection({ selectedItems: { seats: [], rows: [], shapes: [] } });
+        setters.setSelection({
+          selectedItems: { seats: [], rows: [], shapes: [] },
+        });
       }
 
       // Handle copy
@@ -122,8 +127,12 @@ const Canvas: React.FC<CanvasProps> = ({
           });
         } else if (rows.length > 0) {
           const selectedItems = [
-            ...seatingPlan.zones[0].rows.filter((row) => rows.includes(row.uuid)),
-            ...seatingPlan.zones[0].areas.filter((area) => shapes.includes(area.uuid)),
+            ...seatingPlan.zones[0].rows.filter((row) =>
+              rows.includes(row.uuid),
+            ),
+            ...seatingPlan.zones[0].areas.filter((area) =>
+              shapes.includes(area.uuid),
+            ),
           ];
           setters.setClipboard({
             type: 'row',
@@ -385,6 +394,46 @@ const Canvas: React.FC<CanvasProps> = ({
           onSeatDoubleClick={handleSeatDoubleClick}
         />
 
+        <TransformerLayer
+          selection={state.selection}
+          currentTool={currentTool}
+          onTransform={(e) => {
+            const node = e.target;
+            const scaleX = node.scaleX();
+            const scaleY = node.scaleY();
+            const rotation = node.rotation();
+
+            // Update the seating plan with new transform values
+            const updatedPlan = { ...seatingPlan };
+            const nodeId = node.id();
+
+            // Update shape if found
+            const shape = updatedPlan.zones[0].areas.find(a => a.uuid === nodeId);
+            if (shape) {
+              if (shape.size) {
+                shape.size.width *= scaleX;
+                shape.size.height *= scaleY;
+              }
+              if (shape.radius) {
+                shape.radius *= (scaleX + scaleY) / 2;
+              }
+              // Reset scale since we applied it to the actual dimensions
+              node.scaleX(1);
+              node.scaleY(1);
+            }
+
+            // Update row if found
+            const row = updatedPlan.zones[0].rows.find(r => r.uuid === nodeId);
+            if (row) {
+              // For rows, we only allow rotation
+              node.scaleX(1);
+              node.scaleY(1);
+            }
+
+            onPlanChange(updatedPlan);
+          }}
+        />
+
         {(state.previewShape || state.dragPreview) && (
           <Layer>
             {renderPreview()}
@@ -407,10 +456,20 @@ const Canvas: React.FC<CanvasProps> = ({
         {state.selectionBox && (
           <Layer>
             <Rect
-              x={Math.min(state.selectionBox.startPoint.x, state.selectionBox.endPoint.x)}
-              y={Math.min(state.selectionBox.startPoint.y, state.selectionBox.endPoint.y)}
-              width={Math.abs(state.selectionBox.endPoint.x - state.selectionBox.startPoint.x)}
-              height={Math.abs(state.selectionBox.endPoint.y - state.selectionBox.startPoint.y)}
+              x={Math.min(
+                state.selectionBox.startPoint.x,
+                state.selectionBox.endPoint.x,
+              )}
+              y={Math.min(
+                state.selectionBox.startPoint.y,
+                state.selectionBox.endPoint.y,
+              )}
+              width={Math.abs(
+                state.selectionBox.endPoint.x - state.selectionBox.startPoint.x,
+              )}
+              height={Math.abs(
+                state.selectionBox.endPoint.y - state.selectionBox.startPoint.y,
+              )}
               stroke="#4444ff"
               strokeWidth={1}
               dash={[5, 5]}

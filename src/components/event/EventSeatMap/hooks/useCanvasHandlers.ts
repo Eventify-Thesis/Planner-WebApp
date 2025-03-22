@@ -141,14 +141,59 @@ export const useCanvasHandlers = (
     [canvasState, seatingPlan, onPlanChange, canvasSetters],
   );
 
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      // Handle delete/backspace
+      const hasSelection = Object.values(
+        canvasState.selection.selectedItems,
+      ).some((arr) => arr.length > 0);
+      if (!hasSelection && e.key !== 'z') return;
+
+      // Rotation controls
+      if (e.key === 'r') {
+        const rotationDelta = e.shiftKey ? -15 : 15; // Shift+R rotates counterclockwise
+        const updatedPlan = { ...seatingPlan };
+
+        // Rotate selected rows
+        canvasState.selection.selectedItems.rows.forEach((rowId) => {
+          const row = updatedPlan.zones[0].rows.find((r) => r.uuid === rowId);
+          if (row) {
+            row.rotation = (row.rotation || 0) + rotationDelta;
+          }
+        });
+
+        // Rotate selected shapes
+        canvasState.selection.selectedItems.shapes.forEach((shapeId) => {
+          const shape = updatedPlan.zones[0].areas.find(
+            (a) => a.uuid === shapeId,
+          );
+          if (shape) {
+            shape.rotation = (shape.rotation || 0) + rotationDelta;
+          }
+        });
+
+        if (
+          canvasState.selection.selectedItems.rows.length > 0 ||
+          canvasState.selection.selectedItems.shapes.length > 0
+        ) {
+          canvasActions.addToHistory(updatedPlan);
+          onPlanChange(updatedPlan);
+        }
+      }
+    },
+    [canvasState, seatingPlan, onPlanChange, canvasActions],
+  );
+
   useEffect(() => {
     window.addEventListener('keydown', handleCopy);
     window.addEventListener('keydown', handlePaste);
+    window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleCopy);
       window.removeEventListener('keydown', handlePaste);
+      window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [handleCopy, handlePaste]);
+  }, [handleCopy, handlePaste, handleKeyDown]);
 
   const initializePreviewShape = useCallback(
     (point: Point) => {

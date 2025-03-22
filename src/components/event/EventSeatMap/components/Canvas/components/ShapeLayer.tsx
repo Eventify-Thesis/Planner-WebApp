@@ -121,6 +121,7 @@ export const ShapeLayer = memo(
                 return (
                   <Rect
                     key={area.uuid}
+                    id={area.uuid}
                     x={area.position.x}
                     y={area.position.y}
                     width={area.size?.width || 0}
@@ -132,6 +133,7 @@ export const ShapeLayer = memo(
                 return (
                   <Circle
                     key={area.uuid}
+                    id={area.uuid}
                     x={area.position.x}
                     y={area.position.y}
                     radius={area.radius || 0}
@@ -142,6 +144,7 @@ export const ShapeLayer = memo(
                 return (
                   <Ellipse
                     key={area.uuid}
+                    id={area.uuid}
                     x={area.position.x}
                     y={area.position.y}
                     radiusX={area.size?.width ? area.size.width / 2 : 0}
@@ -153,6 +156,7 @@ export const ShapeLayer = memo(
                 return (
                   <Line
                     key={area.uuid}
+                    id={area.uuid}
                     points={area.points || []}
                     closed={true}
                     {...commonProps}
@@ -162,6 +166,7 @@ export const ShapeLayer = memo(
                 return (
                   <Text
                     key={area.uuid}
+                    id={area.uuid}
                     x={area.position.x}
                     y={area.position.y}
                     text={area.text || ''}
