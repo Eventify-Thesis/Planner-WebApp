@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useCallback } from 'react';
-import { Stage, Layer, Group, Line, Circle, Rect } from 'react-konva';
+import { Stage, Layer, Group, Line, Circle, Rect, Ellipse } from 'react-konva';
 import { SeatingPlan, EditorTool, Selection } from '../../types';
 import { useCanvasState } from '../../hooks/useCanvasState';
 import { useCanvasHandlers } from '../../hooks/useCanvasHandlers';
@@ -71,7 +71,8 @@ const Canvas: React.FC<CanvasProps> = ({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!state.selection.ids.length) return;
+      // Handle delete/backspace
+      if (!state.selection.ids.length && e.key !== 'z') return;
 
       if (e.key === 'Delete' || e.key === 'Backspace') {
         e.preventDefault();
@@ -98,10 +99,12 @@ const Canvas: React.FC<CanvasProps> = ({
             break;
         }
 
+        actions.addToHistory(updatedPlan);
         onPlanChange(updatedPlan);
         setters.setSelection({ type: 'none', ids: [] });
       }
 
+      // Handle copy
       if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
         e.preventDefault();
         switch (state.selection.type) {
@@ -134,11 +137,29 @@ const Canvas: React.FC<CanvasProps> = ({
           }
         }
       }
+
+      // Handle undo/redo
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === 'z') {
+          e.preventDefault();
+          if (e.shiftKey) {
+            const redoResult = actions.redo();
+            if (redoResult) {
+              onPlanChange(redoResult);
+            }
+          } else {
+            const undoResult = actions.undo();
+            if (undoResult) {
+              onPlanChange(undoResult);
+            }
+          }
+        }
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [state.selection, seatingPlan, onPlanChange, setters]);
+  }, [state.selection, seatingPlan, onPlanChange, setters, actions]);
 
   const handleSeatDoubleClick = () => {
     if (currentTool === EditorTool.SELECT_ROW) {
@@ -158,34 +179,47 @@ const Canvas: React.FC<CanvasProps> = ({
 
     switch (currentTool) {
       case EditorTool.ADD_SHAPE: {
-        const width = Math.abs(state.previewShape.endPoint.x - state.startPoint.x);
-        const height = Math.abs(state.previewShape.endPoint.y - state.startPoint.y);
+        const width = Math.abs(
+          state.previewShape.endPoint.x - state.startPoint.x,
+        );
+        const height = Math.abs(
+          state.previewShape.endPoint.y - state.startPoint.y,
+        );
         const x = Math.min(state.startPoint.x, state.previewShape.endPoint.x);
         const y = Math.min(state.startPoint.y, state.previewShape.endPoint.y);
-        return <Rect x={x} y={y} width={width} height={height} {...commonProps} />;
+        return (
+          <Rect x={x} y={y} width={width} height={height} {...commonProps} />
+        );
       }
 
       case EditorTool.ADD_CIRCLE: {
         const dx = state.previewShape.endPoint.x - state.startPoint.x;
         const dy = state.previewShape.endPoint.y - state.startPoint.y;
         const radius = Math.sqrt(dx * dx + dy * dy) / 2;
-        const centerX = (state.startPoint.x + state.previewShape.endPoint.x) / 2;
-        const centerY = (state.startPoint.y + state.previewShape.endPoint.y) / 2;
-        return <Circle x={centerX} y={centerY} radius={radius} {...commonProps} />;
+        const centerX =
+          (state.startPoint.x + state.previewShape.endPoint.x) / 2;
+        const centerY =
+          (state.startPoint.y + state.previewShape.endPoint.y) / 2;
+        return (
+          <Circle x={centerX} y={centerY} radius={radius} {...commonProps} />
+        );
       }
 
       case EditorTool.ADD_ELLIPSE: {
-        const width = Math.abs(state.previewShape.endPoint.x - state.startPoint.x);
-        const height = Math.abs(state.previewShape.endPoint.y - state.startPoint.y);
-        const x = Math.min(state.startPoint.x, state.previewShape.endPoint.x);
-        const y = Math.min(state.startPoint.y, state.previewShape.endPoint.y);
+        const width = Math.abs(
+          state.previewShape.endPoint.x - state.startPoint.x,
+        );
+        const height = Math.abs(
+          state.previewShape.endPoint.y - state.startPoint.y,
+        );
+        const centerX = (state.startPoint.x + state.previewShape.endPoint.x) / 2;
+        const centerY = (state.startPoint.y + state.previewShape.endPoint.y) / 2;
         return (
-          <Rect
-            x={x}
-            y={y}
-            width={width}
-            height={height}
-            cornerRadius={Math.min(width, height) / 2}
+          <Ellipse
+            x={centerX}
+            y={centerY}
+            radiusX={width / 2}
+            radiusY={height / 2}
             {...commonProps}
           />
         );
@@ -251,7 +285,14 @@ const Canvas: React.FC<CanvasProps> = ({
         onMouseUp={handleMouseUp}
         scale={{ x: zoom, y: zoom }}
       >
-        {showGrid && <GridLayer zoom={zoom} />}
+        {showGrid && (
+          <GridLayer
+            stageSize={state.stageSize}
+            gridSize={20}
+            zoom={zoom}
+            visible={true}
+          />
+        )}
 
         <ShapeLayer
           seatingPlan={seatingPlan}

@@ -183,56 +183,104 @@ export const useCanvasHandlers = (
       const currentZone = updatedPlan.zones[0];
 
       switch (currentTool) {
-        case EditorTool.ADD_SHAPE:
-          currentZone.areas = [
-            ...currentZone.areas,
-            createShape('rectangle', { x, y }, { size: { width, height } }),
-          ];
+        case EditorTool.ADD_SHAPE: {
+          const shape = {
+            uuid: uuidv4(),
+            type: 'rectangle',
+            position: { x, y },
+            size: {
+              width,
+              height,
+            },
+          };
+          currentZone.areas.push(shape);
           break;
+        }
 
-        case EditorTool.ADD_CIRCLE:
+        case EditorTool.ADD_CIRCLE: {
           const radius = Math.sqrt(width * width + height * height) / 2;
-          currentZone.areas = [
-            ...currentZone.areas,
-            createShape('circle', startPoint, { radius }),
-          ];
+          const centerX = (startPoint.x + endPoint.x) / 2;
+          const centerY = (startPoint.y + endPoint.y) / 2;
+          const shape = {
+            uuid: uuidv4(),
+            type: 'circle',
+            position: { x: centerX, y: centerY },
+            radius,
+          };
+          currentZone.areas.push(shape);
           break;
+        }
 
-        case EditorTool.ADD_ELLIPSE:
-          currentZone.areas = [
-            ...currentZone.areas,
-            createShape(
-              'ellipse',
-              { x: x + width / 2, y: y + height / 2 },
-              {
-                size: { width, height },
-              },
-            ),
-          ];
+        case EditorTool.ADD_ELLIPSE: {
+          const centerX = (startPoint.x + endPoint.x) / 2;
+          const centerY = (startPoint.y + endPoint.y) / 2;
+          const shape = {
+            uuid: uuidv4(),
+            type: 'ellipse',
+            position: { x: centerX, y: centerY },
+            size: {
+              width,
+              height,
+            },
+          };
+          currentZone.areas.push(shape);
           break;
+        }
 
-        case EditorTool.ADD_ROW:
+        case EditorTool.ADD_ROW: {
           const numSeats = Math.max(Math.round(width / 30), 2);
-          currentZone.rows = [
-            ...currentZone.rows,
-            createStraightRow(startPoint, endPoint, numSeats),
-          ];
+          const dx = (endPoint.x - startPoint.x) / (numSeats - 1);
+          const dy = (endPoint.y - startPoint.y) / (numSeats - 1);
+          
+          const seats = Array.from({ length: numSeats }, (_, i) => ({
+            uuid: uuidv4(),
+            position: {
+              x: startPoint.x + dx * i,
+              y: startPoint.y + dy * i,
+            },
+            status: 'available',
+            number: i + 1,
+          }));
+
+          const row = {
+            uuid: uuidv4(),
+            seats,
+            rowNumber: seatingPlan.zones[0].rows.length + 1,
+          };
+          currentZone.rows.push(row);
           break;
+        }
 
         case EditorTool.ADD_RECT_ROW: {
           const seatsPerRow = Math.max(Math.round(width / 30), 2);
           const numRows = Math.max(Math.round(height / 30), 2);
-          const newRows = createRectangularRow(
-            { x, y },
-            { width, height },
-            numRows,
-            seatsPerRow,
-          );
-          currentZone.rows = [...currentZone.rows, ...newRows];
+          const dx = width / (seatsPerRow - 1);
+          const dy = height / (numRows - 1);
+
+          const rows = Array.from({ length: numRows }, (_, rowIndex) => {
+            const seats = Array.from({ length: seatsPerRow }, (_, seatIndex) => ({
+              uuid: uuidv4(),
+              position: {
+                x: x + seatIndex * dx,
+                y: y + rowIndex * dy,
+              },
+              status: 'available',
+              number: seatIndex + 1,
+            }));
+
+            return {
+              uuid: uuidv4(),
+              seats,
+              rowNumber: seatingPlan.zones[0].rows.length + rowIndex + 1,
+            };
+          });
+
+          currentZone.rows.push(...rows);
           break;
         }
       }
 
+      canvasActions.addToHistory(updatedPlan);
       onPlanChange(updatedPlan);
       canvasActions.resetDrawingState();
     },

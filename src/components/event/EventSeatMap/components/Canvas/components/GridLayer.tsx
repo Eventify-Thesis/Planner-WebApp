@@ -8,7 +8,12 @@ interface GridLayerProps {
   visible: boolean;
 }
 
-const GridLayer: React.FC<GridLayerProps> = ({ stageSize, gridSize, zoom, visible }) => {
+const GridLayer: React.FC<GridLayerProps> = ({
+  stageSize,
+  gridSize,
+  zoom,
+  visible,
+}) => {
   if (!visible) return null;
 
   const gridLines = [];
@@ -22,7 +27,7 @@ const GridLayer: React.FC<GridLayerProps> = ({ stageSize, gridSize, zoom, visibl
         points={[x, 0, x, stageSize.height]}
         stroke="#ddd"
         strokeWidth={0.5}
-      />
+      />,
     );
   }
 
@@ -34,7 +39,7 @@ const GridLayer: React.FC<GridLayerProps> = ({ stageSize, gridSize, zoom, visibl
         points={[0, y, stageSize.width, y]}
         stroke="#ddd"
         strokeWidth={0.5}
-      />
+      />,
     );
   }
 

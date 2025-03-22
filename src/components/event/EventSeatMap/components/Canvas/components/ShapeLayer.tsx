@@ -52,18 +52,34 @@ export const ShapeLayer = memo(({
                 fontSize={area.fontSize}
                 fontFamily={area.fontFamily}
                 fill={area.fill}
-                draggable={currentTool === EditorTool.SELECT_ROW}
+                draggable={currentTool === EditorTool.SELECT_SHAPE}
                 onClick={() => onSelect('shape', area.uuid)}
                 onDragEnd={(e) => handleDragEnd(e, area.uuid)}
+                onMouseEnter={(e: any) => {
+                  if (currentTool === EditorTool.SELECT_SHAPE) {
+                    e.target.getStage()!.container().style.cursor = 'pointer';
+                  }
+                }}
+                onMouseLeave={(e: any) => {
+                  e.target.getStage()!.container().style.cursor = 'default';
+                }}
                 {...getShapeStyles(area, isSelected)}
               />
             );
           }
 
           const commonProps = {
-            draggable: currentTool === EditorTool.SELECT_ROW,
+            draggable: currentTool === EditorTool.SELECT_SHAPE,
             onClick: () => onSelect('shape', area.uuid),
             onDragEnd: (e: any) => handleDragEnd(e, area.uuid),
+            onMouseEnter: (e: any) => {
+              if (currentTool === EditorTool.SELECT_SHAPE) {
+                e.target.getStage()!.container().style.cursor = 'pointer';
+              }
+            },
+            onMouseLeave: (e: any) => {
+              e.target.getStage()!.container().style.cursor = 'default';
+            },
             ...getShapeStyles(area, isSelected),
           };
 

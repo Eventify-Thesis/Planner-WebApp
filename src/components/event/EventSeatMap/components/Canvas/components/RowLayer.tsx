@@ -96,12 +96,12 @@ export const RowLayer = memo(({
                   <Text
                     x={seat.position.x}
                     y={seat.position.y}
-                    text={seat.number.toString()}
+                    text={(seat.number || '').toString()}
                     fontSize={12}
                     fill="#000"
                     align="center"
                     verticalAlign="middle"
-                    offsetX={4}
+                    offsetX={6}
                     offsetY={6}
                   />
                 </React.Fragment>

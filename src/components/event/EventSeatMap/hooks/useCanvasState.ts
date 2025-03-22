@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Point, Selection, PreviewShape, DragPreview, Clipboard } from '../types';
+import { Point, Selection, PreviewShape, DragPreview, Clipboard, SeatingPlan } from '../types';
 
 export interface CanvasState {
   isDrawing: boolean;
@@ -12,6 +12,8 @@ export interface CanvasState {
   selectionBox: { startPoint: Point; endPoint: Point } | null;
   clipboard: Clipboard | null;
   stageSize: { width: number; height: number };
+  history: SeatingPlan[];
+  historyIndex: number;
 }
 
 export const useCanvasState = () => {
@@ -28,6 +30,8 @@ export const useCanvasState = () => {
   } | null>(null);
   const [clipboard, setClipboard] = useState<Clipboard | null>(null);
   const [stageSize, setStageSize] = useState({ width: 1, height: 1 });
+  const [history, setHistory] = useState<SeatingPlan[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
 
   const resetDrawingState = useCallback(() => {
     setIsDrawing(false);
@@ -46,6 +50,29 @@ export const useCanvasState = () => {
     setSelectionBox(null);
   }, []);
 
+  const addToHistory = useCallback((plan: SeatingPlan) => {
+    const newHistory = history.slice(0, historyIndex + 1);
+    newHistory.push(JSON.parse(JSON.stringify(plan)));
+    setHistory(newHistory);
+    setHistoryIndex(newHistory.length - 1);
+  }, [history, historyIndex]);
+
+  const undo = useCallback(() => {
+    if (historyIndex > 0) {
+      setHistoryIndex(historyIndex - 1);
+      return JSON.parse(JSON.stringify(history[historyIndex - 1]));
+    }
+    return null;
+  }, [history, historyIndex]);
+
+  const redo = useCallback(() => {
+    if (historyIndex < history.length - 1) {
+      setHistoryIndex(historyIndex + 1);
+      return JSON.parse(JSON.stringify(history[historyIndex + 1]));
+    }
+    return null;
+  }, [history, historyIndex]);
+
   return {
     state: {
       isDrawing,
@@ -58,6 +85,8 @@ export const useCanvasState = () => {
       selectionBox,
       clipboard,
       stageSize,
+      history,
+      historyIndex,
     },
     setters: {
       setIsDrawing,
@@ -70,11 +99,16 @@ export const useCanvasState = () => {
       setSelectionBox,
       setClipboard,
       setStageSize,
+      setHistory,
+      setHistoryIndex,
     },
     actions: {
       resetDrawingState,
       resetDragState,
       resetSelectionState,
+      addToHistory,
+      undo,
+      redo,
     },
   };
 };
