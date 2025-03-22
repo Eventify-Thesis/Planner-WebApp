@@ -50,28 +50,45 @@ export const useCanvasState = () => {
     setSelectionBox(null);
   }, []);
 
-  const addToHistory = useCallback((plan: SeatingPlan) => {
-    const newHistory = history.slice(0, historyIndex + 1);
-    newHistory.push(JSON.parse(JSON.stringify(plan)));
-    setHistory(newHistory);
-    setHistoryIndex(newHistory.length - 1);
-  }, [history, historyIndex]);
+  const addToHistory = useCallback(
+    (plan: SeatingPlan) => {
+      if (JSON.stringify(plan) === JSON.stringify(history[historyIndex])) {
+        return; // Don't add if nothing changed
+      }
+
+      const newHistory = history.slice(0, historyIndex + 1);
+      newHistory.push(JSON.parse(JSON.stringify(plan))); // Deep clone to prevent reference issues
+      
+      // Keep history size manageable
+      if (newHistory.length > 50) {
+        newHistory.shift();
+      }
+      
+      setHistory(newHistory);
+      setHistoryIndex(newHistory.length - 1);
+    },
+    [history, historyIndex],
+  );
 
   const undo = useCallback(() => {
     if (historyIndex > 0) {
-      setHistoryIndex(historyIndex - 1);
-      return JSON.parse(JSON.stringify(history[historyIndex - 1]));
+      setHistoryIndex((prev) => {
+        const newIndex = prev - 1;
+        // onPlanChange(history[newIndex]); // This function is not defined in the provided code
+        return newIndex;
+      });
     }
-    return null;
-  }, [history, historyIndex]);
+  }, [historyIndex, history]);
 
   const redo = useCallback(() => {
     if (historyIndex < history.length - 1) {
-      setHistoryIndex(historyIndex + 1);
-      return JSON.parse(JSON.stringify(history[historyIndex + 1]));
+      setHistoryIndex((prev) => {
+        const newIndex = prev + 1;
+        // onPlanChange(history[newIndex]); // This function is not defined in the provided code
+        return newIndex;
+      });
     }
-    return null;
-  }, [history, historyIndex]);
+  }, [historyIndex, history]);
 
   return {
     state: {

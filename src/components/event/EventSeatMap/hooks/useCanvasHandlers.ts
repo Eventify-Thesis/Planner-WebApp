@@ -25,7 +25,9 @@ export const useCanvasHandlers = (
       if (
         currentTool === EditorTool.ADD_SHAPE ||
         currentTool === EditorTool.ADD_CIRCLE ||
-        currentTool === EditorTool.ADD_ELLIPSE
+        currentTool === EditorTool.ADD_ELLIPSE ||
+        currentTool === EditorTool.ADD_TEXT ||
+        currentTool === EditorTool.ADD_POLYGON
       ) {
         canvasSetters.setPreviewShape({
           type:
@@ -33,6 +35,10 @@ export const useCanvasHandlers = (
               ? 'circle'
               : currentTool === EditorTool.ADD_ELLIPSE
               ? 'ellipse'
+              : currentTool === EditorTool.ADD_TEXT
+              ? 'text'
+              : currentTool === EditorTool.ADD_POLYGON
+              ? 'polygon'
               : 'rectangle',
           startPoint: point,
           endPoint: point,
@@ -71,6 +77,8 @@ export const useCanvasHandlers = (
           EditorTool.ADD_SHAPE,
           EditorTool.ADD_CIRCLE,
           EditorTool.ADD_ELLIPSE,
+          EditorTool.ADD_TEXT,
+          EditorTool.ADD_POLYGON,
         ].includes(currentTool)
       ) {
         // Update shape preview
@@ -83,6 +91,10 @@ export const useCanvasHandlers = (
                     ? 'circle'
                     : currentTool === EditorTool.ADD_ELLIPSE
                     ? 'ellipse'
+                    : currentTool === EditorTool.ADD_TEXT
+                    ? 'text'
+                    : currentTool === EditorTool.ADD_POLYGON
+                    ? 'polygon'
                     : 'rectangle',
                 startPoint,
                 endPoint: currentPoint,
@@ -152,6 +164,8 @@ export const useCanvasHandlers = (
             EditorTool.ADD_SHAPE,
             EditorTool.ADD_CIRCLE,
             EditorTool.ADD_ELLIPSE,
+            EditorTool.ADD_TEXT,
+            EditorTool.ADD_POLYGON,
             EditorTool.ADD_ROW,
             EditorTool.ADD_RECT_ROW,
           ].includes(currentTool)
@@ -222,6 +236,37 @@ export const useCanvasHandlers = (
               width,
               height,
             },
+          };
+          currentZone.areas.push(shape);
+          break;
+        }
+
+        case EditorTool.ADD_TEXT: {
+          const shape = {
+            uuid: uuidv4(),
+            type: 'text',
+            position: { x, y },
+            text: 'Double click to edit',
+            fontSize: 16,
+            fontFamily: 'Arial',
+            fill: '#000000',
+          };
+          currentZone.areas.push(shape);
+          break;
+        }
+
+        case EditorTool.ADD_POLYGON: {
+          const points = [
+            x, y,
+            x + width, y,
+            x + width, y + height,
+            x, y + height,
+          ];
+          const shape = {
+            uuid: uuidv4(),
+            type: 'polygon',
+            position: { x: 0, y: 0 }, // Polygon uses absolute points
+            points,
           };
           currentZone.areas.push(shape);
           break;

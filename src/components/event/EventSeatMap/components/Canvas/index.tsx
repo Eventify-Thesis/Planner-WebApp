@@ -212,8 +212,10 @@ const Canvas: React.FC<CanvasProps> = ({
         const height = Math.abs(
           state.previewShape.endPoint.y - state.startPoint.y,
         );
-        const centerX = (state.startPoint.x + state.previewShape.endPoint.x) / 2;
-        const centerY = (state.startPoint.y + state.previewShape.endPoint.y) / 2;
+        const centerX =
+          (state.startPoint.x + state.previewShape.endPoint.x) / 2;
+        const centerY =
+          (state.startPoint.y + state.previewShape.endPoint.y) / 2;
         return (
           <Ellipse
             x={centerX}
