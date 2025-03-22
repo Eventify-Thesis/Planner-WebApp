@@ -20,6 +20,28 @@ export const useCanvasHandlers = (
   canvasSetters: any,
   canvasActions: any,
 ) => {
+  const initializePreviewShape = useCallback(
+    (point: Point) => {
+      if (
+        currentTool === EditorTool.ADD_SHAPE ||
+        currentTool === EditorTool.ADD_CIRCLE ||
+        currentTool === EditorTool.ADD_ELLIPSE
+      ) {
+        canvasSetters.setPreviewShape({
+          type:
+            currentTool === EditorTool.ADD_CIRCLE
+              ? 'circle'
+              : currentTool === EditorTool.ADD_ELLIPSE
+              ? 'ellipse'
+              : 'rectangle',
+          startPoint: point,
+          endPoint: point,
+        });
+      }
+    },
+    [currentTool, canvasSetters],
+  );
+
   const handleMouseDown = useCallback(
     (e: any) => {
       const point = getMousePosition(e, zoom);
@@ -36,26 +58,48 @@ export const useCanvasHandlers = (
       } else {
         canvasSetters.setStartPoint(point);
         canvasSetters.setIsDrawing(true);
-
-        if (
-          currentTool === EditorTool.ADD_SHAPE ||
-          currentTool === EditorTool.ADD_CIRCLE ||
-          currentTool === EditorTool.ADD_ELLIPSE
-        ) {
-          canvasSetters.setPreviewShape({
-            type:
-              currentTool === EditorTool.ADD_CIRCLE
-                ? 'circle'
-                : currentTool === EditorTool.ADD_ELLIPSE
-                ? 'ellipse'
-                : 'rectangle',
-            startPoint: point,
-            endPoint: point,
-          });
-        }
+        initializePreviewShape(point);
       }
     },
-    [currentTool, zoom, canvasSetters],
+    [currentTool, zoom, canvasSetters, initializePreviewShape],
+  );
+
+  const updatePreview = useCallback(
+    (currentPoint: Point, startPoint: Point) => {
+      if (
+        [
+          EditorTool.ADD_SHAPE,
+          EditorTool.ADD_CIRCLE,
+          EditorTool.ADD_ELLIPSE,
+        ].includes(currentTool)
+      ) {
+        // Update shape preview
+        canvasSetters.setPreviewShape((prev: any) =>
+          prev
+            ? { ...prev, endPoint: currentPoint }
+            : {
+                type:
+                  currentTool === EditorTool.ADD_CIRCLE
+                    ? 'circle'
+                    : currentTool === EditorTool.ADD_ELLIPSE
+                    ? 'ellipse'
+                    : 'rectangle',
+                startPoint,
+                endPoint: currentPoint,
+              },
+        );
+      } else if (
+        [EditorTool.ADD_ROW, EditorTool.ADD_RECT_ROW].includes(currentTool)
+      ) {
+        // Update row preview
+        canvasSetters.setPreviewShape({
+          type: currentTool === EditorTool.ADD_ROW ? 'row' : 'rectRow',
+          startPoint,
+          endPoint: currentPoint,
+        });
+      }
+    },
+    [currentTool, canvasSetters],
   );
 
   const handleMouseMove = useCallback(
@@ -65,6 +109,8 @@ export const useCanvasHandlers = (
 
       if (selectionBox) {
         const point = getMousePosition(e, zoom);
+        if (!point) return;
+
         canvasSetters.setSelectionBox((prev: any) => ({
           ...prev!,
           endPoint: point,
@@ -78,6 +124,8 @@ export const useCanvasHandlers = (
         canvasSetters.setSelection(newSelection);
       } else if (isDragging && dragPreview) {
         const pos = getMousePosition(e, zoom);
+        if (!pos) return;
+
         const dx = pos.x - dragPreview.position.x;
         const dy = pos.y - dragPreview.position.y;
 
@@ -108,24 +156,11 @@ export const useCanvasHandlers = (
             EditorTool.ADD_RECT_ROW,
           ].includes(currentTool)
         ) {
-          canvasSetters.setPreviewShape((prev: any) =>
-            prev
-              ? { ...prev, endPoint: currentPoint }
-              : {
-                  type:
-                    currentTool === EditorTool.ADD_CIRCLE
-                      ? 'circle'
-                      : currentTool === EditorTool.ADD_ELLIPSE
-                      ? 'ellipse'
-                      : 'rectangle',
-                  startPoint,
-                  endPoint: currentPoint,
-                },
-          );
+          updatePreview(currentPoint, startPoint);
         }
       }
     },
-    [canvasState, currentTool, seatingPlan, zoom, canvasSetters],
+    [canvasState, currentTool, seatingPlan, zoom, canvasSetters, updatePreview],
   );
 
   const handleMouseUp = useCallback(

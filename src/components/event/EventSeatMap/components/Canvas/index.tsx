@@ -157,6 +157,40 @@ const Canvas: React.FC<CanvasProps> = ({
     };
 
     switch (currentTool) {
+      case EditorTool.ADD_SHAPE: {
+        const width = Math.abs(state.previewShape.endPoint.x - state.startPoint.x);
+        const height = Math.abs(state.previewShape.endPoint.y - state.startPoint.y);
+        const x = Math.min(state.startPoint.x, state.previewShape.endPoint.x);
+        const y = Math.min(state.startPoint.y, state.previewShape.endPoint.y);
+        return <Rect x={x} y={y} width={width} height={height} {...commonProps} />;
+      }
+
+      case EditorTool.ADD_CIRCLE: {
+        const dx = state.previewShape.endPoint.x - state.startPoint.x;
+        const dy = state.previewShape.endPoint.y - state.startPoint.y;
+        const radius = Math.sqrt(dx * dx + dy * dy) / 2;
+        const centerX = (state.startPoint.x + state.previewShape.endPoint.x) / 2;
+        const centerY = (state.startPoint.y + state.previewShape.endPoint.y) / 2;
+        return <Circle x={centerX} y={centerY} radius={radius} {...commonProps} />;
+      }
+
+      case EditorTool.ADD_ELLIPSE: {
+        const width = Math.abs(state.previewShape.endPoint.x - state.startPoint.x);
+        const height = Math.abs(state.previewShape.endPoint.y - state.startPoint.y);
+        const x = Math.min(state.startPoint.x, state.previewShape.endPoint.x);
+        const y = Math.min(state.startPoint.y, state.previewShape.endPoint.y);
+        return (
+          <Rect
+            x={x}
+            y={y}
+            width={width}
+            height={height}
+            cornerRadius={Math.min(width, height) / 2}
+            {...commonProps}
+          />
+        );
+      }
+
       case EditorTool.ADD_ROW: {
         const preview = renderRowPreview(
           state.startPoint,
