@@ -97,6 +97,11 @@ const Canvas: React.FC<CanvasProps> = ({
               (area) => !state.selection.ids.includes(area.uuid),
             );
             break;
+          case 'shape':
+            updatedPlan.zones[0].areas = updatedPlan.zones[0].areas.filter(
+              (area) => !state.selection.ids.includes(area.uuid),
+            );
+            break;
         }
 
         actions.addToHistory(updatedPlan);
