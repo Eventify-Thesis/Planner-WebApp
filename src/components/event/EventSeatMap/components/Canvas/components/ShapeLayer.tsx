@@ -22,16 +22,67 @@ export const ShapeLayer = memo(
     onPlanChange,
     onSelect,
   }: ShapeLayerProps) => {
+    const handleDragStart = (e: any, uuid: string) => {
+      // Get all selected shapes including the one being dragged
+      const selectedShapes = seatingPlan.zones[0].areas.filter(
+        (a) =>
+          selection.selectedItems.shapes.includes(a.uuid) || a.uuid === uuid,
+      );
+      if (selectedShapes.length === 0) return;
+
+      // Store the initial positions and mouse offset for all selected shapes
+      const mousePos = getMousePosition(e, zoom);
+      if (!mousePos) return;
+
+      // Find the shape being dragged to calculate offset
+      const draggedShape = selectedShapes.find((s) => s.uuid === uuid);
+      if (!draggedShape) return;
+
+      // Calculate mouse offset from the dragged shape
+      const mouseOffset = {
+        x: mousePos.x - draggedShape.position.x,
+        y: mousePos.y - draggedShape.position.y,
+      };
+
+      // Store initial positions of all selected shapes
+      e.target.dragStartData = {
+        selectedShapes: selectedShapes.map((shape) => ({
+          uuid: shape.uuid,
+          initialPos: { ...shape.position },
+        })),
+        mouseOffset,
+      };
+    };
+
     const handleDragEnd = (e: any, uuid: string) => {
-      const pos = getMousePosition(e, zoom);
-      if (!pos) return;
+      const mousePos = getMousePosition(e, zoom);
+      if (!mousePos || !e.target.dragStartData) return;
+
+      const { selectedShapes, mouseOffset } = e.target.dragStartData;
+
+      // Calculate the movement delta
+      const dx = mousePos.x - mouseOffset.x - selectedShapes[0].initialPos.x;
+      const dy = mousePos.y - mouseOffset.y - selectedShapes[0].initialPos.y;
 
       const updatedPlan = { ...seatingPlan };
       updatedPlan.zones = updatedPlan.zones.map((z) => ({
         ...z,
-        areas: z.areas.map((a) =>
-          a.uuid === uuid ? { ...a, position: pos } : a,
-        ),
+        areas: z.areas.map((area) => {
+          // Find if this area was in the selection
+          const selectedShape = selectedShapes.find(
+            (s) => s.uuid === area.uuid,
+          );
+          if (!selectedShape) return area;
+
+          // Move the shape by the same delta from its initial position
+          return {
+            ...area,
+            position: {
+              x: selectedShape.initialPos.x + dx,
+              y: selectedShape.initialPos.y + dy,
+            },
+          };
+        }),
       }));
       onPlanChange(updatedPlan);
     };
@@ -49,6 +100,7 @@ export const ShapeLayer = memo(
                 currentTool === EditorTool.SELECT_ROW ||
                 currentTool === EditorTool.SELECT_SHAPE,
               onClick: (e: any) => onSelect('shape', area.uuid, e),
+              onDragStart: (e: any) => handleDragStart(e, area.uuid),
               onDragEnd: (e: any) => handleDragEnd(e, area.uuid),
               onMouseEnter: (e: any) => {
                 if (

@@ -60,13 +60,61 @@ export const RowLayer = memo(
                   onDragEnd={(e) => onDragEnd(e, 'row')}
                 />
 
-                <Text
-                  x={minX}
-                  y={minY - 25}
-                  text={`Row ${row.rowNumber}`}
-                  fontSize={14}
-                  fill={isSelected ? '#4444ff' : '#666'}
-                />
+                {/* Row Labels */}
+                {row.seats.length > 0 && (
+                  <>
+                    {(() => {
+                      const firstSeat = row.seats[0];
+                      const lastSeat = row.seats[row.seats.length - 1];
+                      const angle =
+                        Math.atan2(
+                          lastSeat.position.y - firstSeat.position.y,
+                          lastSeat.position.x - firstSeat.position.x,
+                        ) *
+                        (180 / Math.PI);
+
+                      // Calculate offsets in the row's direction
+                      const frontOffset = 30; // Distance from first seat
+                      const backOffset = 19; // Distance from last seat - slightly smaller for better visual balance
+
+                      const frontOffsetX =
+                        Math.cos(angle * (Math.PI / 180)) * frontOffset;
+                      const frontOffsetY =
+                        Math.sin(angle * (Math.PI / 180)) * frontOffset;
+                      const backOffsetX =
+                        Math.cos(angle * (Math.PI / 180)) * backOffset;
+                      const backOffsetY =
+                        Math.sin(angle * (Math.PI / 180)) * backOffset;
+
+                      return (
+                        <>
+                          {/* Front label (before first seat) */}
+                          <Text
+                            x={firstSeat.position.x - frontOffsetX}
+                            y={firstSeat.position.y - frontOffsetY}
+                            text={row.rowNumber.toString()}
+                            fontSize={14}
+                            fill={isSelected ? '#4444ff' : '#666'}
+                            rotation={angle}
+                            align="center"
+                            verticalAlign="middle"
+                          />
+                          {/* Back label (after last seat) */}
+                          <Text
+                            x={lastSeat.position.x + backOffsetX}
+                            y={lastSeat.position.y + backOffsetY}
+                            text={row.rowNumber.toString()}
+                            fontSize={14}
+                            fill={isSelected ? '#4444ff' : '#666'}
+                            rotation={angle}
+                            align="center"
+                            verticalAlign="middle"
+                          />
+                        </>
+                      );
+                    })()}
+                  </>
+                )}
 
                 {row.seats.map((seat) => (
                   <React.Fragment key={seat.uuid}>
