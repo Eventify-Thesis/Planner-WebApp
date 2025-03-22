@@ -208,6 +208,7 @@ export const useCanvasHandlers = (
             },
           };
           currentZone.areas.push(shape);
+          canvasSetters.setSelection({ type: 'shape', ids: [shape.uuid] });
           break;
         }
 
@@ -222,6 +223,7 @@ export const useCanvasHandlers = (
             radius,
           };
           currentZone.areas.push(shape);
+          canvasSetters.setSelection({ type: 'shape', ids: [shape.uuid] });
           break;
         }
 
@@ -238,6 +240,7 @@ export const useCanvasHandlers = (
             },
           };
           currentZone.areas.push(shape);
+          canvasSetters.setSelection({ type: 'shape', ids: [shape.uuid] });
           break;
         }
 
@@ -252,6 +255,7 @@ export const useCanvasHandlers = (
             fill: '#000000',
           };
           currentZone.areas.push(shape);
+          canvasSetters.setSelection({ type: 'shape', ids: [shape.uuid] });
           break;
         }
 
@@ -265,10 +269,11 @@ export const useCanvasHandlers = (
           const shape = {
             uuid: uuidv4(),
             type: 'polygon',
-            position: { x: 0, y: 0 }, // Polygon uses absolute points
+            position: { x: 0, y: 0 },
             points,
           };
           currentZone.areas.push(shape);
+          canvasSetters.setSelection({ type: 'shape', ids: [shape.uuid] });
           break;
         }
 
@@ -293,6 +298,7 @@ export const useCanvasHandlers = (
             rowNumber: seatingPlan.zones[0].rows.length + 1,
           };
           currentZone.rows.push(row);
+          canvasSetters.setSelection({ type: 'row', ids: [row.uuid] });
           break;
         }
 
@@ -321,6 +327,7 @@ export const useCanvasHandlers = (
           });
 
           currentZone.rows.push(...rows);
+          canvasSetters.setSelection({ type: 'row', ids: rows.map(r => r.uuid) });
           break;
         }
       }
