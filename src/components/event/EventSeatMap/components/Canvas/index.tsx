@@ -72,84 +72,71 @@ const Canvas: React.FC<CanvasProps> = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Handle delete/backspace
-      if (!state.selection.ids.length && e.key !== 'z') return;
+      const hasSelection = Object.values(state.selection.selectedItems).some(arr => arr.length > 0);
+      if (!hasSelection && e.key !== 'z') return;
 
       if (e.key === 'Delete' || e.key === 'Backspace') {
         e.preventDefault();
         const updatedPlan = { ...seatingPlan };
+        const { seats, rows, shapes } = state.selection.selectedItems;
 
-        switch (state.selection.type) {
-          case 'seat':
-            updatedPlan.zones[0].rows = updatedPlan.zones[0].rows.map(
-              (row) => ({
-                ...row,
-                seats: row.seats.filter(
-                  (seat) => !state.selection.ids.includes(seat.uuid),
-                ),
-              }),
-            );
-            break;
-          case 'row':
-            updatedPlan.zones[0].rows = updatedPlan.zones[0].rows.filter(
-              (row) => !state.selection.ids.includes(row.uuid),
-            );
-            updatedPlan.zones[0].areas = updatedPlan.zones[0].areas.filter(
-              (area) => !state.selection.ids.includes(area.uuid),
-            );
-            break;
-          case 'shape':
-            updatedPlan.zones[0].areas = updatedPlan.zones[0].areas.filter(
-              (area) => !state.selection.ids.includes(area.uuid),
-            );
-            break;
+        // Remove selected seats
+        if (seats.length > 0) {
+          updatedPlan.zones[0].rows = updatedPlan.zones[0].rows.map((row) => ({
+            ...row,
+            seats: row.seats.filter((seat) => !seats.includes(seat.uuid)),
+          }));
+        }
+
+        // Remove selected rows
+        if (rows.length > 0) {
+          updatedPlan.zones[0].rows = updatedPlan.zones[0].rows.filter(
+            (row) => !rows.includes(row.uuid),
+          );
+        }
+
+        // Remove selected shapes
+        if (shapes.length > 0) {
+          updatedPlan.zones[0].areas = updatedPlan.zones[0].areas.filter(
+            (area) => !shapes.includes(area.uuid),
+          );
         }
 
         actions.addToHistory(updatedPlan);
         onPlanChange(updatedPlan);
-        setters.setSelection({ type: 'none', ids: [] });
+        setters.setSelection({ selectedItems: { seats: [], rows: [], shapes: [] } });
       }
 
       // Handle copy
       if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
         e.preventDefault();
-        switch (state.selection.type) {
-          case 'seat': {
-            const selectedSeats = seatingPlan.zones[0].rows.flatMap((row) =>
-              row.seats.filter((seat) =>
-                state.selection.ids.includes(seat.uuid),
-              ),
-            );
-            setters.setClipboard({
-              type: 'seats',
-              items: JSON.parse(JSON.stringify(selectedSeats)),
-            });
-            break;
-          }
-          case 'row': {
-            const selectedItems = [
-              ...seatingPlan.zones[0].rows.filter((row) =>
-                state.selection.ids.includes(row.uuid),
-              ),
-              ...seatingPlan.zones[0].areas.filter((area) =>
-                state.selection.ids.includes(area.uuid),
-              ),
-            ];
-            setters.setClipboard({
-              type: state.selection.type,
-              items: JSON.parse(JSON.stringify(selectedItems)),
-            });
-            break;
-          }
-          case 'shape': {
-            const selectedShapes = seatingPlan.zones[0].areas.filter((area) =>
-              state.selection.ids.includes(area.uuid),
-            );
-            setters.setClipboard({
-              type: 'shape',
-              items: JSON.parse(JSON.stringify(selectedShapes)),
-            });
-            break;
-          }
+        const { seats, rows, shapes } = state.selection.selectedItems;
+
+        if (seats.length > 0) {
+          const selectedSeats = seatingPlan.zones[0].rows.flatMap((row) =>
+            row.seats.filter((seat) => seats.includes(seat.uuid)),
+          );
+          setters.setClipboard({
+            type: 'seats',
+            items: JSON.parse(JSON.stringify(selectedSeats)),
+          });
+        } else if (rows.length > 0) {
+          const selectedItems = [
+            ...seatingPlan.zones[0].rows.filter((row) => rows.includes(row.uuid)),
+            ...seatingPlan.zones[0].areas.filter((area) => shapes.includes(area.uuid)),
+          ];
+          setters.setClipboard({
+            type: 'row',
+            items: JSON.parse(JSON.stringify(selectedItems)),
+          });
+        } else if (shapes.length > 0) {
+          const selectedShapes = seatingPlan.zones[0].areas.filter((area) =>
+            shapes.includes(area.uuid),
+          );
+          setters.setClipboard({
+            type: 'shape',
+            items: JSON.parse(JSON.stringify(selectedShapes)),
+          });
         }
       }
 

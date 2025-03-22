@@ -67,8 +67,11 @@ export interface Zone {
 }
 
 export interface Selection {
-  type: 'none' | 'seat' | 'row' | 'shape';
-  ids: string[];
+  selectedItems: {
+    seats: string[];
+    rows: string[];
+    shapes: string[];
+  };
 }
 
 export interface SeatingPlan {

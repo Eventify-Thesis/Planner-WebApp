@@ -120,7 +120,11 @@ export const useCanvasHandlers = (
         if (newIds.length) {
           onPlanChange(updatedPlan);
           canvasSetters.setSelection({
-            type: clipboardItems.type,
+            selectedItems: {
+              seats: [],
+              rows: [],
+              shapes: [],
+            },
             ids: newIds,
           });
         }
@@ -177,7 +181,14 @@ export const useCanvasHandlers = (
       ) {
         if (e.target === e.target.getStage()) {
           canvasSetters.setSelectionBox({ startPoint: point, endPoint: point });
-          canvasSetters.setSelection({ type: 'none', ids: [] });
+          canvasSetters.setSelection({
+            selectedItems: {
+              seats: [],
+              rows: [],
+              shapes: [],
+            },
+            ids: [],
+          });
         }
       } else {
         canvasSetters.setStartPoint(point);
@@ -299,12 +310,39 @@ export const useCanvasHandlers = (
     (e: any) => {
       const { selectionBox, isDrawing, startPoint } = canvasState;
 
+      // Handle selection box
       if (selectionBox) {
+        const endPoint = getMousePosition(e, zoom);
+        if (!endPoint) {
+          canvasSetters.setSelectionBox(null);
+          return;
+        }
+
+        // Update selection based on selection box
+        const selection = updateSelection(
+          seatingPlan,
+          {
+            startPoint: selectionBox.startPoint,
+            endPoint,
+          },
+          currentTool === EditorTool.SELECT_SEAT ? 'seat' : 'row',
+        );
+
+        onSelectionChange(selection);
         canvasSetters.setSelectionBox(null);
-      } else if (!isDrawing || !startPoint) return;
+        return;
+      }
+
+      // Handle drawing
+      if (!isDrawing || !startPoint) {
+        return;
+      }
 
       const endPoint = getMousePosition(e, zoom);
-      if (!endPoint) return;
+      if (!endPoint) {
+        canvasActions.resetDrawingState();
+        return;
+      }
 
       const width = Math.abs(endPoint.x - startPoint.x);
       const height = Math.abs(endPoint.y - startPoint.y);
@@ -326,7 +364,13 @@ export const useCanvasHandlers = (
             },
           };
           currentZone.areas.push(shape);
-          canvasSetters.setSelection({ type: 'shape', ids: [shape.uuid] });
+          canvasSetters.setSelection({
+            selectedItems: {
+              seats: [],
+              rows: [],
+              shapes: [shape.uuid],
+            },
+          });
           break;
         }
 
@@ -341,7 +385,13 @@ export const useCanvasHandlers = (
             radius,
           };
           currentZone.areas.push(shape);
-          canvasSetters.setSelection({ type: 'shape', ids: [shape.uuid] });
+          canvasSetters.setSelection({
+            selectedItems: {
+              seats: [],
+              rows: [],
+              shapes: [shape.uuid],
+            },
+          });
           break;
         }
 
@@ -358,7 +408,13 @@ export const useCanvasHandlers = (
             },
           };
           currentZone.areas.push(shape);
-          canvasSetters.setSelection({ type: 'shape', ids: [shape.uuid] });
+          canvasSetters.setSelection({
+            selectedItems: {
+              seats: [],
+              rows: [],
+              shapes: [shape.uuid],
+            },
+          });
           break;
         }
 
@@ -373,7 +429,13 @@ export const useCanvasHandlers = (
             fill: '#000000',
           };
           currentZone.areas.push(shape);
-          canvasSetters.setSelection({ type: 'shape', ids: [shape.uuid] });
+          canvasSetters.setSelection({
+            selectedItems: {
+              seats: [],
+              rows: [],
+              shapes: [shape.uuid],
+            },
+          });
           break;
         }
 
@@ -395,7 +457,13 @@ export const useCanvasHandlers = (
             points,
           };
           currentZone.areas.push(shape);
-          canvasSetters.setSelection({ type: 'shape', ids: [shape.uuid] });
+          canvasSetters.setSelection({
+            selectedItems: {
+              seats: [],
+              rows: [],
+              shapes: [shape.uuid],
+            },
+          });
           break;
         }
 
@@ -420,7 +488,13 @@ export const useCanvasHandlers = (
             rowNumber: 1, // Each new row starts with 1
           };
           currentZone.rows.push(row);
-          canvasSetters.setSelection({ type: 'row', ids: [row.uuid] });
+          canvasSetters.setSelection({
+            selectedItems: {
+              seats: [],
+              rows: [row.uuid],
+              shapes: [],
+            },
+          });
           break;
         }
 
@@ -453,8 +527,11 @@ export const useCanvasHandlers = (
 
           currentZone.rows.push(...rows);
           canvasSetters.setSelection({
-            type: 'row',
-            ids: rows.map((r) => r.uuid),
+            selectedItems: {
+              seats: [],
+              rows: rows.map((r) => r.uuid),
+              shapes: [],
+            },
           });
           break;
         }
@@ -481,18 +558,14 @@ export const useCanvasHandlers = (
         event.cancelBubble = true;
       }
 
-      switch (currentTool) {
-        case EditorTool.SELECT_SEAT:
-          if (type !== 'seat') return;
-          break;
-        case EditorTool.SELECT_ROW:
-          if (type !== 'row' && type !== 'shape') return;
-          break;
-        default:
-          return;
-      }
+      const newSelection = {
+        selectedItems: {
+          seats: type === 'seat' ? [id] : [],
+          rows: type === 'row' ? [id] : [],
+          shapes: type === 'shape' ? [id] : [],
+        },
+      };
 
-      const newSelection = { type, ids: [id] };
       canvasSetters.setSelection(newSelection);
       onSelectionChange(newSelection);
     },

@@ -21,7 +21,13 @@ export const useCanvasState = () => {
   const [startPoint, setStartPoint] = useState<Point | null>(null);
   const [previewShape, setPreviewShape] = useState<PreviewShape | null>(null);
   const [draggedSeatId, setDraggedSeatId] = useState<string | null>(null);
-  const [selection, setSelection] = useState<Selection>({ type: 'none', ids: [] });
+  const [selection, setSelection] = useState<Selection>({
+    selectedItems: {
+      seats: [],
+      rows: [],
+      shapes: [],
+    },
+  });
   const [isDragging, setIsDragging] = useState(false);
   const [dragPreview, setDragPreview] = useState<DragPreview | null>(null);
   const [selectionBox, setSelectionBox] = useState<{
@@ -46,7 +52,13 @@ export const useCanvasState = () => {
   }, []);
 
   const resetSelectionState = useCallback(() => {
-    setSelection({ type: 'none', ids: [] });
+    setSelection({ 
+      selectedItems: {
+        seats: [],
+        rows: [],
+        shapes: [],
+      },
+    });
     setSelectionBox(null);
   }, []);
 

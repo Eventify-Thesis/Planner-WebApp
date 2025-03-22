@@ -11,25 +11,30 @@ export interface EditorState {
 }
 
 const useEditorState = () => {
-  const [currentTool, setCurrentTool] = useState<EditorTool>(EditorTool.SELECT);
+  const [currentTool, setCurrentTool] = useState<EditorTool>(
+    EditorTool.SELECT_SEAT,
+  );
   const [zoom, setZoom] = useState(1);
   const [history, setHistory] = useState<any[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
 
-  const addToHistory = useCallback((state: any) => {
-    setHistory((prev) => {
-      // Remove all states after current index
-      const newHistory = prev.slice(0, historyIndex + 1);
-      // Add new state
-      newHistory.push(state);
-      // Keep only last MAX_HISTORY_SIZE states
-      if (newHistory.length > MAX_HISTORY_SIZE) {
-        newHistory.shift();
-      }
-      return newHistory;
-    });
-    setHistoryIndex((prev) => Math.min(prev + 1, MAX_HISTORY_SIZE - 1));
-  }, [historyIndex]);
+  const addToHistory = useCallback(
+    (state: any) => {
+      setHistory((prev) => {
+        // Remove all states after current index
+        const newHistory = prev.slice(0, historyIndex + 1);
+        // Add new state
+        newHistory.push(state);
+        // Keep only last MAX_HISTORY_SIZE states
+        if (newHistory.length > MAX_HISTORY_SIZE) {
+          newHistory.shift();
+        }
+        return newHistory;
+      });
+      setHistoryIndex((prev) => Math.min(prev + 1, MAX_HISTORY_SIZE - 1));
+    },
+    [historyIndex],
+  );
 
   const undo = useCallback(() => {
     if (historyIndex > 0) {
