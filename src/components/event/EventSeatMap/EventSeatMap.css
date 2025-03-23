@@ -1,0 +1,146 @@
+.seat-map-layout {
+  height: 100%;
+  background: #fff;
+}
+
+.seat-map-header {
+  padding: 16px;
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.seat-map-content {
+  padding: 16px;
+  background: #f5f5f5;
+  height: calc(100vh - 120px);
+  overflow: auto;
+}
+
+.canvas-container {
+  height: 100%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.plan-settings-panel {
+  border-left: 1px solid #f0f0f0;
+  overflow: auto;
+}
+
+.plan-settings-panel .ant-tabs-content {
+  height: 100%;
+}
+
+.panel-content {
+  padding: 16px;
+}
+
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.event-seat-map {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.toolbar {
+  display: flex;
+  gap: 16px;
+  padding: 8px;
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #ddd;
+}
+
+.tool-group {
+  display: flex;
+  gap: 4px;
+  padding: 0 8px;
+  border-right: 1px solid #ddd;
+}
+
+.tool-group:last-child {
+  border-right: none;
+}
+
+.tool-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tool-button:hover {
+  background-color: #f0f0f0;
+}
+
+.tool-button.active {
+  background-color: #e3f2fd;
+  border-color: #2196f3;
+  color: #2196f3;
+}
+
+.zoom-level {
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  font-size: 14px;
+  color: #666;
+}
+
+.editor-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.canvas-container {
+  flex: 1;
+  overflow: hidden;
+  background-color: #fafafa;
+}
+
+/* Tooltip styles */
+.tool-button {
+  position: relative;
+}
+
+.tool-button:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1000;
+}
