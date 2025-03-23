@@ -9,6 +9,8 @@ import {
   Group,
   Stack,
   FileInput,
+  Accordion,
+  Badge,
 } from '@mantine/core';
 import { SeatingPlan, Category } from '../../types';
 import './PlanSettingsPanel.css';
@@ -84,7 +86,12 @@ const PlanSettingsPanel: React.FC<PlanSettingsPanelProps> = ({
           label="Width"
           value={seatingPlan.size.width}
           onChange={(value) =>
-            handleUpdate({ size: { ...seatingPlan.size, width: value || 0 } })
+            handleUpdate({
+              size: {
+                width: value || seatingPlan.size.width,
+                height: seatingPlan.size.height,
+              },
+            })
           }
           min={100}
         />
@@ -92,7 +99,12 @@ const PlanSettingsPanel: React.FC<PlanSettingsPanelProps> = ({
           label="Height"
           value={seatingPlan.size.height}
           onChange={(value) =>
-            handleUpdate({ size: { ...seatingPlan.size, height: value || 0 } })
+            handleUpdate({
+              size: {
+                width: seatingPlan.size.width,
+                height: value || seatingPlan.size.height,
+              },
+            })
           }
           min={100}
         />
@@ -102,62 +114,77 @@ const PlanSettingsPanel: React.FC<PlanSettingsPanelProps> = ({
         Total Seats: {seatingPlan.totalSeats}
       </Text>
 
-      <Card.Section p="md">
-        <h4>Categories</h4>
-      </Card.Section>
+      <Accordion defaultValue="categories" mb="md">
+        <Accordion.Item value="categories">
+          <Accordion.Control>
+            <Group position="apart">
+              <Text>Categories</Text>
+              <Badge>{seatingPlan.categories.length}</Badge>
+            </Group>
+          </Accordion.Control>
+          <Accordion.Panel>
+            {seatingPlan.categories.map((category, index) => (
+              <Group key={category.name} mb="sm" position="apart" noWrap>
+                <Stack spacing="xs" style={{ flex: 1 }}>
+                  <Group noWrap>
+                    <TextInput
+                      value={category.name}
+                      onChange={(e) =>
+                        handleUpdateCategory(index, { name: e.target.value })
+                      }
+                      size="sm"
+                      style={{ flex: 1 }}
+                    />
+                    <ColorInput
+                      value={category.color}
+                      onChange={(color) => handleUpdateCategory(index, { color })}
+                      size="sm"
+                      style={{ width: 100 }}
+                    />
+                  </Group>
+                  <Text size="xs" color="dimmed">Seats: {category.seatCount}</Text>
+                </Stack>
+                <Button
+                  color="red"
+                  variant="subtle"
+                  size="sm"
+                  onClick={() => handleDeleteCategory(index)}
+                  ml="xs"
+                >
+                  Remove
+                </Button>
+              </Group>
+            ))}
 
-      {seatingPlan.categories.map((category, index) => (
-        <Group key={category.name} mb="sm" position="apart">
-          <Stack spacing="xs" style={{ flex: 1 }}>
-            <TextInput
-              value={category.name}
-              onChange={(e) =>
-                handleUpdateCategory(index, { name: e.target.value })
-              }
-              size="sm"
-            />
-            <Text size="xs">Seats: {category.seatCount}</Text>
-          </Stack>
-          <ColorInput
-            value={category.color}
-            onChange={(color) => handleUpdateCategory(index, { color })}
-            size="sm"
-          />
-          <Button
-            color="red"
-            variant="subtle"
-            size="sm"
-            onClick={() => handleDeleteCategory(index)}
-          >
-            Remove
-          </Button>
-        </Group>
-      ))}
-
-      <Group mb="md">
-        <TextInput
-          placeholder="Category Name"
-          value={newCategory.name || ''}
-          onChange={(e) =>
-            setNewCategory({ ...newCategory, name: e.target.value })
-          }
-          size="sm"
-        />
-        <ColorInput
-          value={newCategory.color || '#000000'}
-          onChange={(color) => setNewCategory({ ...newCategory, color })}
-          size="sm"
-        />
-        <Button size="sm" onClick={handleAddCategory}>
-          Add Category
-        </Button>
-      </Group>
+            <Group mt="md">
+              <TextInput
+                placeholder="Category Name"
+                value={newCategory.name || ''}
+                onChange={(e) =>
+                  setNewCategory({ ...newCategory, name: e.target.value })
+                }
+                size="sm"
+                style={{ flex: 1 }}
+              />
+              <ColorInput
+                value={newCategory.color || '#000000'}
+                onChange={(color) => setNewCategory({ ...newCategory, color })}
+                size="sm"
+              />
+              <Button size="sm" onClick={handleAddCategory}>
+                Add
+              </Button>
+            </Group>
+          </Accordion.Panel>
+        </Accordion.Item>
+      </Accordion>
 
       <FileInput
         label="Background Image"
         accept="image/*"
         placeholder="Upload image"
         onChange={handleBackgroundImage}
+        clearable
       />
     </Card>
   );
