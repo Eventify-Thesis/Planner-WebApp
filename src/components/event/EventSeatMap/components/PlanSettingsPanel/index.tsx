@@ -27,7 +27,33 @@ const PlanSettingsPanel: React.FC<PlanSettingsPanelProps> = ({
   const [newCategory, setNewCategory] = useState<Partial<Category>>({});
 
   const handleUpdate = (updates: Partial<SeatingPlan>) => {
-    onUpdate({ ...seatingPlan, ...updates });
+    const updatedPlan = { ...seatingPlan, ...updates };
+    
+    // Calculate total seats and update category seat counts
+    const categoryCounts: { [key: string]: number } = {};
+    let totalSeats = 0;
+    
+    updatedPlan.zones.forEach(zone => {
+      zone.rows.forEach(row => {
+        totalSeats += row.seats.length;
+        row.seats.forEach(seat => {
+          if (seat.category) {
+            categoryCounts[seat.category] = (categoryCounts[seat.category] || 0) + 1;
+          }
+        });
+      });
+    });
+
+    // Update category seat counts
+    updatedPlan.categories = updatedPlan.categories.map(category => ({
+      ...category,
+      seatCount: categoryCounts[category.name] || 0
+    }));
+
+    // Update total seats
+    updatedPlan.totalSeats = totalSeats;
+    
+    onUpdate(updatedPlan);
   };
 
   const handleAddCategory = () => {
@@ -58,7 +84,10 @@ const PlanSettingsPanel: React.FC<PlanSettingsPanelProps> = ({
   };
 
   const handleBackgroundImage = (file: File | null) => {
-    if (!file) return;
+    if (!file) {
+      handleUpdate({ backgroundImage: undefined });
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -66,6 +95,10 @@ const PlanSettingsPanel: React.FC<PlanSettingsPanelProps> = ({
       handleUpdate({ backgroundImage: dataUrl });
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleRemoveBackground = () => {
+    handleUpdate({ backgroundImage: undefined });
   };
 
   return (
@@ -85,28 +118,26 @@ const PlanSettingsPanel: React.FC<PlanSettingsPanelProps> = ({
         <NumberInput
           label="Width"
           value={seatingPlan.size.width}
-          onChange={(value) =>
+          onChange={(value: number | '') => {
+            if (value === '') return;
             handleUpdate({
-              size: {
-                ...seatingPlan.size,
-                width: value ?? seatingPlan.size.width,
-              },
-            })
-          }
+              size: { ...seatingPlan.size, width: value },
+            });
+          }}
           min={100}
+          step={10}
         />
         <NumberInput
           label="Height"
           value={seatingPlan.size.height}
-          onChange={(value) =>
+          onChange={(value: number | '') => {
+            if (value === '') return;
             handleUpdate({
-              size: {
-                ...seatingPlan.size,
-                height: value ?? seatingPlan.size.height,
-              },
-            })
-          }
+              size: { ...seatingPlan.size, height: value },
+            });
+          }}
           min={100}
+          step={10}
         />
       </Group>
 
@@ -137,12 +168,16 @@ const PlanSettingsPanel: React.FC<PlanSettingsPanelProps> = ({
                     />
                     <ColorInput
                       value={category.color}
-                      onChange={(color) => handleUpdateCategory(index, { color })}
+                      onChange={(color) =>
+                        handleUpdateCategory(index, { color })
+                      }
                       size="sm"
                       style={{ width: 100 }}
                     />
                   </Group>
-                  <Text size="xs" color="dimmed">Seats: {category.seatCount}</Text>
+                  <Text size="xs" color="dimmed">
+                    Seats: {category.seatCount}
+                  </Text>
                 </Stack>
                 <Button
                   color="red"
@@ -179,14 +214,29 @@ const PlanSettingsPanel: React.FC<PlanSettingsPanelProps> = ({
         </Accordion.Item>
       </Accordion>
 
-      <FileInput
-        label="Background Image"
-        accept="image/*"
-        placeholder="Upload image"
-        onChange={handleBackgroundImage}
-        clearable
-        value={null} // Reset value after upload
-      />
+      <Stack spacing="xs">
+        <Text size="sm" weight={500}>
+          Background Image
+        </Text>
+        <Group spacing="xs">
+          <FileInput
+            placeholder="Upload image"
+            accept="image/*"
+            onChange={handleBackgroundImage}
+            style={{ flex: 1 }}
+            value={null}
+          />
+          {seatingPlan.backgroundImage && (
+            <Button
+              variant="light"
+              color="red"
+              onClick={handleRemoveBackground}
+            >
+              Remove
+            </Button>
+          )}
+        </Group>
+      </Stack>
     </Card>
   );
 };

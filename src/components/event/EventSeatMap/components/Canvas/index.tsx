@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useCallback } from 'react';
 import { Stage, Layer, Group, Line, Circle, Rect, Ellipse } from 'react-konva';
-import { SeatingPlan, EditorTool, Selection } from '../../types';
+import { SeatingPlan, EditorTool, Selection } from '../..//types/index';
 import { useCanvasState } from '../../hooks/useCanvasState';
 import { useCanvasHandlers } from '../../hooks/useCanvasHandlers';
 import { ShapeLayer } from './components/ShapeLayer';
@@ -17,6 +17,7 @@ interface CanvasProps {
   zoom: number;
   showGrid: boolean;
   onPlanChange: (plan: SeatingPlan) => void;
+  selection: Selection;
   onSelectionChange: (selection: Selection) => void;
   setCurrentTool: (tool: EditorTool) => void;
 }
@@ -27,11 +28,15 @@ const Canvas: React.FC<CanvasProps> = ({
   zoom,
   showGrid,
   onPlanChange,
+  selection,
   onSelectionChange,
   setCurrentTool,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { state, setters, actions } = useCanvasState();
+  const { state, setters, actions } = useCanvasState(
+    selection,
+    onSelectionChange,
+  );
   const {
     handleMouseDown,
     handleMouseMove,
@@ -82,7 +87,7 @@ const Canvas: React.FC<CanvasProps> = ({
       if (e.key === 'Delete' || e.key === 'Backspace') {
         e.preventDefault();
         const updatedPlan = { ...seatingPlan };
-        const { seats, rows, shapes } = state.selection.selectedItems;
+        const { seats, rows, areas } = state.selection.selectedItems;
 
         // Remove selected seats
         if (seats.length > 0) {
@@ -100,23 +105,23 @@ const Canvas: React.FC<CanvasProps> = ({
         }
 
         // Remove selected shapes
-        if (shapes.length > 0) {
+        if (areas.length > 0) {
           updatedPlan.zones[0].areas = updatedPlan.zones[0].areas.filter(
-            (area) => !shapes.includes(area.uuid),
+            (area) => !areas.includes(area.uuid),
           );
         }
 
         actions.addToHistory(updatedPlan);
         onPlanChange(updatedPlan);
         setters.setSelection({
-          selectedItems: { seats: [], rows: [], shapes: [] },
+          selectedItems: { seats: [], rows: [], areas: [] },
         });
       }
 
       // Handle copy
       if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
         e.preventDefault();
-        const { seats, rows, shapes } = state.selection.selectedItems;
+        const { seats, rows, areas } = state.selection.selectedItems;
 
         if (seats.length > 0) {
           const selectedSeats = seatingPlan.zones[0].rows.flatMap((row) =>
@@ -132,16 +137,16 @@ const Canvas: React.FC<CanvasProps> = ({
               rows.includes(row.uuid),
             ),
             ...seatingPlan.zones[0].areas.filter((area) =>
-              shapes.includes(area.uuid),
+              areas.includes(area.uuid),
             ),
           ];
           setters.setClipboard({
             type: 'row',
             items: JSON.parse(JSON.stringify(selectedItems)),
           });
-        } else if (shapes.length > 0) {
+        } else if (areas.length > 0) {
           const selectedShapes = seatingPlan.zones[0].areas.filter((area) =>
-            shapes.includes(area.uuid),
+            areas.includes(area.uuid),
           );
           setters.setClipboard({
             type: 'shape',
@@ -414,7 +419,9 @@ const Canvas: React.FC<CanvasProps> = ({
             const nodeId = node.id();
 
             // Update shape if found
-            const shape = updatedPlan.zones[0].areas.find(a => a.uuid === nodeId);
+            const shape = updatedPlan.zones[0].areas.find(
+              (a) => a.uuid === nodeId,
+            );
             if (shape) {
               if (shape.size) {
                 shape.size.width *= scaleX;
@@ -429,7 +436,9 @@ const Canvas: React.FC<CanvasProps> = ({
             }
 
             // Update row if found
-            const row = updatedPlan.zones[0].rows.find(r => r.uuid === nodeId);
+            const row = updatedPlan.zones[0].rows.find(
+              (r) => r.uuid === nodeId,
+            );
             if (row) {
               // For rows, we only allow rotation
               node.scaleX(1);

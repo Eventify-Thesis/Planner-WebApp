@@ -19,9 +19,9 @@ export const useCanvasHandlers = (
     (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
         const { selection } = canvasState;
-        const { seats, rows, shapes } = selection.selectedItems;
+        const { seats, rows, areas } = selection.selectedItems;
 
-        if (!seats.length && !rows.length && !shapes.length) return;
+        if (!seats.length && !rows.length && !areas.length) return;
 
         const copiedItems = {
           seats: seats.length
@@ -32,9 +32,9 @@ export const useCanvasHandlers = (
           rows: rows.length
             ? seatingPlan.zones[0].rows.filter((row) => rows.includes(row.uuid))
             : [],
-          shapes: shapes.length
+          areas: areas.length
             ? seatingPlan.zones[0].areas.filter((area) =>
-                shapes.includes(area.uuid),
+                areas.includes(area.uuid),
               )
             : [],
         };
@@ -42,7 +42,7 @@ export const useCanvasHandlers = (
         if (
           copiedItems.seats.length ||
           copiedItems.rows.length ||
-          copiedItems.shapes.length
+          copiedItems.areas.length
         ) {
           canvasSetters.setClipboard(copiedItems);
         }
@@ -59,7 +59,7 @@ export const useCanvasHandlers = (
         const newSelection = {
           seats: [] as string[],
           rows: [] as string[],
-          shapes: [] as string[],
+          areas: [] as string[],
         };
 
         const offset = 30; // Offset for pasted items
@@ -103,8 +103,8 @@ export const useCanvasHandlers = (
         }
 
         // Paste shapes
-        if (canvasState.clipboard.shapes?.length) {
-          canvasState.clipboard.shapes.forEach((shape: any) => {
+        if (canvasState.clipboard.areas?.length) {
+          canvasState.clipboard.areas.forEach((shape: any) => {
             const newShape = {
               ...shape,
               uuid: uuidv4(),
@@ -124,14 +124,14 @@ export const useCanvasHandlers = (
               }),
             };
             currentZone.areas.push(newShape);
-            newSelection.shapes.push(newShape.uuid);
+            newSelection.areas.push(newShape.uuid);
           });
         }
 
         if (
           newSelection.seats.length ||
           newSelection.rows.length ||
-          newSelection.shapes.length
+          newSelection.areas.length
         ) {
           onPlanChange(updatedPlan);
           canvasSetters.setSelection({ selectedItems: newSelection });
@@ -163,7 +163,7 @@ export const useCanvasHandlers = (
         });
 
         // Rotate selected shapes
-        canvasState.selection.selectedItems.shapes.forEach((shapeId) => {
+        canvasState.selection.selectedItems.areas.forEach((shapeId) => {
           const shape = updatedPlan.zones[0].areas.find(
             (a) => a.uuid === shapeId,
           );
@@ -174,7 +174,7 @@ export const useCanvasHandlers = (
 
         if (
           canvasState.selection.selectedItems.rows.length > 0 ||
-          canvasState.selection.selectedItems.shapes.length > 0
+          canvasState.selection.selectedItems.areas.length > 0
         ) {
           canvasActions.addToHistory(updatedPlan);
           onPlanChange(updatedPlan);
@@ -238,7 +238,7 @@ export const useCanvasHandlers = (
             selectedItems: {
               seats: [],
               rows: [],
-              shapes: [],
+              areas: [],
             },
             ids: [],
           });
@@ -421,7 +421,7 @@ export const useCanvasHandlers = (
             selectedItems: {
               seats: [],
               rows: [],
-              shapes: [shape.uuid],
+              areas: [shape.uuid],
             },
           });
           break;
@@ -442,7 +442,7 @@ export const useCanvasHandlers = (
             selectedItems: {
               seats: [],
               rows: [],
-              shapes: [shape.uuid],
+              areas: [shape.uuid],
             },
           });
           break;
@@ -465,7 +465,7 @@ export const useCanvasHandlers = (
             selectedItems: {
               seats: [],
               rows: [],
-              shapes: [shape.uuid],
+              areas: [shape.uuid],
             },
           });
           break;
@@ -486,7 +486,7 @@ export const useCanvasHandlers = (
             selectedItems: {
               seats: [],
               rows: [],
-              shapes: [shape.uuid],
+              areas: [shape.uuid],
             },
           });
           break;
@@ -514,7 +514,7 @@ export const useCanvasHandlers = (
             selectedItems: {
               seats: [],
               rows: [],
-              shapes: [shape.uuid],
+              areas: [shape.uuid],
             },
           });
           break;
@@ -545,7 +545,7 @@ export const useCanvasHandlers = (
             selectedItems: {
               seats: [],
               rows: [row.uuid],
-              shapes: [],
+              areas: [],
             },
           });
           break;
@@ -583,7 +583,7 @@ export const useCanvasHandlers = (
             selectedItems: {
               seats: [],
               rows: rows.map((r) => r.uuid),
-              shapes: [],
+              areas: [],
             },
           });
           break;
@@ -615,7 +615,7 @@ export const useCanvasHandlers = (
         selectedItems: {
           seats: type === 'seat' ? [id] : [],
           rows: type === 'row' ? [id] : [],
-          shapes: type === 'shape' ? [id] : [],
+          areas: type === 'shape' ? [id] : [],
         },
       };
 

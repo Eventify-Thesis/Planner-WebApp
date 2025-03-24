@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { Layer, Text, Rect, Circle, Ellipse, Line } from 'react-konva';
-import { SeatingPlan, Selection, EditorTool } from '../../../types';
+import { SeatingPlan, Selection, EditorTool } from '../../../types/index';
 import { getShapeStyles } from '../utils/styleUtils';
 import { getMousePosition } from '../utils/mouseUtils';
 
@@ -26,7 +26,7 @@ export const ShapeLayer = memo(
       // Get all selected shapes including the one being dragged
       const selectedShapes = seatingPlan.zones[0].areas.filter(
         (a) =>
-          selection.selectedItems.shapes.includes(a.uuid) || a.uuid === uuid,
+          selection.selectedItems.areas.includes(a.uuid) || a.uuid === uuid,
       );
       if (selectedShapes.length === 0) return;
 
@@ -91,7 +91,7 @@ export const ShapeLayer = memo(
       <Layer>
         {seatingPlan.zones.flatMap((zone) =>
           zone.areas.map((area) => {
-            const isSelected = selection.selectedItems.shapes.includes(
+            const isSelected = selection.selectedItems.areas.includes(
               area.uuid,
             );
 

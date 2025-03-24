@@ -132,7 +132,7 @@ export const updateSelection = (
   const selectedItems = {
     seats: [] as string[],
     rows: [] as string[],
-    shapes: [] as string[],
+    areas: [] as string[],
   };
 
   if (selectionType === 'seat') {
@@ -157,7 +157,7 @@ export const updateSelection = (
 
     seatingPlan.zones[0].areas.forEach((area) => {
       if (isPointInBounds(area.position, bounds)) {
-        selectedItems.shapes.push(area.uuid);
+        selectedItems.areas.push(area.uuid);
       }
     });
   }

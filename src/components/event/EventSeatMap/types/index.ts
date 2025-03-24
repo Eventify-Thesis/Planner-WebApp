@@ -11,80 +11,78 @@ export interface Size {
 export interface Category {
   name: string;
   color: string;
-  seatCount: number;
 }
 
 export interface Seat {
   uuid: string;
   position: Point;
-  number: number;
+  number: string;
+  radius?: number;
   category?: string;
-  radius: number;
-  label?: string;
-  rowId: string; // Reference to parent row
 }
 
 export interface Row {
   uuid: string;
-  position: Point;
+  seats: Seat[];
+  seatSpacing?: number;
+  seatRadius?: number;
+  defaultCategory?: string;
+  type: 'straight' | 'rectangular';
+  numberingType: 'continuous' | 'perRow';
+  startNumber: number;
   rowNumber: number;
   label?: string;
-  seatSpacing: number;
-  seatRadius: number;
-  defaultCategory?: string;
-  seats: Seat[];
-  type: 'straight' | 'circular' | 'rectangular';
-  startNumber: number;
-  numberingType: 'continuous' | 'perRow';
-  numberFormat: string;
 }
 
 export interface Shape {
   uuid: string;
-  type: 'rectangle' | 'circle' | 'ellipse' | 'polygon';
+  type: 'rectangle' | 'circle' | 'text';
   position: Point;
-  size?: Size; // For rectangle and ellipse
-  radius?: number; // For circle
-  points?: Point[]; // For polygon
-  fill?: string;
-  stroke?: string;
+  size: Size;
+  rotation: number;
+  fill: string;
+  stroke: string;
+  text?: string;
+  textSize?: number;
+  textPosition?: Point;
+  textColor?: string;
 }
 
-export interface TextLabel {
-  uuid: string;
-  position: Point;
-  text: string;
-  fontSize?: number;
-  fontFamily?: string;
-  fill?: string;
-}
-
+/**
+ * Represents a zone within a seating plan.
+ *
+ * @property {string} uuid - Unique identifier for the zone.
+ * @property {string} name - Name of the zone.
+ * @property {string} zone_id - Identifier for referencing the zone.
+ * @property {Point} position - The position of the zone on the seating plan.
+ * @property {Row[]} rows - The list of rows contained in the zone.
+ * @property {Shape[]} shapes - The list of shapes contained in the zone.
+ * @property {any[]} areas - The list of areas in the zone. TODO: Define Area type if needed.
+ */
 export interface Zone {
   uuid: string;
   name: string;
-  areas: Shape[];
+  zone_id: string;
+  position: Point;
   rows: Row[];
+  areas: Shape[]; // TODO: Define Area type if needed
+}
+
+export interface SeatingPlan {
+  id: string;
+  name: string;
+  size: Size;
+  categories: Category[];
+  zones: Zone[];
+  backgroundImage?: string;
 }
 
 export interface Selection {
   selectedItems: {
     seats: string[];
     rows: string[];
-    shapes: string[];
+    areas: string[];
   };
-}
-
-export interface SeatingPlan {
-  uuid: string;
-  name: string;
-  size: {
-    width: number;
-    height: number;
-  };
-  backgroundImage?: string;
-  categories: Category[];
-  zones: Zone[];
-  totalSeats: number;
 }
 
 export enum EditorTool {

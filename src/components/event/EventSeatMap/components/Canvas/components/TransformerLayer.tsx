@@ -22,12 +22,8 @@ const TransformerLayer: React.FC<TransformerLayerProps> = ({
     if (!stage) return;
 
     selectedNodes.current = [
-      ...selection.selectedItems.rows.map((id) =>
-        stage.findOne(`#${id}`),
-      ),
-      ...selection.selectedItems.shapes.map((id) =>
-        stage.findOne(`#${id}`),
-      ),
+      ...selection.selectedItems.rows.map((id) => stage.findOne(`#${id}`)),
+      ...selection.selectedItems.areas.map((id) => stage.findOne(`#${id}`)),
     ].filter(Boolean);
 
     // Attach nodes to transformer
@@ -46,7 +42,12 @@ const TransformerLayer: React.FC<TransformerLayerProps> = ({
           return newBox;
         }}
         rotateEnabled={true}
-        enabledAnchors={['top-left', 'top-right', 'bottom-left', 'bottom-right']}
+        enabledAnchors={[
+          'top-left',
+          'top-right',
+          'bottom-left',
+          'bottom-right',
+        ]}
         rotationSnaps={[0, 45, 90, 135, 180, 225, 270, 315]}
         onTransform={onTransform}
       />
