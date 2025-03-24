@@ -9,6 +9,7 @@ import { renderRowPreview, renderRectRowPreview } from './utils/rowUtils';
 import './Canvas.css';
 import GridLayer from './components/GridLayer';
 import TransformerLayer from './components/TransformerLayer';
+import BackgroundLayer from './components/BackgroundLayer';
 
 interface CanvasProps {
   seatingPlan: SeatingPlan;
@@ -366,6 +367,11 @@ const Canvas: React.FC<CanvasProps> = ({
         onMouseUp={handleMouseUp}
         scale={{ x: zoom, y: zoom }}
       >
+        <BackgroundLayer
+          backgroundImage={seatingPlan.backgroundImage}
+          stageSize={state.stageSize}
+        />
+
         {showGrid && (
           <GridLayer
             stageSize={state.stageSize}

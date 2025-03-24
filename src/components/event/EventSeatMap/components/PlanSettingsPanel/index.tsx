@@ -88,8 +88,8 @@ const PlanSettingsPanel: React.FC<PlanSettingsPanelProps> = ({
           onChange={(value) =>
             handleUpdate({
               size: {
-                width: value || seatingPlan.size.width,
-                height: seatingPlan.size.height,
+                ...seatingPlan.size,
+                width: value ?? seatingPlan.size.width,
               },
             })
           }
@@ -101,8 +101,8 @@ const PlanSettingsPanel: React.FC<PlanSettingsPanelProps> = ({
           onChange={(value) =>
             handleUpdate({
               size: {
-                width: seatingPlan.size.width,
-                height: value || seatingPlan.size.height,
+                ...seatingPlan.size,
+                height: value ?? seatingPlan.size.height,
               },
             })
           }
@@ -185,6 +185,7 @@ const PlanSettingsPanel: React.FC<PlanSettingsPanelProps> = ({
         placeholder="Upload image"
         onChange={handleBackgroundImage}
         clearable
+        value={null} // Reset value after upload
       />
     </Card>
   );
