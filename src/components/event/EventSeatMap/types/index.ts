@@ -42,10 +42,11 @@ export interface Shape {
   rotation: number;
   fill: string;
   stroke: string;
-  text?: string;
-  textSize?: number;
-  textPosition?: Point;
-  textColor?: string;
+  text: {
+    position: Point;
+    color: string;
+    text: string;
+  };
 }
 
 /**
@@ -75,6 +76,7 @@ export interface SeatingPlan {
   categories: Category[];
   zones: Zone[];
   backgroundImage?: string;
+  totalSeats: number;
 }
 
 export interface Selection {

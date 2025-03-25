@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getMousePosition } from '../components/Canvas/utils/mouseUtils';
 import { updateSelection } from '../components/Canvas/utils/selectionUtils';
 import { createDragPreview } from '../components/Canvas/utils/dragUtils';
+import { text } from 'stream/consumers';
 
 export const useCanvasHandlers = (
   zoom: number,
@@ -404,6 +405,8 @@ export const useCanvasHandlers = (
 
       const updatedPlan = { ...seatingPlan };
       const currentZone = updatedPlan.zones[0];
+      const centerX = x + (width || 0) / 2;
+      const centerY = y + (height || 0) / 2;
 
       switch (currentTool) {
         case EditorTool.ADD_SHAPE: {
@@ -411,6 +414,11 @@ export const useCanvasHandlers = (
             uuid: uuidv4(),
             type: 'rectangle',
             position: { x, y },
+            text: {
+              position: { x: centerX, y: centerY },
+              color: '#000',
+              text: '',
+            },
             size: {
               width,
               height,

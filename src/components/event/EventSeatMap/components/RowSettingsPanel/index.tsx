@@ -1,5 +1,13 @@
 import React, { useEffect } from 'react';
-import { Card, NumberInput, TextInput, Select, Stack } from '@mantine/core';
+import {
+  Card,
+  NumberInput,
+  TextInput,
+  Select,
+  Stack,
+  Title,
+  ColorInput,
+} from '@mantine/core';
 import { Row, Category, Point } from '../../types';
 
 interface RowSettingsPanelProps {
@@ -16,7 +24,10 @@ const DEFAULT_SETTINGS = {
   NUMBER_FORMAT: '{row}-{number}',
 } as const;
 
-const recalculateSeatPositions = (seats: Row['seats'], spacing: number): Row['seats'] => {
+const recalculateSeatPositions = (
+  seats: Row['seats'],
+  spacing: number,
+): Row['seats'] => {
   if (seats.length < 2) return seats;
 
   // Get first and last seat to determine direction
@@ -42,9 +53,12 @@ const recalculateSeatPositions = (seats: Row['seats'], spacing: number): Row['se
   }));
 };
 
-const getCommonValue = <K extends keyof Row>(key: K, rows: Row[]): Row[K] | null => {
+const getCommonValue = <K extends keyof Row>(
+  key: K,
+  rows: Row[],
+): Row[K] | null => {
   const value = rows[0]?.[key];
-  return rows.every(row => row[key] === value) ? value : null;
+  return rows.every((row) => row[key] === value) ? value : null;
 };
 
 const RowSettingsPanel: React.FC<RowSettingsPanelProps> = ({
@@ -53,21 +67,21 @@ const RowSettingsPanel: React.FC<RowSettingsPanelProps> = ({
   onUpdate,
 }) => {
   const handleUpdate = (updates: Partial<Row>) => {
-    const updatedRows = rows.map(row => ({
+    const updatedRows = rows.map((row) => ({
       ...row,
       ...updates,
     }));
 
     // Update seat positions and properties
     if (updates.seatSpacing) {
-      updatedRows.forEach(row => {
+      updatedRows.forEach((row) => {
         row.seats = recalculateSeatPositions(row.seats, updates.seatSpacing);
       });
     }
 
     // Update seat radius if changed
     if (updates.seatRadius) {
-      updatedRows.forEach(row => {
+      updatedRows.forEach((row) => {
         row.seats = row.seats.map((seat) => ({
           ...seat,
           radius: updates.seatRadius,
@@ -77,8 +91,11 @@ const RowSettingsPanel: React.FC<RowSettingsPanelProps> = ({
 
     // Update seat numbers if start number or numbering type changed
     if (updates.startNumber !== undefined || updates.numberingType) {
-      const startNum = updates.startNumber ?? rows[0].startNumber ?? DEFAULT_SETTINGS.START_NUMBER;
-      updatedRows.forEach(row => {
+      const startNum =
+        updates.startNumber ??
+        rows[0].startNumber ??
+        DEFAULT_SETTINGS.START_NUMBER;
+      updatedRows.forEach((row) => {
         row.seats = row.seats.map((seat, index) => ({
           ...seat,
           number: startNum + index,
@@ -88,7 +105,7 @@ const RowSettingsPanel: React.FC<RowSettingsPanelProps> = ({
 
     // Update seat categories if default category changed
     if (updates.defaultCategory !== undefined) {
-      updatedRows.forEach(row => {
+      updatedRows.forEach((row) => {
         row.seats = row.seats.map((seat) => ({
           ...seat,
           category: updates.defaultCategory,
@@ -143,13 +160,14 @@ const RowSettingsPanel: React.FC<RowSettingsPanelProps> = ({
   if (rows.length === 0) return null;
 
   return (
-    <Card shadow="sm" p="md">
-      <Stack spacing="sm">
-        <Card.Section p="md">
-          <h3>Row Settings</h3>
+    <Card shadow="sm" p="xs">
+      <Stack spacing="xs">
+        <Card.Section p="xs">
+          <Title order={4}>Row Settings</Title>
         </Card.Section>
 
         <NumberInput
+          size="xs"
           label="Row Number"
           value={getCommonValue('rowNumber', rows)}
           onChange={(value: number | '') => {
@@ -163,6 +181,7 @@ const RowSettingsPanel: React.FC<RowSettingsPanelProps> = ({
         />
 
         <TextInput
+          size="xs"
           label="Row Label"
           value={getCommonValue('label', rows) || ''}
           placeholder={`Row ${getCommonValue('rowNumber', rows)}`}
@@ -170,9 +189,12 @@ const RowSettingsPanel: React.FC<RowSettingsPanelProps> = ({
         />
 
         <NumberInput
+          size="xs"
           label="Seat Spacing"
           description="Distance between seats (pixels)"
-          value={getCommonValue('seatSpacing', rows) || DEFAULT_SETTINGS.SEAT_SPACING}
+          value={
+            getCommonValue('seatSpacing', rows) || DEFAULT_SETTINGS.SEAT_SPACING
+          }
           placeholder={DEFAULT_SETTINGS.SEAT_SPACING.toString()}
           onChange={(value: number | '') => {
             if (value === '') return;
@@ -183,9 +205,12 @@ const RowSettingsPanel: React.FC<RowSettingsPanelProps> = ({
         />
 
         <NumberInput
+          size="xs"
           label="Seat Radius"
           description="Size of each seat (pixels)"
-          value={getCommonValue('seatRadius', rows) || DEFAULT_SETTINGS.SEAT_RADIUS}
+          value={
+            getCommonValue('seatRadius', rows) || DEFAULT_SETTINGS.SEAT_RADIUS
+          }
           placeholder={DEFAULT_SETTINGS.SEAT_RADIUS.toString()}
           onChange={(value: number | '') => {
             if (value === '') return;
@@ -197,9 +222,12 @@ const RowSettingsPanel: React.FC<RowSettingsPanelProps> = ({
         />
 
         <Select
+          size="xs"
           label="Default Category"
           value={getCommonValue('defaultCategory', rows)}
-          onChange={(value) => handleUpdate({ defaultCategory: value || undefined })}
+          onChange={(value) =>
+            handleUpdate({ defaultCategory: value || undefined })
+          }
           data={categories.map((cat) => ({
             value: cat.name,
             label: cat.name,
@@ -207,8 +235,9 @@ const RowSettingsPanel: React.FC<RowSettingsPanelProps> = ({
           clearable
           placeholder="Select a category"
         />
-
+        {/* 
         <Select
+          size="xs"
           label="Numbering Type"
           value={getCommonValue('numberingType', rows) || 'continuous'}
           onChange={(value) => 
@@ -220,12 +249,15 @@ const RowSettingsPanel: React.FC<RowSettingsPanelProps> = ({
             { value: 'continuous', label: 'Continuous' },
             { value: 'perRow', label: 'Per Row' },
           ]}
-        />
+        /> */}
 
         <NumberInput
+          size="xs"
           label="Start Number"
           description="First seat number in the row"
-          value={getCommonValue('startNumber', rows) || DEFAULT_SETTINGS.START_NUMBER}
+          value={
+            getCommonValue('startNumber', rows) || DEFAULT_SETTINGS.START_NUMBER
+          }
           onChange={(value: number | '') => {
             if (value === '') return;
             handleUpdate({ startNumber: value });
@@ -234,13 +266,14 @@ const RowSettingsPanel: React.FC<RowSettingsPanelProps> = ({
           step={1}
         />
 
-        <TextInput
+        {/* <TextInput
+          size="xs"
           label="Number Format"
           description="Use {row} and {number} as placeholders"
           value={getCommonValue('numberFormat', rows) || DEFAULT_SETTINGS.NUMBER_FORMAT}
           placeholder={DEFAULT_SETTINGS.NUMBER_FORMAT}
           onChange={(e) => handleUpdate({ numberFormat: e.target.value })}
-        />
+        /> */}
       </Stack>
     </Card>
   );

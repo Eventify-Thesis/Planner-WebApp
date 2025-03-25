@@ -170,7 +170,6 @@ const EventSeatMap: React.FC = () => {
     )
     .filter((shape): shape is Shape => shape !== undefined);
 
-  console.log(selectedShapes, selection.selectedItems.areas);
   return (
     <Layout className="seat-map-layout">
       <SeatMapHeader

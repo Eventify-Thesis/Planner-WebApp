@@ -78,13 +78,23 @@ const Canvas: React.FC<CanvasProps> = ({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Handle delete/backspace
-      const hasSelection = Object.values(state.selection.selectedItems).some(
-        (arr) => arr.length > 0,
-      );
-      if (!hasSelection && e.key !== 'z') return;
+      // Check if we're in an input-like element
+      const activeElement = document.activeElement;
+      const isInputElement =
+        activeElement instanceof HTMLElement &&
+        (activeElement.isContentEditable ||
+          activeElement.tagName === 'INPUT' ||
+          activeElement.tagName === 'TEXTAREA' ||
+          activeElement.tagName === 'SELECT');
 
-      if (e.key === 'Delete' || e.key === 'Backspace') {
+      // Only handle delete/backspace if we're not in an input element
+      if ((e.key === 'Delete' || e.key === 'Backspace') && !isInputElement) {
+        // Check if we have any selection before preventing default
+        const hasSelection = Object.values(state.selection.selectedItems).some(
+          (arr) => arr.length > 0,
+        );
+        if (!hasSelection) return;
+
         e.preventDefault();
         const updatedPlan = { ...seatingPlan };
         const { seats, rows, areas } = state.selection.selectedItems;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Stack, NumberInput, TextInput, ColorInput } from '@mantine/core';
+import { Card, Stack, NumberInput, TextInput, ColorInput, Title } from '@mantine/core';
 import { Shape } from '../../types';
 
 interface ShapeSettingsPanelProps {
@@ -8,7 +8,11 @@ interface ShapeSettingsPanelProps {
 }
 
 const DEFAULT_SETTINGS = {
-  TEXT_SIZE: 14,
+  TEXT: {
+    color: '#000000',
+    text: '',
+    position: { x: 0, y: 0 }
+  }
 } as const;
 
 const ShapeSettingsPanel: React.FC<ShapeSettingsPanelProps> = ({
@@ -19,6 +23,12 @@ const ShapeSettingsPanel: React.FC<ShapeSettingsPanelProps> = ({
     const updatedShapes = shapes.map(shape => ({
       ...shape,
       ...updates,
+      // Ensure text object exists with defaults
+      text: {
+        ...DEFAULT_SETTINGS.TEXT,
+        ...(shape.text || {}),
+        ...(updates.text || {})
+      }
     }));
     onUpdate(updatedShapes);
   };
@@ -29,17 +39,24 @@ const ShapeSettingsPanel: React.FC<ShapeSettingsPanelProps> = ({
     return shapes.every(shape => shape[key] === value) ? value : null;
   };
 
+  // Get common text values
+  const getCommonTextValue = <K extends keyof Shape['text']>(key: K): Shape['text'][K] | null => {
+    const value = shapes[0]?.text?.[key];
+    return shapes.every(shape => shape.text?.[key] === value) ? value : null;
+  };
+
   // Don't show panel if no shapes selected
   if (shapes.length === 0) return null;
 
   return (
-    <Card shadow="sm" p="md">
-      <Stack spacing="sm">
-        <Card.Section p="md">
-          <h3>Shape Settings</h3>
+    <Card shadow="sm" p="xs">
+      <Stack spacing="xs">
+        <Card.Section p="xs">
+          <Title order={4}>Shape Settings</Title>
         </Card.Section>
 
         <NumberInput
+          size="xs"
           label="Rotation (degrees)"
           value={getCommonValue('rotation') ?? undefined}
           onChange={(value: number | '') => {
@@ -52,6 +69,7 @@ const ShapeSettingsPanel: React.FC<ShapeSettingsPanelProps> = ({
         />
 
         <NumberInput
+          size="xs"
           label="Width"
           value={getCommonValue('size')?.width ?? undefined}
           onChange={(value: number | '') => {
@@ -68,6 +86,7 @@ const ShapeSettingsPanel: React.FC<ShapeSettingsPanelProps> = ({
         />
 
         <NumberInput
+          size="xs"
           label="Height"
           value={getCommonValue('size')?.height ?? undefined}
           onChange={(value: number | '') => {
@@ -84,6 +103,7 @@ const ShapeSettingsPanel: React.FC<ShapeSettingsPanelProps> = ({
         />
 
         <ColorInput
+          size="xs"
           label="Fill Color"
           value={getCommonValue('fill') ?? undefined}
           onChange={(value) => handleUpdate({ fill: value })}
@@ -92,6 +112,7 @@ const ShapeSettingsPanel: React.FC<ShapeSettingsPanelProps> = ({
         />
 
         <ColorInput
+          size="xs"
           label="Border Color"
           value={getCommonValue('stroke') ?? undefined}
           onChange={(value) => handleUpdate({ stroke: value })}
@@ -99,67 +120,74 @@ const ShapeSettingsPanel: React.FC<ShapeSettingsPanelProps> = ({
           swatches={['#000000', '#666666', '#999999', '#CCCCCC', '#FFFFFF']}
         />
 
-        {/* Text settings - only show if all selected shapes have text */}
-        {shapes.every(shape => shape.type === 'text') && (
-          <>
-            <TextInput
-              label="Text Content"
-              value={getCommonValue('text') ?? ''}
-              onChange={(e) => handleUpdate({ text: e.target.value })}
-              placeholder="Enter text..."
-            />
+        <Card.Section p="xs">
+          <Title order={5}>Text Settings</Title>
+        </Card.Section>
 
-            <NumberInput
-              label="Text Size"
-              value={getCommonValue('textSize') ?? DEFAULT_SETTINGS.TEXT_SIZE}
-              onChange={(value: number | '') => {
-                if (value === '') return;
-                handleUpdate({ textSize: value });
-              }}
-              min={8}
-              max={72}
-              step={1}
-            />
+        <TextInput
+          size="xs"
+          label="Text Content"
+          value={getCommonTextValue('text') ?? ''}
+          onChange={(e) => handleUpdate({ 
+            text: { 
+              ...shapes[0].text,
+              text: e.target.value 
+            }
+          })}
+          placeholder="Enter text..."
+        />
 
-            <NumberInput
-              label="Text Position X"
-              value={getCommonValue('textPosition')?.x ?? undefined}
-              onChange={(value: number | '') => {
-                if (value === '') return;
-                handleUpdate({
-                  textPosition: {
-                    ...shapes[0].textPosition,
-                    x: value,
-                  },
-                });
-              }}
-              step={1}
-            />
+        <NumberInput
+          size="xs"
+          label="Text Position X"
+          value={getCommonTextValue('position')?.x ?? undefined}
+          onChange={(value: number | '') => {
+            if (value === '') return;
+            handleUpdate({
+              text: {
+                ...shapes[0].text,
+                position: {
+                  ...shapes[0].text.position,
+                  x: value,
+                }
+              }
+            });
+          }}
+          step={1}
+        />
 
-            <NumberInput
-              label="Text Position Y"
-              value={getCommonValue('textPosition')?.y ?? undefined}
-              onChange={(value: number | '') => {
-                if (value === '') return;
-                handleUpdate({
-                  textPosition: {
-                    ...shapes[0].textPosition,
-                    y: value,
-                  },
-                });
-              }}
-              step={1}
-            />
+        <NumberInput
+          size="xs"
+          label="Text Position Y"
+          value={getCommonTextValue('position')?.y ?? undefined}
+          onChange={(value: number | '') => {
+            if (value === '') return;
+            handleUpdate({
+              text: {
+                ...shapes[0].text,
+                position: {
+                  ...shapes[0].text.position,
+                  y: value,
+                }
+              }
+            });
+          }}
+          step={1}
+        />
 
-            <ColorInput
-              label="Text Color"
-              value={getCommonValue('textColor') ?? undefined}
-              onChange={(value) => handleUpdate({ textColor: value })}
-              format="rgba"
-              swatches={['#000000', '#666666', '#999999', '#CCCCCC', '#FFFFFF']}
-            />
-          </>
-        )}
+        <ColorInput
+          size="xs"
+          label="Text Color"
+          value={getCommonTextValue('color') ?? undefined}
+          onChange={(value) => handleUpdate({ 
+            text: {
+              ...shapes[0].text,
+              color: value
+            }
+          })}
+          format="rgba"
+          swatches={['#000000', '#666666', '#999999', '#CCCCCC', '#FFFFFF']}
+        />
       </Stack>
     </Card>
   );
