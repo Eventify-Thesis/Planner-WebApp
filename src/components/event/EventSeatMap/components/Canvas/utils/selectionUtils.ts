@@ -16,6 +16,89 @@ export const isPointInBounds = (point: Point, bounds: Bounds): boolean => {
   );
 };
 
+const isRectIntersectBounds = (
+  position: Point,
+  width: number,
+  height: number,
+  bounds: Bounds,
+): boolean => {
+  return !(
+    position.x + width < bounds.x1 ||
+    position.x > bounds.x2 ||
+    position.y + height < bounds.y1 ||
+    position.y > bounds.y2
+  );
+};
+
+const isCircleIntersectBounds = (
+  center: Point,
+  radius: number,
+  bounds: Bounds,
+): boolean => {
+  // Find closest point to the circle within the rectangle
+  const closestX = Math.max(bounds.x1, Math.min(center.x, bounds.x2));
+  const closestY = Math.max(bounds.y1, Math.min(center.y, bounds.y2));
+
+  // Calculate distance between circle's center and closest point
+  const distanceX = center.x - closestX;
+  const distanceY = center.y - closestY;
+
+  // If distance is less than circle's radius, an intersection occurs
+  return (distanceX * distanceX + distanceY * distanceY) <= (radius * radius);
+};
+
+const isEllipseIntersectBounds = (
+  center: Point,
+  radiusX: number,
+  radiusY: number,
+  bounds: Bounds,
+): boolean => {
+  // Check if any corner of the bounds is inside the ellipse
+  const corners = [
+    { x: bounds.x1, y: bounds.y1 },
+    { x: bounds.x2, y: bounds.y1 },
+    { x: bounds.x2, y: bounds.y2 },
+    { x: bounds.x1, y: bounds.y2 },
+  ];
+
+  // Check if any corner is inside the ellipse
+  const insideCorner = corners.some(corner => {
+    const normalizedX = (corner.x - center.x) / radiusX;
+    const normalizedY = (corner.y - center.y) / radiusY;
+    return (normalizedX * normalizedX + normalizedY * normalizedY) <= 1;
+  });
+
+  if (insideCorner) return true;
+
+  // Check if ellipse intersects with any of the rectangle's edges
+  const edges = [
+    [corners[0], corners[1]],
+    [corners[1], corners[2]],
+    [corners[2], corners[3]],
+    [corners[3], corners[0]],
+  ];
+
+  return edges.some(([p1, p2]) => {
+    // Transform to ellipse space
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    const cx = p1.x - center.x;
+    const cy = p1.y - center.y;
+
+    const a = (dx * dx) / (radiusX * radiusX) + (dy * dy) / (radiusY * radiusY);
+    const b = 2 * ((cx * dx) / (radiusX * radiusX) + (cy * dy) / (radiusY * radiusY));
+    const c = (cx * cx) / (radiusX * radiusX) + (cy * cy) / (radiusY * radiusY) - 1;
+
+    const discriminant = b * b - 4 * a * c;
+    if (discriminant < 0) return false;
+
+    const t1 = (-b + Math.sqrt(discriminant)) / (2 * a);
+    const t2 = (-b - Math.sqrt(discriminant)) / (2 * a);
+
+    return (t1 >= 0 && t1 <= 1) || (t2 >= 0 && t2 <= 1);
+  });
+};
+
 export const getItemsInSelectionBox = (
   seatingPlan: SeatingPlan,
   selectionBox: SelectionBox,
@@ -81,31 +164,41 @@ export const getItemsInSelectionBox = (
       // Also check shapes when in row selection mode
       zone.areas.forEach((area) => {
         if ('position' in area) {
-          const areaBox = {
-            x1: area.position.x,
-            y1: area.position.y,
-            x2: area.position.x + (area.size?.width || 0),
-            y2: area.position.y + (area.size?.height || 0),
-          };
+          let intersects = false;
 
-          if (area.type === 'circle' && 'radius' in area) {
-            areaBox.x1 = area.position.x - area.radius;
-            areaBox.y1 = area.position.y - area.radius;
-            areaBox.x2 = area.position.x + area.radius;
-            areaBox.y2 = area.position.y + area.radius;
-          } else if (area.type === 'ellipse' && area.size) {
-            areaBox.x1 = area.position.x - area.size.width / 2;
-            areaBox.y1 = area.position.y - area.size.height / 2;
-            areaBox.x2 = area.position.x + area.size.width / 2;
-            areaBox.y2 = area.position.y + area.size.height / 2;
+          switch (area.type) {
+            case 'rectangle':
+              intersects = isRectIntersectBounds(
+                area.position,
+                area.size?.width || 0,
+                area.size?.height || 0,
+                bounds
+              );
+              break;
+
+            case 'circle':
+              intersects = isCircleIntersectBounds(
+                area.position,
+                area.radius || 0,
+                bounds
+              );
+              break;
+
+            case 'ellipse':
+              intersects = isEllipseIntersectBounds(
+                area.position,
+                (area.size?.width || 0) / 2,
+                (area.size?.height || 0) / 2,
+                bounds
+              );
+              break;
+
+            default:
+              // For other shapes, fallback to point-in-bounds
+              intersects = isPointInBounds(area.position, bounds);
           }
 
-          if (
-            areaBox.x1 <= bounds.x2 &&
-            areaBox.x2 >= bounds.x1 &&
-            areaBox.y1 <= bounds.y2 &&
-            areaBox.y2 >= bounds.y1
-          ) {
+          if (intersects) {
             selectedIds.push(area.uuid);
           }
         }
@@ -156,7 +249,41 @@ export const updateSelection = (
     });
 
     seatingPlan.zones[0].areas.forEach((area) => {
-      if (isPointInBounds(area.position, bounds)) {
+      let intersects = false;
+
+      switch (area.type) {
+        case 'rectangle':
+          intersects = isRectIntersectBounds(
+            area.position,
+            area.size?.width || 0,
+            area.size?.height || 0,
+            bounds
+          );
+          break;
+
+        case 'circle':
+          intersects = isCircleIntersectBounds(
+            area.position,
+            area.radius || 0,
+            bounds
+          );
+          break;
+
+        case 'ellipse':
+          intersects = isEllipseIntersectBounds(
+            area.position,
+            (area.size?.width || 0) / 2,
+            (area.size?.height || 0) / 2,
+            bounds
+          );
+          break;
+
+        default:
+          // For other shapes, fallback to point-in-bounds
+          intersects = isPointInBounds(area.position, bounds);
+      }
+
+      if (intersects) {
         selectedItems.areas.push(area.uuid);
       }
     });

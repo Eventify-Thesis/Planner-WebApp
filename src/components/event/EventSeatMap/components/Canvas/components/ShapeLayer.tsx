@@ -13,6 +13,46 @@ interface ShapeLayerProps {
   onSelect: (type: 'shape', id: string, event?: any) => void;
 }
 
+interface ShapeTextProps {
+  text: any;
+  shape: any;
+}
+
+const ShapeText = memo(({ text, shape }: ShapeTextProps) => {
+  if (!text?.text) return null;
+
+  let centerX = shape.position.x;
+  let centerY = shape.position.y;
+
+  // Calculate center based on shape type
+  switch (shape.type) {
+    case 'rectangle':
+      centerX += (shape.size?.width || 0) / 2;
+      centerY += (shape.size?.height || 0) / 2;
+      break;
+    case 'circle':
+    case 'ellipse':
+    case 'polygon':
+      // Center is already at shape.position for these shapes
+      break;
+  }
+
+  return (
+    <Text
+      x={text.position?.x ?? centerX}
+      y={text.position?.y ?? centerY}
+      text={text.text}
+      fill={text.color || '#000000'}
+      fontSize={14}
+      align="center"
+      verticalAlign="middle"
+      offsetX={7}
+      offsetY={7}
+      draggable={false}
+    />
+  );
+});
+
 export const ShapeLayer = memo(
   ({
     seatingPlan,
@@ -23,34 +63,33 @@ export const ShapeLayer = memo(
     onSelect,
   }: ShapeLayerProps) => {
     const handleDragStart = (e: any, uuid: string) => {
-      // Get all selected shapes including the one being dragged
-      const selectedShapes = seatingPlan.zones[0].areas.filter(
-        (a) =>
-          selection.selectedItems.areas.includes(a.uuid) || a.uuid === uuid,
-      );
-      if (selectedShapes.length === 0) return;
-
-      // Store the initial positions and mouse offset for all selected shapes
       const mousePos = getMousePosition(e, zoom);
       if (!mousePos) return;
 
-      // Find the shape being dragged to calculate offset
-      const draggedShape = selectedShapes.find((s) => s.uuid === uuid);
+      // Get the shape being dragged and all selected shapes
+      const draggedShape = seatingPlan.zones[0].areas.find(
+        (a) => a.uuid === uuid,
+      );
+      const selectedShapes = seatingPlan.zones[0].areas.filter((a) =>
+        selection.selectedItems.areas.includes(a.uuid),
+      );
+
       if (!draggedShape) return;
 
-      // Calculate mouse offset from the dragged shape
-      const mouseOffset = {
-        x: mousePos.x - draggedShape.position.x,
-        y: mousePos.y - draggedShape.position.y,
-      };
+      // If dragged shape is not in selection, only move that shape
+      const shapesToMove = selectedShapes.includes(draggedShape)
+        ? selectedShapes
+        : [draggedShape];
 
-      // Store initial positions of all selected shapes
       e.target.dragStartData = {
-        selectedShapes: selectedShapes.map((shape) => ({
+        shapes: shapesToMove.map((shape) => ({
           uuid: shape.uuid,
           initialPos: { ...shape.position },
+          offset: {
+            x: mousePos.x - shape.position.x,
+            y: mousePos.y - shape.position.y,
+          },
         })),
-        mouseOffset,
       };
     };
 
@@ -58,32 +97,52 @@ export const ShapeLayer = memo(
       const mousePos = getMousePosition(e, zoom);
       if (!mousePos || !e.target.dragStartData) return;
 
-      const { selectedShapes, mouseOffset } = e.target.dragStartData;
+      const { shapes } = e.target.dragStartData;
+      const draggedShapeData = shapes.find((s) => s.uuid === uuid);
+      if (!draggedShapeData) return;
 
-      // Calculate the movement delta
-      const dx = mousePos.x - mouseOffset.x - selectedShapes[0].initialPos.x;
-      const dy = mousePos.y - mouseOffset.y - selectedShapes[0].initialPos.y;
+      // Calculate the movement based on the dragged shape
+      const dx =
+        mousePos.x - draggedShapeData.offset.x - draggedShapeData.initialPos.x;
+      const dy =
+        mousePos.y - draggedShapeData.offset.y - draggedShapeData.initialPos.y;
 
       const updatedPlan = { ...seatingPlan };
       updatedPlan.zones = updatedPlan.zones.map((z) => ({
         ...z,
         areas: z.areas.map((area) => {
-          // Find if this area was in the selection
-          const selectedShape = selectedShapes.find(
-            (s) => s.uuid === area.uuid,
-          );
-          if (!selectedShape) return area;
+          const shapeData = shapes.find((s) => s.uuid === area.uuid);
+          if (!shapeData) return area;
 
-          // Move the shape by the same delta from its initial position
+          const newPosition = {
+            x: shapeData.initialPos.x + dx,
+            y: shapeData.initialPos.y + dy,
+          };
+
           return {
             ...area,
-            position: {
-              x: selectedShape.initialPos.x + dx,
-              y: selectedShape.initialPos.y + dy,
-            },
+            position: newPosition,
+            text: area.text
+              ? {
+                  ...area.text,
+                  position: area.text.position
+                    ? {
+                        x:
+                          area.text.position.x -
+                          shapeData.initialPos.x +
+                          newPosition.x,
+                        y:
+                          area.text.position.y -
+                          shapeData.initialPos.y +
+                          newPosition.y,
+                      }
+                    : undefined,
+                }
+              : undefined,
           };
         }),
       }));
+
       onPlanChange(updatedPlan);
     };
 
@@ -94,7 +153,6 @@ export const ShapeLayer = memo(
             const isSelected = selection.selectedItems.areas.includes(
               area.uuid,
             );
-
             const commonProps = {
               draggable:
                 currentTool === EditorTool.SELECT_ROW ||
@@ -119,48 +177,56 @@ export const ShapeLayer = memo(
             switch (area.type) {
               case 'rectangle':
                 return (
-                  <Rect
-                    key={area.uuid}
-                    id={area.uuid}
-                    x={area.position.x}
-                    y={area.position.y}
-                    width={area.size?.width || 0}
-                    height={area.size?.height || 0}
-                    {...commonProps}
-                  />
+                  <React.Fragment key={area.uuid}>
+                    <Rect
+                      id={area.uuid}
+                      x={area.position.x}
+                      y={area.position.y}
+                      width={area.size?.width || 0}
+                      height={area.size?.height || 0}
+                      {...commonProps}
+                    />
+                    <ShapeText text={area.text} shape={area} />
+                  </React.Fragment>
                 );
               case 'circle':
                 return (
-                  <Circle
-                    key={area.uuid}
-                    id={area.uuid}
-                    x={area.position.x}
-                    y={area.position.y}
-                    radius={area.radius || 0}
-                    {...commonProps}
-                  />
+                  <React.Fragment key={area.uuid}>
+                    <Circle
+                      id={area.uuid}
+                      x={area.position.x}
+                      y={area.position.y}
+                      radius={area.radius || 0}
+                      {...commonProps}
+                    />
+                    <ShapeText text={area.text} shape={area} />
+                  </React.Fragment>
                 );
               case 'ellipse':
                 return (
-                  <Ellipse
-                    key={area.uuid}
-                    id={area.uuid}
-                    x={area.position.x}
-                    y={area.position.y}
-                    radiusX={area.size?.width ? area.size.width / 2 : 0}
-                    radiusY={area.size?.height ? area.size.height / 2 : 0}
-                    {...commonProps}
-                  />
+                  <React.Fragment key={area.uuid}>
+                    <Ellipse
+                      id={area.uuid}
+                      x={area.position.x}
+                      y={area.position.y}
+                      radiusX={area.size?.width ? area.size.width / 2 : 0}
+                      radiusY={area.size?.height ? area.size.height / 2 : 0}
+                      {...commonProps}
+                    />
+                    <ShapeText text={area.text} shape={area} />
+                  </React.Fragment>
                 );
               case 'polygon':
                 return (
-                  <Line
-                    key={area.uuid}
-                    id={area.uuid}
-                    points={area.points || []}
-                    closed={true}
-                    {...commonProps}
-                  />
+                  <React.Fragment key={area.uuid}>
+                    <Line
+                      id={area.uuid}
+                      points={area.points || []}
+                      closed={true}
+                      {...commonProps}
+                    />
+                    <ShapeText text={area.text} shape={area} />
+                  </React.Fragment>
                 );
               case 'text':
                 return (

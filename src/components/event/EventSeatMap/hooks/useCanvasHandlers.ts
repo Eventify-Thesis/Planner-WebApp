@@ -442,6 +442,11 @@ export const useCanvasHandlers = (
           const shape = {
             uuid: uuidv4(),
             type: 'circle',
+            text: {
+              position: { x: centerX, y: centerY },
+              color: '#000',
+              text: '',
+            },
             position: { x: centerX, y: centerY },
             radius,
           };
@@ -463,6 +468,11 @@ export const useCanvasHandlers = (
             uuid: uuidv4(),
             type: 'ellipse',
             position: { x: centerX, y: centerY },
+            text: {
+              position: { x: centerX, y: centerY },
+              color: '#000',
+              text: '',
+            },
             size: {
               width,
               height,
