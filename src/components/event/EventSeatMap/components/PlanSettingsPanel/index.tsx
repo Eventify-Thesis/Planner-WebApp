@@ -12,9 +12,12 @@ import {
   Accordion,
   Badge,
   Title,
+  ActionIcon,
 } from '@mantine/core';
 import { SeatingPlan, Category } from '../../types/index';
 import './PlanSettingsPanel.css';
+import { IconTrashFilled } from '@tabler/icons-react';
+import { Divider } from 'antd';
 
 interface PlanSettingsPanelProps {
   seatingPlan: SeatingPlan;
@@ -27,34 +30,31 @@ const PlanSettingsPanel: React.FC<PlanSettingsPanelProps> = ({
 }) => {
   const [newCategory, setNewCategory] = useState<Partial<Category>>({});
 
-  const handleUpdate = (updates: Partial<SeatingPlan>) => {
-    const updatedPlan = { ...seatingPlan, ...updates };
-
-    // Calculate total seats and update category seat counts
-    const categoryCounts: { [key: string]: number } = {};
+  const calculateSeats = () => {
+    // Calculate total seats and seats per category
+    const seatsByCategory: { [key: string]: number } = {};
     let totalSeats = 0;
 
-    updatedPlan.zones.forEach((zone) => {
+    seatingPlan.zones.forEach((zone) => {
       zone.rows.forEach((row) => {
-        totalSeats += row.seats.length;
         row.seats.forEach((seat) => {
-          if (seat.category) {
-            categoryCounts[seat.category] =
-              (categoryCounts[seat.category] || 0) + 1;
-          }
+          totalSeats++;
+          const category = seat.category || 'uncategorized';
+          seatsByCategory[category] = (seatsByCategory[category] || 0) + 1;
         });
       });
     });
 
-    // Update category seat counts
-    updatedPlan.categories = updatedPlan.categories.map((category) => ({
-      ...category,
-      seatCount: categoryCounts[category.name] || 0,
-    }));
+    return {
+      totalSeats,
+      seatsByCategory,
+    };
+  };
 
-    // Update total seats
-    updatedPlan.totalSeats = totalSeats;
+  const { totalSeats, seatsByCategory } = calculateSeats();
 
+  const handleUpdate = (updates: Partial<SeatingPlan>) => {
+    const updatedPlan = { ...seatingPlan, ...updates, totalSeats };
     onUpdate(updatedPlan);
   };
 
@@ -147,7 +147,7 @@ const PlanSettingsPanel: React.FC<PlanSettingsPanelProps> = ({
         </Group>
 
         <Text size="xs" mb="xs">
-          Total Seats: {seatingPlan.totalSeats}
+          Total Seats: {totalSeats}
         </Text>
 
         <Accordion mb="xs">
@@ -160,39 +160,51 @@ const PlanSettingsPanel: React.FC<PlanSettingsPanelProps> = ({
             </Accordion.Control>
             <Accordion.Panel>
               {seatingPlan.categories.map((category, index) => (
-                <Group key={category.name} mb="xs" position="apart" noWrap>
-                  <Stack spacing="xs" style={{ flex: 1 }}>
-                    <Group noWrap>
-                      <TextInput
-                        value={category.name}
-                        onChange={(e) =>
-                          handleUpdateCategory(index, { name: e.target.value })
-                        }
-                        size="xs"
-                        style={{ flex: 1 }}
-                      />
-                      <ColorInput
-                        value={category.color}
-                        onChange={(color) =>
-                          handleUpdateCategory(index, { color })
-                        }
-                        size="xs"
-                        style={{ width: 100 }}
-                      />
-                    </Group>
-                    <Text size="xs" color="dimmed">
-                      Seats: {category.seatCount}
-                    </Text>
-                  </Stack>
-                  <Button
+                <Group
+                  key={category.name}
+                  position="apart"
+                  align="center"
+                  spacing="xs"
+                  noWrap
+                  mb="xs"
+                  style={{ width: '100%' }}
+                >
+                  <ColorInput
+                    value={category.color}
+                    onChange={(color) => handleUpdateCategory(index, { color })}
+                    size="xs"
+                    style={{ width: '105px' }}
+                    variant="filled"
+                  />
+                  <TextInput
+                    value={category.name}
+                    onChange={(e) =>
+                      handleUpdateCategory(index, { name: e.target.value })
+                    }
+                    size="xs"
+                    style={{ minWidth: '150px', flex: 1 }}
+                    rightSection={
+                      <Badge size="sm" variant="light" color="gray">
+                        {seatsByCategory[category.name] || 0}
+                      </Badge>
+                    }
+                    rightSectionWidth={40}
+                  />
+                  <ActionIcon
                     color="red"
                     variant="subtle"
-                    size="xs"
+                    size="sm"
                     onClick={() => handleDeleteCategory(index)}
-                    ml="xs"
                   >
-                    Remove
-                  </Button>
+                    <IconTrashFilled size={16} />
+                  </ActionIcon>
+
+                  <Divider
+                    style={{
+                      margin: 0,
+                      padding: 0,
+                    }}
+                  />
                 </Group>
               ))}
 
@@ -213,6 +225,7 @@ const PlanSettingsPanel: React.FC<PlanSettingsPanelProps> = ({
                   }
                   size="xs"
                 />
+
                 <Button size="xs" onClick={handleAddCategory}>
                   Add
                 </Button>

@@ -14,8 +14,16 @@ interface ShapeLayerProps {
 }
 
 interface ShapeTextProps {
-  text: any;
-  shape: any;
+  text: {
+    text: string;
+    position?: Point;
+    color?: string;
+    fontSize?: number;
+    fontFamily?: string;
+    align?: string;
+    verticalAlign?: string;
+  };
+  shape: Shape;
 }
 
 const ShapeText = memo(({ text, shape }: ShapeTextProps) => {
@@ -31,24 +39,66 @@ const ShapeText = memo(({ text, shape }: ShapeTextProps) => {
       centerY += (shape.size?.height || 0) / 2;
       break;
     case 'circle':
+      centerX = shape.position.x;
+      centerY = shape.position.y;
+      break;
     case 'ellipse':
+      centerX = shape.position.x;
+      centerY = shape.position.y;
+      break;
     case 'polygon':
-      // Center is already at shape.position for these shapes
+      if (shape.points && shape.points.length > 0) {
+        // Calculate centroid for polygon
+        const points = shape.points;
+        let sumX = 0;
+        let sumY = 0;
+        points.forEach((point) => {
+          sumX += point.x;
+          sumY += point.y;
+        });
+        centerX = sumX / points.length;
+        centerY = sumY / points.length;
+      }
       break;
   }
 
+  // Use provided position or fallback to shape center
+  const x = text.position?.x ?? centerX;
+  const y = text.position?.y ?? centerY;
+
   return (
     <Text
-      x={text.position?.x ?? centerX}
-      y={text.position?.y ?? centerY}
+      x={x}
+      y={y}
       text={text.text}
       fill={text.color || '#000000'}
-      fontSize={14}
-      align="center"
-      verticalAlign="middle"
-      offsetX={7}
-      offsetY={7}
-      draggable={false}
+      fontSize={text.fontSize || 14}
+      fontFamily={text.fontFamily || 'Arial'}
+      align={text.align || 'center'}
+      verticalAlign={text.verticalAlign || 'middle'}
+      offsetX={
+        text.align === 'left'
+          ? 0
+          : text.align === 'right'
+          ? text.text.length * 7
+          : text.text.length * 3.5
+      }
+      offsetY={
+        text.verticalAlign === 'top'
+          ? 0
+          : text.verticalAlign === 'bottom'
+          ? 14
+          : 7
+      }
+      onDragMove={(e) => {
+        // Update text position when dragged
+        const stage = e.target.getStage();
+        const position = {
+          x: e.target.x(),
+          y: e.target.y(),
+        };
+        text.position = position;
+      }}
     />
   );
 });
@@ -85,6 +135,9 @@ export const ShapeLayer = memo(
         shapes: shapesToMove.map((shape) => ({
           uuid: shape.uuid,
           initialPos: { ...shape.position },
+          initialTextPos: shape.text?.position
+            ? { ...shape.text.position }
+            : { ...shape.position },
           offset: {
             x: mousePos.x - shape.position.x,
             y: mousePos.y - shape.position.y,
@@ -125,18 +178,10 @@ export const ShapeLayer = memo(
             text: area.text
               ? {
                   ...area.text,
-                  position: area.text.position
-                    ? {
-                        x:
-                          area.text.position.x -
-                          shapeData.initialPos.x +
-                          newPosition.x,
-                        y:
-                          area.text.position.y -
-                          shapeData.initialPos.y +
-                          newPosition.y,
-                      }
-                    : undefined,
+                  position: {
+                    x: shapeData.initialTextPos.x + dx,
+                    y: shapeData.initialTextPos.y + dy,
+                  },
                 }
               : undefined,
           };
@@ -178,18 +223,10 @@ export const ShapeLayer = memo(
             text: area.text
               ? {
                   ...area.text,
-                  position: area.text.position
-                    ? {
-                        x:
-                          area.text.position.x -
-                          shapeData.initialPos.x +
-                          newPosition.x,
-                        y:
-                          area.text.position.y -
-                          shapeData.initialPos.y +
-                          newPosition.y,
-                      }
-                    : undefined,
+                  position: {
+                    x: shapeData.initialTextPos.x + dx,
+                    y: shapeData.initialTextPos.y + dy,
+                  },
                 }
               : undefined,
           };
@@ -203,7 +240,9 @@ export const ShapeLayer = memo(
       <Layer>
         {seatingPlan.zones.flatMap((zone) =>
           zone.areas.map((area) => {
-            const isSelected = selection.selectedItems.areas.includes(area.uuid);
+            const isSelected = selection.selectedItems.areas.includes(
+              area.uuid,
+            );
             const commonProps = {
               draggable:
                 currentTool === EditorTool.SELECT_ROW ||
