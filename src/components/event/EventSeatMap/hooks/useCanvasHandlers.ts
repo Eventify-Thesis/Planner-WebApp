@@ -1,5 +1,5 @@
 import { useCallback, useState, useEffect } from 'react';
-import { EditorTool, Point, SeatingPlan, Selection } from '../types';
+import { EditorTool, Point, SeatingPlan, Selection } from '../types/index';
 import { v4 as uuidv4 } from 'uuid';
 import { getMousePosition } from '../components/Canvas/utils/mouseUtils';
 import { updateSelection } from '../components/Canvas/utils/selectionUtils';
@@ -494,10 +494,13 @@ export const useCanvasHandlers = (
             uuid: uuidv4(),
             type: 'text',
             position: { x, y },
-            text: 'Double click to edit',
+            text: {
+              position: { x, y },
+              color: '#000',
+              text: 'Double click to edit',
+            },
             fontSize: 16,
             fontFamily: 'Arial',
-            fill: '#000000',
           };
           currentZone.areas.push(shape);
           canvasSetters.setSelection({

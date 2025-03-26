@@ -33,9 +33,10 @@ const Canvas: React.FC<CanvasProps> = ({
   setCurrentTool,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { state, setters, actions } = useCanvasState(
+  const { state, setters, actions, handlePlanChange } = useCanvasState(
     selection,
     onSelectionChange,
+    onPlanChange,
   );
   const {
     handleMouseDown,
@@ -48,7 +49,7 @@ const Canvas: React.FC<CanvasProps> = ({
     zoom,
     seatingPlan,
     currentTool,
-    onPlanChange,
+    handlePlanChange,
     onSelectionChange,
     state,
     setters,
@@ -122,7 +123,7 @@ const Canvas: React.FC<CanvasProps> = ({
         }
 
         actions.addToHistory(updatedPlan);
-        onPlanChange(updatedPlan);
+        handlePlanChange(updatedPlan);
         setters.setSelection({
           selectedItems: { seats: [], rows: [], areas: [] },
         });
@@ -230,7 +231,7 @@ const Canvas: React.FC<CanvasProps> = ({
         }
 
         actions.addToHistory(updatedPlan);
-        onPlanChange(updatedPlan);
+        handlePlanChange(updatedPlan);
       }
 
       // Handle undo/redo
@@ -240,12 +241,12 @@ const Canvas: React.FC<CanvasProps> = ({
           if (e.shiftKey) {
             const redoResult = actions.redo();
             if (redoResult) {
-              onPlanChange(redoResult);
+              handlePlanChange(redoResult);
             }
           } else {
             const undoResult = actions.undo();
             if (undoResult) {
-              onPlanChange(undoResult);
+              handlePlanChange(undoResult);
             }
           }
         }
@@ -254,7 +255,7 @@ const Canvas: React.FC<CanvasProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [state.selection, seatingPlan, onPlanChange, setters, actions]);
+  }, [state.selection, seatingPlan, handlePlanChange, setters, actions]);
 
   const handleSeatDoubleClick = () => {
     if (currentTool === EditorTool.SELECT_ROW) {
@@ -401,7 +402,7 @@ const Canvas: React.FC<CanvasProps> = ({
           selection={state.selection}
           currentTool={currentTool}
           zoom={zoom}
-          onPlanChange={onPlanChange}
+          onPlanChange={handlePlanChange}
           onSelect={handleSelect}
         />
 
@@ -455,7 +456,7 @@ const Canvas: React.FC<CanvasProps> = ({
               node.scaleY(1);
             }
 
-            onPlanChange(updatedPlan);
+            handlePlanChange(updatedPlan);
           }}
         />
 

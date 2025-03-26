@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Layer, Text, Rect, Circle, Ellipse, Line } from 'react-konva';
+import { Layer, Text, Rect, Circle, Ellipse, Line, Group } from 'react-konva';
 import { SeatingPlan, Selection, EditorTool } from '../../../types/index';
 import { getShapeStyles } from '../utils/styleUtils';
 import { getMousePosition } from '../utils/mouseUtils';
@@ -93,6 +93,59 @@ export const ShapeLayer = memo(
       };
     };
 
+    const handleDragMove = (e: any, uuid: string) => {
+      const mousePos = getMousePosition(e, zoom);
+      if (!mousePos || !e.target.dragStartData) return;
+
+      const { shapes } = e.target.dragStartData;
+      const draggedShapeData = shapes.find((s) => s.uuid === uuid);
+      if (!draggedShapeData) return;
+
+      // Calculate the movement based on the dragged shape
+      const dx =
+        mousePos.x - draggedShapeData.offset.x - draggedShapeData.initialPos.x;
+      const dy =
+        mousePos.y - draggedShapeData.offset.y - draggedShapeData.initialPos.y;
+
+      const updatedPlan = { ...seatingPlan };
+      updatedPlan.zones = updatedPlan.zones.map((z) => ({
+        ...z,
+        areas: z.areas.map((area) => {
+          const shapeData = shapes.find((s) => s.uuid === area.uuid);
+          if (!shapeData) return area;
+
+          const newPosition = {
+            x: shapeData.initialPos.x + dx,
+            y: shapeData.initialPos.y + dy,
+          };
+
+          return {
+            ...area,
+            position: newPosition,
+            text: area.text
+              ? {
+                  ...area.text,
+                  position: area.text.position
+                    ? {
+                        x:
+                          area.text.position.x -
+                          shapeData.initialPos.x +
+                          newPosition.x,
+                        y:
+                          area.text.position.y -
+                          shapeData.initialPos.y +
+                          newPosition.y,
+                      }
+                    : undefined,
+                }
+              : undefined,
+          };
+        }),
+      }));
+
+      onPlanChange(updatedPlan);
+    };
+
     const handleDragEnd = (e: any, uuid: string) => {
       const mousePos = getMousePosition(e, zoom);
       if (!mousePos || !e.target.dragStartData) return;
@@ -150,15 +203,14 @@ export const ShapeLayer = memo(
       <Layer>
         {seatingPlan.zones.flatMap((zone) =>
           zone.areas.map((area) => {
-            const isSelected = selection.selectedItems.areas.includes(
-              area.uuid,
-            );
+            const isSelected = selection.selectedItems.areas.includes(area.uuid);
             const commonProps = {
               draggable:
                 currentTool === EditorTool.SELECT_ROW ||
                 currentTool === EditorTool.SELECT_SHAPE,
               onClick: (e: any) => onSelect('shape', area.uuid, e),
               onDragStart: (e: any) => handleDragStart(e, area.uuid),
+              onDragMove: (e: any) => handleDragMove(e, area.uuid),
               onDragEnd: (e: any) => handleDragEnd(e, area.uuid),
               onMouseEnter: (e: any) => {
                 if (
@@ -176,8 +228,9 @@ export const ShapeLayer = memo(
 
             switch (area.type) {
               case 'rectangle':
+                console.log(area.rotation);
                 return (
-                  <React.Fragment key={area.uuid}>
+                  <Group key={area.uuid} rotation={area.rotation}>
                     <Rect
                       id={area.uuid}
                       x={area.position.x}
@@ -187,11 +240,11 @@ export const ShapeLayer = memo(
                       {...commonProps}
                     />
                     <ShapeText text={area.text} shape={area} />
-                  </React.Fragment>
+                  </Group>
                 );
               case 'circle':
                 return (
-                  <React.Fragment key={area.uuid}>
+                  <Group key={area.uuid} rotationDeg={area.rotation || 0}>
                     <Circle
                       id={area.uuid}
                       x={area.position.x}
@@ -200,11 +253,11 @@ export const ShapeLayer = memo(
                       {...commonProps}
                     />
                     <ShapeText text={area.text} shape={area} />
-                  </React.Fragment>
+                  </Group>
                 );
               case 'ellipse':
                 return (
-                  <React.Fragment key={area.uuid}>
+                  <Group key={area.uuid} rotationDeg={area.rotation || 0}>
                     <Ellipse
                       id={area.uuid}
                       x={area.position.x}
@@ -214,11 +267,11 @@ export const ShapeLayer = memo(
                       {...commonProps}
                     />
                     <ShapeText text={area.text} shape={area} />
-                  </React.Fragment>
+                  </Group>
                 );
               case 'polygon':
                 return (
-                  <React.Fragment key={area.uuid}>
+                  <Group key={area.uuid} rotationDeg={area.rotation || 0}>
                     <Line
                       id={area.uuid}
                       points={area.points || []}
@@ -226,21 +279,23 @@ export const ShapeLayer = memo(
                       {...commonProps}
                     />
                     <ShapeText text={area.text} shape={area} />
-                  </React.Fragment>
+                  </Group>
                 );
               case 'text':
                 return (
-                  <Text
-                    key={area.uuid}
-                    id={area.uuid}
-                    x={area.position.x}
-                    y={area.position.y}
-                    text={area.text || ''}
-                    fontSize={area.fontSize || 16}
-                    fontFamily={area.fontFamily || 'Arial'}
-                    fill={area.fill || '#000'}
-                    {...commonProps}
-                  />
+                  <Group key={area.uuid} rotationDeg={area.rotation || 0}>
+                    <Text
+                      key={area.uuid}
+                      id={area.uuid}
+                      x={area.position.x}
+                      y={area.position.y}
+                      text={area.text.text || ''}
+                      fontSize={area.fontSize || 16}
+                      fontFamily={area.fontFamily || 'Arial'}
+                      fill={area.fill || '#000'}
+                      {...commonProps}
+                    />
+                  </Group>
                 );
               default:
                 return null;

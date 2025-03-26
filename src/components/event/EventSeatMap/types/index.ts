@@ -36,7 +36,7 @@ export interface Row {
 
 export interface Shape {
   uuid: string;
-  type: 'rectangle' | 'circle' | 'text';
+  type: 'rectangle' | 'circle' | 'text' | 'polygon' | 'ellipse';
   position: Point;
   size: Size;
   rotation: number;

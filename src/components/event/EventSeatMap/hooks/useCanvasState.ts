@@ -6,11 +6,15 @@ import {
   DragPreview,
   Clipboard,
   SeatingPlan,
+  EditorTool,
 } from '../types/index';
+
+const MAX_HISTORY_SIZE = 50;
 
 export const useCanvasState = (
   selection: Selection,
   setSelection: (selection: Selection) => void,
+  onPlanChange: (plan: SeatingPlan) => void,
 ) => {
   const [isDrawing, setIsDrawing] = useState(false);
   const [startPoint, setStartPoint] = useState<Point | null>(null);
@@ -61,7 +65,7 @@ export const useCanvasState = (
       newHistory.push(JSON.parse(JSON.stringify(plan))); // Deep clone to prevent reference issues
 
       // Keep history size manageable
-      if (newHistory.length > 50) {
+      if (newHistory.length > MAX_HISTORY_SIZE) {
         newHistory.shift();
       }
 
@@ -71,25 +75,33 @@ export const useCanvasState = (
     [history, historyIndex],
   );
 
+  const handlePlanChange = useCallback(
+    (plan: SeatingPlan) => {
+      addToHistory(plan);
+      onPlanChange(plan);
+    },
+    [addToHistory, onPlanChange],
+  );
+
   const undo = useCallback(() => {
     if (historyIndex > 0) {
       setHistoryIndex((prev) => {
         const newIndex = prev - 1;
-        // onPlanChange(history[newIndex]); // This function is not defined in the provided code
+        onPlanChange(history[newIndex]); 
         return newIndex;
       });
     }
-  }, [historyIndex, history]);
+  }, [historyIndex, history, onPlanChange]);
 
   const redo = useCallback(() => {
     if (historyIndex < history.length - 1) {
       setHistoryIndex((prev) => {
         const newIndex = prev + 1;
-        // onPlanChange(history[newIndex]); // This function is not defined in the provided code
+        onPlanChange(history[newIndex]); 
         return newIndex;
       });
     }
-  }, [historyIndex, history]);
+  }, [historyIndex, history, onPlanChange]);
 
   return {
     state: {
@@ -128,5 +140,6 @@ export const useCanvasState = (
       undo,
       redo,
     },
+    handlePlanChange,
   };
 };
