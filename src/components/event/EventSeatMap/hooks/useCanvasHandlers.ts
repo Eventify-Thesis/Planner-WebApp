@@ -422,6 +422,8 @@ export const useCanvasHandlers = (
               color: '#000',
               text: '',
             },
+            fill: '#808080',
+            stroke: '#000',
             size: {
               width,
               height,
@@ -450,6 +452,8 @@ export const useCanvasHandlers = (
               color: '#000',
               text: '',
             },
+            fill: '#808080',
+            stroke: '#000',
             position: { x: centerX, y: centerY },
             radius,
           };
@@ -476,6 +480,8 @@ export const useCanvasHandlers = (
               color: '#000',
               text: '',
             },
+            fill: '#808080',
+            stroke: '#00000',
             size: {
               width,
               height,
