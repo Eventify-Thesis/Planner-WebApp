@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Card,
   NumberInput,
@@ -6,14 +6,22 @@ import {
   Select,
   Stack,
   Title,
-  ColorInput,
+  Group,
+  Button,
+  Tooltip,
 } from '@mantine/core';
-import { Row, Category, Point } from '../../types';
+import {
+  PlusOutlined,
+  RadiusSettingOutlined,
+  AimOutlined,
+} from '@ant-design/icons';
+import { Row, Category, Point } from '../../types/index';
 
 interface RowSettingsPanelProps {
   rows: Row[];
   categories: Category[];
   onUpdate: (updatedRows: Row[]) => void;
+  onStartCircleAlignment: (type: 'byRadius' | 'byCenter') => void;
 }
 
 // Default values for row settings
@@ -65,6 +73,7 @@ const RowSettingsPanel: React.FC<RowSettingsPanelProps> = ({
   rows,
   categories,
   onUpdate,
+  onStartCircleAlignment,
 }) => {
   const handleUpdate = (updates: Partial<Row>) => {
     const updatedRows = rows.map((row) => ({
@@ -116,6 +125,64 @@ const RowSettingsPanel: React.FC<RowSettingsPanelProps> = ({
     onUpdate(updatedRows);
   };
 
+  const handleAddSeat = () => {
+    if (rows.length === 0) return;
+
+    const updatedRows = rows.map((row) => {
+      const lastSeat = row.seats[row.seats.length - 1];
+      const spacing = row.seatSpacing || DEFAULT_SETTINGS.SEAT_SPACING;
+
+      // Calculate new seat position based on the direction of the row
+      let newPosition: Point;
+      if (row.seats.length >= 2) {
+        const secondLastSeat = row.seats[row.seats.length - 2];
+        const dx = lastSeat.position.x - secondLastSeat.position.x;
+        const dy = lastSeat.position.y - secondLastSeat.position.y;
+        newPosition = {
+          x: lastSeat.position.x + dx,
+          y: lastSeat.position.y + dy,
+        };
+      } else if (row.seats.length === 1) {
+        // If only one seat, add new seat to the right
+        newPosition = {
+          x: lastSeat.position.x + spacing,
+          y: lastSeat.position.y,
+        };
+      } else {
+        // If no seats, add first seat at origin
+        newPosition = { x: 0, y: 0 };
+      }
+
+      return {
+        ...row,
+        seats: [
+          ...row.seats,
+          {
+            uuid: crypto.randomUUID(),
+            position: newPosition,
+            number: lastSeat
+              ? lastSeat.number + 1
+              : row.startNumber || DEFAULT_SETTINGS.START_NUMBER,
+            radius: row.seatRadius || DEFAULT_SETTINGS.SEAT_RADIUS,
+            category: row.defaultCategory,
+          },
+        ],
+      };
+    });
+
+    onUpdate(updatedRows);
+  };
+
+  const handleAlignByRadius = () => {
+    if (rows.length !== 1) return;
+    onStartCircleAlignment('byRadius');
+  };
+
+  const handleAlignByCenter = () => {
+    if (rows.length !== 1) return;
+    onStartCircleAlignment('byCenter');
+  };
+
   // Set default values when component mounts or row changes
   useEffect(() => {
     const updates: Partial<Row> = {};
@@ -164,6 +231,42 @@ const RowSettingsPanel: React.FC<RowSettingsPanelProps> = ({
       <Stack spacing="xs">
         <Card.Section p="xs">
           <Title order={4}>Row Settings</Title>
+        </Card.Section>
+
+        {/* Seat Arrangement Buttons */}
+        <Card.Section p="xs">
+          <Group spacing="xs">
+            <Tooltip label="Add Seat">
+              <Button
+                size="xs"
+                variant="light"
+                onClick={handleAddSeat}
+                disabled={rows.length === 0}
+              >
+                <PlusOutlined /> Add Seat
+              </Button>
+            </Tooltip>
+            <Tooltip label="Preview curved alignment">
+              <Button
+                size="xs"
+                variant="light"
+                onClick={handleAlignByRadius}
+                disabled={rows.length !== 1}
+              >
+                <RadiusSettingOutlined /> Preview Curve
+              </Button>
+            </Tooltip>
+            <Tooltip label="Preview curved alignment with center point">
+              <Button
+                size="xs"
+                variant="light"
+                onClick={handleAlignByCenter}
+                disabled={rows.length !== 1}
+              >
+                <AimOutlined /> Preview Arc
+              </Button>
+            </Tooltip>
+          </Group>
         </Card.Section>
 
         <NumberInput

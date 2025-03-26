@@ -87,6 +87,41 @@ export interface Selection {
   };
 }
 
+export interface Clipboard {
+  seats: string[];
+  rows: string[];
+  areas: string[];
+}
+
+export interface CirclePreview {
+  center: Point;
+  radius: number;
+  type: 'byRadius' | 'byCenter';
+  originalPosition: Point;
+}
+
+export interface CanvasState {
+  isDrawing: boolean;
+  startPoint: Point | null;
+  previewShape: any | null;
+  draggedSeatId: string | null;
+  selection: Selection;
+  isDragging: boolean;
+  dragPreview: any | null;
+  selectionBox: {
+    startPoint: Point;
+    endPoint: Point;
+  } | null;
+  clipboard: Clipboard | null;
+  stageSize: {
+    width: number;
+    height: number;
+  };
+  circlePreview: CirclePreview | null;
+  history: SeatingPlan[];
+  historyIndex: number;
+}
+
 export enum EditorTool {
   SELECT_SEAT = 'SELECT_SEAT',
   SELECT_ROW = 'SELECT_ROW',

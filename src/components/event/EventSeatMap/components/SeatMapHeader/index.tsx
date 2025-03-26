@@ -1,5 +1,5 @@
 import React from 'react';
-import { Space, Button, Input, Tooltip, Divider, Switch } from 'antd';
+import { Space, Button, Input, Tooltip, Divider, Switch, Dropdown } from 'antd';
 import {
   SelectOutlined,
   TableOutlined,
@@ -15,9 +15,16 @@ import {
   RedoOutlined,
   AppstoreOutlined,
   BorderlessTableOutlined,
+  CopyOutlined,
+  ScissorOutlined,
+  SnippetsOutlined,
+  FileAddOutlined,
+  FolderOpenOutlined,
+  MoreOutlined,
 } from '@ant-design/icons';
 import { EditorTool } from '../../types';
 import { ButtonGroup } from './styles';
+import type { MenuProps } from 'antd';
 
 interface SeatMapHeaderProps {
   currentTool: EditorTool;
@@ -25,6 +32,9 @@ interface SeatMapHeaderProps {
   showGrid: boolean;
   canUndo: boolean;
   canRedo: boolean;
+  canCopy: boolean;
+  canPaste: boolean;
+  canCut: boolean;
   onToolChange: (tool: EditorTool) => void;
   onZoomIn: () => void;
   onZoomOut: () => void;
@@ -33,6 +43,11 @@ interface SeatMapHeaderProps {
   onSave: () => void;
   onUndo: () => void;
   onRedo: () => void;
+  onCopy: () => void;
+  onPaste: () => void;
+  onCut: () => void;
+  onNewPlan: () => void;
+  onLoadPlan: () => void;
 }
 
 const SeatMapHeader: React.FC<SeatMapHeaderProps> = ({
@@ -41,6 +56,9 @@ const SeatMapHeader: React.FC<SeatMapHeaderProps> = ({
   showGrid,
   canUndo,
   canRedo,
+  canCopy,
+  canPaste,
+  canCut,
   onToolChange,
   onZoomIn,
   onZoomOut,
@@ -49,15 +67,49 @@ const SeatMapHeader: React.FC<SeatMapHeaderProps> = ({
   onSave,
   onUndo,
   onRedo,
+  onCopy,
+  onPaste,
+  onCut,
+  onNewPlan,
+  onLoadPlan,
 }) => {
+  const fileItems: MenuProps['items'] = [
+    {
+      key: 'new',
+      icon: <FileAddOutlined />,
+      label: 'New Plan',
+      onClick: onNewPlan,
+    },
+    {
+      key: 'load',
+      icon: <FolderOpenOutlined />,
+      label: 'Load Plan',
+      onClick: onLoadPlan,
+    },
+    {
+      key: 'save',
+      icon: <SaveOutlined />,
+      label: 'Save Plan',
+      onClick: onSave,
+    },
+  ];
+
   return (
-    <Space size="middle">
+    <Space size="middle" style={{ padding: '8px 16px', background: '#fff', borderBottom: '1px solid #f0f0f0' }}>
+      {/* File Operations */}
+      <ButtonGroup>
+        <Dropdown menu={{ items: fileItems }} placement="bottomLeft">
+          <Button icon={<MoreOutlined />} />
+        </Dropdown>
+      </ButtonGroup>
+
+      <Divider type="vertical" style={{ height: '24px' }} />
+
+      {/* Selection Tools */}
       <ButtonGroup>
         <Tooltip title="Select Individual Seats">
           <Button
-            type={
-              currentTool === EditorTool.SELECT_SEAT ? 'primary' : 'default'
-            }
+            type={currentTool === EditorTool.SELECT_SEAT ? 'primary' : 'default'}
             icon={<SelectOutlined />}
             onClick={() => onToolChange(EditorTool.SELECT_SEAT)}
           />
@@ -71,8 +123,36 @@ const SeatMapHeader: React.FC<SeatMapHeaderProps> = ({
         </Tooltip>
       </ButtonGroup>
 
-      <Divider type="vertical" />
+      <Divider type="vertical" style={{ height: '24px' }} />
 
+      {/* Edit Operations */}
+      <ButtonGroup>
+        <Tooltip title="Copy (Ctrl+C)">
+          <Button
+            icon={<CopyOutlined />}
+            onClick={onCopy}
+            disabled={!canCopy}
+          />
+        </Tooltip>
+        <Tooltip title="Cut (Ctrl+X)">
+          <Button
+            icon={<ScissorOutlined />}
+            onClick={onCut}
+            disabled={!canCut}
+          />
+        </Tooltip>
+        <Tooltip title="Paste (Ctrl+V)">
+          <Button
+            icon={<SnippetsOutlined />}
+            onClick={onPaste}
+            disabled={!canPaste}
+          />
+        </Tooltip>
+      </ButtonGroup>
+
+      <Divider type="vertical" style={{ height: '24px' }} />
+
+      {/* Row Tools */}
       <ButtonGroup>
         <Tooltip title="Add Row">
           <Button
@@ -83,13 +163,17 @@ const SeatMapHeader: React.FC<SeatMapHeaderProps> = ({
         </Tooltip>
         <Tooltip title="Add Rectangle Row">
           <Button
-            type={
-              currentTool === EditorTool.ADD_RECT_ROW ? 'primary' : 'default'
-            }
+            type={currentTool === EditorTool.ADD_RECT_ROW ? 'primary' : 'default'}
             icon={<BorderlessTableOutlined />}
             onClick={() => onToolChange(EditorTool.ADD_RECT_ROW)}
           />
         </Tooltip>
+      </ButtonGroup>
+
+      <Divider type="vertical" style={{ height: '24px' }} />
+
+      {/* Shape Tools */}
+      <ButtonGroup>
         <Tooltip title="Add Shape">
           <Button
             type={currentTool === EditorTool.ADD_SHAPE ? 'primary' : 'default'}
@@ -106,18 +190,14 @@ const SeatMapHeader: React.FC<SeatMapHeaderProps> = ({
         </Tooltip>
         <Tooltip title="Add Ellipse">
           <Button
-            type={
-              currentTool === EditorTool.ADD_ELLIPSE ? 'primary' : 'default'
-            }
+            type={currentTool === EditorTool.ADD_ELLIPSE ? 'primary' : 'default'}
             icon={<EllipsisOutlined rotate={90} />}
             onClick={() => onToolChange(EditorTool.ADD_ELLIPSE)}
           />
         </Tooltip>
         <Tooltip title="Add Polygon">
           <Button
-            type={
-              currentTool === EditorTool.ADD_POLYGON ? 'primary' : 'default'
-            }
+            type={currentTool === EditorTool.ADD_POLYGON ? 'primary' : 'default'}
             icon={<StarOutlined />}
             onClick={() => onToolChange(EditorTool.ADD_POLYGON)}
           />
@@ -131,8 +211,29 @@ const SeatMapHeader: React.FC<SeatMapHeaderProps> = ({
         </Tooltip>
       </ButtonGroup>
 
-      <Divider type="vertical" />
+      <Divider type="vertical" style={{ height: '24px' }} />
 
+      {/* History Tools */}
+      <ButtonGroup>
+        <Tooltip title="Undo (Ctrl+Z)">
+          <Button
+            icon={<UndoOutlined />}
+            onClick={onUndo}
+            disabled={!canUndo}
+          />
+        </Tooltip>
+        <Tooltip title="Redo (Ctrl+Y)">
+          <Button
+            icon={<RedoOutlined />}
+            onClick={onRedo}
+            disabled={!canRedo}
+          />
+        </Tooltip>
+      </ButtonGroup>
+
+      <Divider type="vertical" style={{ height: '24px' }} />
+
+      {/* View Tools */}
       <ButtonGroup>
         <Tooltip title="Zoom Out">
           <Button icon={<ZoomOutOutlined />} onClick={onZoomOut} />
@@ -153,23 +254,9 @@ const SeatMapHeader: React.FC<SeatMapHeaderProps> = ({
         </Tooltip>
       </ButtonGroup>
 
-      <ButtonGroup>
-        <Tooltip title="Undo">
-          <Button
-            icon={<UndoOutlined />}
-            onClick={onUndo}
-            disabled={!canUndo}
-          />
-        </Tooltip>
-        <Tooltip title="Redo">
-          <Button
-            icon={<RedoOutlined />}
-            onClick={onRedo}
-            disabled={!canRedo}
-          />
-        </Tooltip>
-      </ButtonGroup>
+      <Divider type="vertical" style={{ height: '24px' }} />
 
+      {/* Grid Toggle */}
       <Tooltip title="Toggle Grid">
         <Switch
           checkedChildren="Grid"
@@ -177,10 +264,6 @@ const SeatMapHeader: React.FC<SeatMapHeaderProps> = ({
           checked={showGrid}
           onChange={onShowGridChange}
         />
-      </Tooltip>
-
-      <Tooltip title="Save Changes">
-        <Button type="primary" icon={<SaveOutlined />} onClick={onSave} />
       </Tooltip>
     </Space>
   );

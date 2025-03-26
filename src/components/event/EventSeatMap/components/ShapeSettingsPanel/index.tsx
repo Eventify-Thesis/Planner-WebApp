@@ -6,12 +6,13 @@ import {
   TextInput,
   ColorInput,
   Title,
+  Divider,
 } from '@mantine/core';
 import { Shape } from '../../types/index';
 
 interface ShapeSettingsPanelProps {
   shapes: Shape[];
-  onUpdate: (updatedShapes: Shape[]) => void;
+  onUpdate: (shapes: Shape[]) => void;
 }
 
 const DEFAULT_SETTINGS = {
@@ -19,6 +20,7 @@ const DEFAULT_SETTINGS = {
     color: '#000000',
     text: '',
     position: { x: 0, y: 0 },
+    fontSize: 14,
   },
 } as const;
 
@@ -30,11 +32,13 @@ const ShapeSettingsPanel: React.FC<ShapeSettingsPanelProps> = ({
     const updatedShapes = shapes.map((shape) => ({
       ...shape,
       ...updates,
-      // Ensure text object exists with defaults
+      // Ensure text object exists with defaults and preserve individual shape's text properties
       text: {
         ...DEFAULT_SETTINGS.TEXT,
-        ...(shape.text || {}),
-        ...(updates.text || {}),
+        ...(shape.text || {}), // Preserve existing text settings for each shape
+        ...(updates.text || {}), // Apply new text updates
+        // Preserve individual shape's text position if not explicitly updating position
+        position: updates.text?.position || shape.text?.position || DEFAULT_SETTINGS.TEXT.position,
       },
     }));
     onUpdate(updatedShapes);
@@ -55,18 +59,19 @@ const ShapeSettingsPanel: React.FC<ShapeSettingsPanelProps> = ({
   };
 
   // Don't show panel if no shapes selected
-  if (shapes.length === 0) return null;
+  if (shapes.length === 0) {
+    return null;
+  }
 
   return (
-    <Card shadow="sm" p="xs">
-      <Stack spacing="xs">
-        <Card.Section p="xs">
-          <Title order={4}>Shape Settings</Title>
-        </Card.Section>
+    <Card shadow="sm" p="md" radius="md" withBorder>
+      <Stack spacing="sm">
+        <Title order={4}>Shape Settings</Title>
+        <Divider />
 
         <NumberInput
           size="xs"
-          label="Rotation (degrees)"
+          label="Rotation"
           value={getCommonValue('rotation') ?? undefined}
           onChange={(value: number | '') => {
             if (value === '') return;
@@ -115,7 +120,7 @@ const ShapeSettingsPanel: React.FC<ShapeSettingsPanelProps> = ({
           />
         )}
 
-        {getCommonValue('fill') && (
+        {getCommonValue('fill') !== undefined && (
           <ColorInput
             size="xs"
             label="Fill Color"
@@ -126,7 +131,7 @@ const ShapeSettingsPanel: React.FC<ShapeSettingsPanelProps> = ({
           />
         )}
 
-        {getCommonValue('stroke') && (
+        {getCommonValue('stroke') !== undefined && (
           <ColorInput
             size="xs"
             label="Border Color"
@@ -137,9 +142,20 @@ const ShapeSettingsPanel: React.FC<ShapeSettingsPanelProps> = ({
           />
         )}
 
-        <Card.Section p="xs">
-          <Title order={5}>Text Settings</Title>
-        </Card.Section>
+        <NumberInput
+          size="xs"
+          label="Z-Index"
+          value={getCommonValue('zIndex') ?? 0}
+          onChange={(value: number | '') => {
+            if (value === '') return;
+            handleUpdate({ zIndex: value });
+          }}
+          min={0}
+          step={1}
+        />
+
+        <Divider />
+        <Title order={5}>Text Settings</Title>
 
         <TextInput
           size="xs"
@@ -148,7 +164,6 @@ const ShapeSettingsPanel: React.FC<ShapeSettingsPanelProps> = ({
           onChange={(e) =>
             handleUpdate({
               text: {
-                ...shapes[0].text,
                 text: e.target.value,
               },
             })
@@ -158,16 +173,32 @@ const ShapeSettingsPanel: React.FC<ShapeSettingsPanelProps> = ({
 
         <NumberInput
           size="xs"
-          label="Text Position X"
-          value={getCommonTextValue('position')?.x ?? undefined}
+          label="Font Size"
+          value={getCommonTextValue('fontSize') ?? DEFAULT_SETTINGS.TEXT.fontSize}
           onChange={(value: number | '') => {
             if (value === '') return;
             handleUpdate({
               text: {
-                ...shapes[0].text,
+                fontSize: value,
+              },
+            });
+          }}
+          min={8}
+          max={72}
+          step={1}
+        />
+
+        <NumberInput
+          size="xs"
+          label="Text X Position"
+          value={getCommonTextValue('position')?.x ?? 0}
+          onChange={(value: number | '') => {
+            if (value === '') return;
+            handleUpdate({
+              text: {
                 position: {
-                  ...shapes[0].text.position,
                   x: value,
+                  y: shapes[0].text?.position?.y ?? 0,
                 },
               },
             });
@@ -177,15 +208,14 @@ const ShapeSettingsPanel: React.FC<ShapeSettingsPanelProps> = ({
 
         <NumberInput
           size="xs"
-          label="Text Position Y"
-          value={getCommonTextValue('position')?.y ?? undefined}
+          label="Text Y Position"
+          value={getCommonTextValue('position')?.y ?? 0}
           onChange={(value: number | '') => {
             if (value === '') return;
             handleUpdate({
               text: {
-                ...shapes[0].text,
                 position: {
-                  ...shapes[0].text.position,
+                  x: shapes[0].text?.position?.x ?? 0,
                   y: value,
                 },
               },
@@ -197,11 +227,10 @@ const ShapeSettingsPanel: React.FC<ShapeSettingsPanelProps> = ({
         <ColorInput
           size="xs"
           label="Text Color"
-          value={getCommonTextValue('color') ?? undefined}
+          value={getCommonTextValue('color') ?? DEFAULT_SETTINGS.TEXT.color}
           onChange={(value) =>
             handleUpdate({
               text: {
-                ...shapes[0].text,
                 color: value,
               },
             })

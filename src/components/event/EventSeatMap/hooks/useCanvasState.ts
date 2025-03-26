@@ -7,6 +7,7 @@ import {
   Clipboard,
   SeatingPlan,
   EditorTool,
+  CirclePreview,
 } from '../types/index';
 
 const MAX_HISTORY_SIZE = 50;
@@ -29,6 +30,7 @@ export const useCanvasState = (
   } | null>(null);
   const [clipboard, setClipboard] = useState<Clipboard | null>(null);
   const [stageSize, setStageSize] = useState({ width: 1, height: 1 });
+  const [circlePreview, setCirclePreview] = useState<CirclePreview | null>(null);
   const [history, setHistory] = useState<SeatingPlan[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
 
@@ -75,7 +77,7 @@ export const useCanvasState = (
     [history, historyIndex],
   );
 
-  const handlePlanChange = useCallback(
+  const handlePlanChangeCanvas = useCallback(
     (plan: SeatingPlan) => {
       addToHistory(plan);
       onPlanChange(plan);
@@ -87,7 +89,7 @@ export const useCanvasState = (
     if (historyIndex > 0) {
       setHistoryIndex((prev) => {
         const newIndex = prev - 1;
-        onPlanChange(history[newIndex]); 
+        onPlanChange(history[newIndex]);
         return newIndex;
       });
     }
@@ -97,7 +99,7 @@ export const useCanvasState = (
     if (historyIndex < history.length - 1) {
       setHistoryIndex((prev) => {
         const newIndex = prev + 1;
-        onPlanChange(history[newIndex]); 
+        onPlanChange(history[newIndex]);
         return newIndex;
       });
     }
@@ -115,6 +117,7 @@ export const useCanvasState = (
       selectionBox,
       clipboard,
       stageSize,
+      circlePreview,
       history,
       historyIndex,
     },
@@ -129,6 +132,7 @@ export const useCanvasState = (
       setSelectionBox,
       setClipboard,
       setStageSize,
+      setCirclePreview,
       setHistory,
       setHistoryIndex,
     },
@@ -140,6 +144,6 @@ export const useCanvasState = (
       undo,
       redo,
     },
-    handlePlanChange,
+    handlePlanChangeCanvas,
   };
 };

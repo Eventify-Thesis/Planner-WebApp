@@ -17,8 +17,8 @@ export const useCanvasHandlers = (
   canvasActions: any,
 ) => {
   const handleCopy = useCallback(
-    (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+    (e: KeyboardEvent, isCallOutside: boolean = false) => {
+      if (isCallOutside || ((e.ctrlKey || e.metaKey) && e.key === 'c')) {
         const { selection } = canvasState;
         const { seats, rows, areas } = selection.selectedItems;
 
@@ -53,8 +53,11 @@ export const useCanvasHandlers = (
   );
 
   const handlePaste = useCallback(
-    (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'v' && canvasState.clipboard) {
+    (e: KeyboardEvent, isCallOutside: boolean = false) => {
+      if (
+        isCallOutside ||
+        ((e.ctrlKey || e.metaKey) && e.key === 'v' && canvasState.clipboard)
+      ) {
         const updatedPlan = { ...seatingPlan };
         const currentZone = updatedPlan.zones[0];
         const newSelection = {
@@ -554,6 +557,7 @@ export const useCanvasHandlers = (
             },
             status: 'available',
             number: i + 1,
+            radius: 15,
           }));
 
           const row = {
@@ -718,5 +722,7 @@ export const useCanvasHandlers = (
     handleSelect,
     handleDragStart,
     handleDragEnd,
+    handlePaste,
+    handleCopy,
   };
 };
