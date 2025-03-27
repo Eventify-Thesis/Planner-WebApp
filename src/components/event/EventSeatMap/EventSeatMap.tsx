@@ -1,7 +1,12 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Grid, Stack } from '@mantine/core';
-import { Layout, Modal } from 'antd';
+import { Layout, Modal, Form, Input, message, Button } from 'antd';
 import { v4 as uuidv4 } from 'uuid';
+import { useParams } from 'react-router-dom';
+import {
+  useGetSeatingPlanDetail,
+  useSeatingPlanMutations,
+} from '@/queries/useSeatingPlanQueries';
 import {
   SeatingPlan,
   Selection,
@@ -51,9 +56,21 @@ const DEFAULT_SEATING_PLAN: SeatingPlan = {
 };
 
 const EventSeatMap: React.FC = () => {
+  const { eventId, planId } = useParams();
   const [seatingPlan, setSeatingPlan] =
     useState<SeatingPlan>(DEFAULT_SEATING_PLAN);
   const [showGrid, setShowGrid] = useState(true);
+  const [saveModalVisible, setSaveModalVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [form] = Form.useForm();
+
+  const { data: existingPlan, isLoading: isLoadingPlan } =
+    useGetSeatingPlanDetail(eventId!, planId!);
+  const { createMutation, updateMutation } = useSeatingPlanMutations(
+    eventId!,
+    planId,
+  );
+
   const {
     currentTool,
     setCurrentTool,
@@ -75,16 +92,7 @@ const EventSeatMap: React.FC = () => {
     setSeatingPlan,
   );
 
-  const {
-    handleMouseDown,
-    handleMouseMove,
-    handleMouseUp,
-    handleSelect,
-    handleDragStart,
-    handleDragEnd,
-    handleCopy,
-    handlePaste,
-  } = useCanvasHandlers(
+  const { handleCopy, handlePaste } = useCanvasHandlers(
     zoom,
     seatingPlan,
     currentTool,
@@ -95,18 +103,66 @@ const EventSeatMap: React.FC = () => {
     actions,
   );
 
-  const handleSave = useCallback(() => {
-    console.log('Saving seating plan:', seatingPlan);
+  const handleSaveToComputer = useCallback(() => {
     const dataStr = JSON.stringify(seatingPlan, null, 2);
     const dataUri =
       'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
-    const exportFileDefaultName = 'seating-plan.json';
+    const exportFileDefaultName = `${seatingPlan.name
+      .toLowerCase()
+      .replace(/\s+/g, '-')}.json`;
 
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
     linkElement.setAttribute('download', exportFileDefaultName);
     linkElement.click();
   }, [seatingPlan]);
+
+  const handleSave = useCallback(async () => {
+    if (planId && planId !== 'new') {
+      // Update existing plan
+      try {
+        setLoading(true);
+        await updateMutation.mutateAsync({
+          id: planId,
+          name: seatingPlan.name,
+          plan: JSON.stringify(seatingPlan),
+        });
+        message.success('Seating plan updated successfully');
+      } catch (error) {
+        console.error(error);
+        message.error('Failed to update seating plan');
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      // Show modal for new plan
+      setSaveModalVisible(true);
+    }
+  }, [planId, seatingPlan, updateMutation]);
+
+  const handleModalSave = async () => {
+    try {
+      const values = await form.validateFields();
+      setLoading(true);
+
+      const newPlan = {
+        plan: JSON.stringify(seatingPlan),
+        name: values.name,
+        description: values.description,
+      };
+
+      await createMutation.mutateAsync(newPlan);
+      message.success('Seating plan created successfully');
+      setSaveModalVisible(false);
+    } catch (error) {
+      if (error.errorFields) {
+        return; // Form validation error
+      }
+      message.error('Failed to create seating plan');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handlePlanChange = useCallback(
     (updatedPlan: SeatingPlan) => {
@@ -414,8 +470,57 @@ const EventSeatMap: React.FC = () => {
     [seatingPlan, selection.selectedItems.rows, setters],
   );
 
+  // Load existing plan if available
+  useEffect(() => {
+    if (existingPlan && !isLoadingPlan && planId !== 'new') {
+      const parsedPlan = JSON.parse(existingPlan.plan);
+      setSeatingPlan(parsedPlan);
+      addToHistory(parsedPlan);
+    }
+  }, [existingPlan, isLoadingPlan, planId, addToHistory]);
+
   return (
     <Layout style={{ height: '100vh' }}>
+      <Modal
+        title="Save Seating Plan"
+        open={saveModalVisible}
+        onCancel={() => setSaveModalVisible(false)}
+        footer={[
+          <Button key="cancel" onClick={() => setSaveModalVisible(false)}>
+            Cancel
+          </Button>,
+          <Button
+            key="save"
+            type="primary"
+            loading={loading}
+            onClick={handleModalSave}
+          >
+            Save
+          </Button>,
+        ]}
+      >
+        <Form
+          form={form}
+          layout="vertical"
+          initialValues={{ name: seatingPlan.name }}
+        >
+          <Form.Item
+            name="name"
+            label="Name"
+            rules={[{ required: true, message: 'Please enter a name' }]}
+          >
+            <Input placeholder="Enter seating plan name" />
+          </Form.Item>
+          <Form.Item
+            name="description"
+            label="Description"
+            rules={[{ required: true, message: 'Please enter a description' }]}
+          >
+            <Input.TextArea placeholder="Enter seating plan description" />
+          </Form.Item>
+        </Form>
+      </Modal>
+
       <SeatMapHeader
         currentTool={currentTool}
         zoom={zoom}
@@ -443,13 +548,15 @@ const EventSeatMap: React.FC = () => {
         onZoomChange={setZoom}
         onShowGridChange={setShowGrid}
         onSave={handleSave}
+        onSaveToComputer={handleSaveToComputer}
         onUndo={handleUndo}
         onRedo={handleRedo}
         onCopy={onCopy}
-        onPaste={onPaste}
+        onPaste={handlePaste}
         onCut={handleCut}
         onNewPlan={handleNewPlan}
         onLoadPlan={handleLoadPlan}
+        loading={loading || isLoadingPlan}
       />
       <Layout>
         <Content className="seat-map-content">

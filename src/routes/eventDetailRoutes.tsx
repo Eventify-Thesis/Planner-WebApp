@@ -20,6 +20,9 @@ const EventMembers = React.lazy(
 const EventSeatMap = React.lazy(
   () => import('@/components/event/EventSeatMap/EventSeatMap'),
 );
+const EventSeatingPlans = React.lazy(
+  () => import('@/components/event/EventSeatingPlans/EventSeatingPlans'),
+);
 const EventQuestions = React.lazy(
   () => import('@/components/event/EventQuestions/EventQuestions'),
 );
@@ -75,7 +78,15 @@ export const eventDetailRoutes: RouteObject[] = [
         ),
       },
       {
-        path: 'seatmap',
+        path: 'seating-plans',
+        element: (
+          <React.Suspense fallback={<LoadingFallback />}>
+            <EventSeatingPlans />
+          </React.Suspense>
+        ),
+      },
+      {
+        path: 'seatmap/:planId',
         element: (
           <React.Suspense fallback={<LoadingFallback />}>
             <EventSeatMap />

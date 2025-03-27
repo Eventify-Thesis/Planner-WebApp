@@ -21,6 +21,7 @@ import {
   FileAddOutlined,
   FolderOpenOutlined,
   MoreOutlined,
+  DownloadOutlined,
 } from '@ant-design/icons';
 import { EditorTool } from '../../types';
 import { ButtonGroup } from './styles';
@@ -41,6 +42,7 @@ interface SeatMapHeaderProps {
   onZoomChange: (value: number) => void;
   onShowGridChange: (checked: boolean) => void;
   onSave: () => void;
+  onSaveToComputer: () => void;
   onUndo: () => void;
   onRedo: () => void;
   onCopy: () => void;
@@ -48,6 +50,7 @@ interface SeatMapHeaderProps {
   onCut: () => void;
   onNewPlan: () => void;
   onLoadPlan: () => void;
+  loading?: boolean;
 }
 
 const SeatMapHeader: React.FC<SeatMapHeaderProps> = ({
@@ -65,6 +68,7 @@ const SeatMapHeader: React.FC<SeatMapHeaderProps> = ({
   onZoomChange,
   onShowGridChange,
   onSave,
+  onSaveToComputer,
   onUndo,
   onRedo,
   onCopy,
@@ -72,6 +76,7 @@ const SeatMapHeader: React.FC<SeatMapHeaderProps> = ({
   onCut,
   onNewPlan,
   onLoadPlan,
+  loading = false,
 }) => {
   const fileItems: MenuProps['items'] = [
     {
@@ -79,23 +84,40 @@ const SeatMapHeader: React.FC<SeatMapHeaderProps> = ({
       icon: <FileAddOutlined />,
       label: 'New Plan',
       onClick: onNewPlan,
+      disabled: loading,
     },
     {
       key: 'load',
       icon: <FolderOpenOutlined />,
       label: 'Load Plan',
       onClick: onLoadPlan,
+      disabled: loading,
     },
     {
       key: 'save',
       icon: <SaveOutlined />,
       label: 'Save Plan',
       onClick: onSave,
+      disabled: loading,
+    },
+    {
+      key: 'saveToComputer',
+      icon: <DownloadOutlined />,
+      label: 'Save to Computer',
+      onClick: onSaveToComputer,
+      disabled: loading,
     },
   ];
 
   return (
-    <Space size="middle" style={{ padding: '8px 16px', background: '#fff', borderBottom: '1px solid #f0f0f0' }}>
+    <Space
+      size="middle"
+      style={{
+        padding: '8px 16px',
+        background: '#fff',
+        borderBottom: '1px solid #f0f0f0',
+      }}
+    >
       {/* File Operations */}
       <ButtonGroup>
         <Dropdown menu={{ items: fileItems }} placement="bottomLeft">
@@ -109,7 +131,9 @@ const SeatMapHeader: React.FC<SeatMapHeaderProps> = ({
       <ButtonGroup>
         <Tooltip title="Select Individual Seats">
           <Button
-            type={currentTool === EditorTool.SELECT_SEAT ? 'primary' : 'default'}
+            type={
+              currentTool === EditorTool.SELECT_SEAT ? 'primary' : 'default'
+            }
             icon={<SelectOutlined />}
             onClick={() => onToolChange(EditorTool.SELECT_SEAT)}
           />
@@ -163,7 +187,9 @@ const SeatMapHeader: React.FC<SeatMapHeaderProps> = ({
         </Tooltip>
         <Tooltip title="Add Rectangle Row">
           <Button
-            type={currentTool === EditorTool.ADD_RECT_ROW ? 'primary' : 'default'}
+            type={
+              currentTool === EditorTool.ADD_RECT_ROW ? 'primary' : 'default'
+            }
             icon={<BorderlessTableOutlined />}
             onClick={() => onToolChange(EditorTool.ADD_RECT_ROW)}
           />
@@ -190,14 +216,18 @@ const SeatMapHeader: React.FC<SeatMapHeaderProps> = ({
         </Tooltip>
         <Tooltip title="Add Ellipse">
           <Button
-            type={currentTool === EditorTool.ADD_ELLIPSE ? 'primary' : 'default'}
+            type={
+              currentTool === EditorTool.ADD_ELLIPSE ? 'primary' : 'default'
+            }
             icon={<EllipsisOutlined rotate={90} />}
             onClick={() => onToolChange(EditorTool.ADD_ELLIPSE)}
           />
         </Tooltip>
         <Tooltip title="Add Polygon">
           <Button
-            type={currentTool === EditorTool.ADD_POLYGON ? 'primary' : 'default'}
+            type={
+              currentTool === EditorTool.ADD_POLYGON ? 'primary' : 'default'
+            }
             icon={<StarOutlined />}
             onClick={() => onToolChange(EditorTool.ADD_POLYGON)}
           />
