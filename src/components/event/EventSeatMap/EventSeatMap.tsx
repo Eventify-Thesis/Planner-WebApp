@@ -293,11 +293,63 @@ const EventSeatMap: React.FC = () => {
   };
 
   const handleLoadPlan = () => {
-    // You can implement file upload logic here
-    Modal.info({
-      title: 'Load Plan',
-      content: 'Plan loading functionality will be implemented here.',
-    });
+    // Create a hidden file input
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'application/json';
+    fileInput.style.display = 'none';
+
+    fileInput.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const plan = JSON.parse(event.target?.result as string);
+
+          // Validate the plan structure
+          if (
+            !plan.id ||
+            !plan.name ||
+            !plan.size ||
+            !Array.isArray(plan.zones)
+          ) {
+            Modal.error({
+              title: 'Invalid Plan Format',
+              content: 'The selected file is not a valid seating plan.',
+            });
+            return;
+          }
+
+          setSeatingPlan(plan);
+          addToHistory(plan);
+
+          Modal.success({
+            title: 'Plan Loaded',
+            content: `Successfully loaded plan: ${plan.name}`,
+          });
+        } catch (error) {
+          Modal.error({
+            title: 'Error Loading Plan',
+            content:
+              'Failed to parse the seating plan file. Please ensure it is a valid JSON file.',
+          });
+        }
+      };
+
+      reader.onerror = () => {
+        Modal.error({
+          title: 'Error Loading Plan',
+          content: 'Failed to read the file. Please try again.',
+        });
+      };
+
+      reader.readAsText(file);
+    };
+
+    // Trigger file selection
+    fileInput.click();
   };
 
   const selectedSeat = selection.selectedItems.seats[0]
@@ -331,10 +383,12 @@ const EventSeatMap: React.FC = () => {
       if (!row || row.seats.length === 0) return;
 
       // Calculate row's bounding box
-      let minX = Infinity, minY = Infinity;
-      let maxX = -Infinity, maxY = -Infinity;
-      
-      row.seats.forEach(seat => {
+      let minX = Infinity,
+        minY = Infinity;
+      let maxX = -Infinity,
+        maxY = -Infinity;
+
+      row.seats.forEach((seat) => {
         minX = Math.min(minX, seat.position.x);
         minY = Math.min(minY, seat.position.y);
         maxX = Math.max(maxX, seat.position.x);
@@ -354,7 +408,7 @@ const EventSeatMap: React.FC = () => {
         type,
         center: { x: centerX, y: centerY },
         radius: defaultRadius,
-        originalPosition: { x: centerX, y: centerY }
+        originalPosition: { x: centerX, y: centerY },
       });
     },
     [seatingPlan, selection.selectedItems.rows, setters],
