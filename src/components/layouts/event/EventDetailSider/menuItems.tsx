@@ -8,6 +8,7 @@ import {
   ScanOutlined,
   BorderOutlined,
 } from '@ant-design/icons';
+import { Icon } from '@iconify/react/dist/iconify.js';
 
 interface MenuItem {
   key: string;
@@ -61,13 +62,13 @@ const settingsMenuItem: MenuItem = {
 
 const seatingPlansMenuItem: MenuItem = {
   key: 'seating-plans',
-  icon: <SettingOutlined />,
+  icon: <Icon icon="material-symbols:map" width="16" height="16" />,
   label: 'Seating Plans',
 };
 
 const seatmapMenuItem: MenuItem = {
-  key: 'seatmap',
-  icon: <BorderOutlined />,
+  key: 'seatmap/new',
+  icon: <Icon icon="fluent:seat-16-filled" width="16" height="16" />,
   label: 'Seat Map',
 };
 

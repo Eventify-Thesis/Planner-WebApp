@@ -21,6 +21,7 @@ import {
   FileAddOutlined,
   FolderOpenOutlined,
   MoreOutlined,
+  DownloadOutlined,
 } from '@ant-design/icons';
 import { EditorTool } from '../../types';
 import { ButtonGroup } from './styles';
@@ -41,6 +42,7 @@ interface SeatMapHeaderProps {
   onZoomChange: (value: number) => void;
   onShowGridChange: (checked: boolean) => void;
   onSave: () => void;
+  onSaveToComputer: () => void;
   onUndo: () => void;
   onRedo: () => void;
   onCopy: () => void;
@@ -48,6 +50,7 @@ interface SeatMapHeaderProps {
   onCut: () => void;
   onNewPlan: () => void;
   onLoadPlan: () => void;
+  loading?: boolean;
 }
 
 const SeatMapHeader: React.FC<SeatMapHeaderProps> = ({
@@ -65,6 +68,7 @@ const SeatMapHeader: React.FC<SeatMapHeaderProps> = ({
   onZoomChange,
   onShowGridChange,
   onSave,
+  onSaveToComputer,
   onUndo,
   onRedo,
   onCopy,
@@ -72,6 +76,7 @@ const SeatMapHeader: React.FC<SeatMapHeaderProps> = ({
   onCut,
   onNewPlan,
   onLoadPlan,
+  loading = false,
 }) => {
   const fileItems: MenuProps['items'] = [
     {
@@ -79,18 +84,28 @@ const SeatMapHeader: React.FC<SeatMapHeaderProps> = ({
       icon: <FileAddOutlined />,
       label: 'New Plan',
       onClick: onNewPlan,
+      disabled: loading,
     },
     {
       key: 'load',
       icon: <FolderOpenOutlined />,
       label: 'Load Plan',
       onClick: onLoadPlan,
+      disabled: loading,
     },
     {
       key: 'save',
       icon: <SaveOutlined />,
       label: 'Save Plan',
       onClick: onSave,
+      disabled: loading,
+    },
+    {
+      key: 'saveToComputer',
+      icon: <DownloadOutlined />,
+      label: 'Save to Computer',
+      onClick: onSaveToComputer,
+      disabled: loading,
     },
   ];
 

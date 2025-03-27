@@ -49,7 +49,7 @@ export const seatingPlanClient = {
   },
 
   getDetail: async (
-    eventId: string,
+    eventId: IdParam,
     id: IdParam,
   ): Promise<SeatingPlanModel> => {
     try {
@@ -64,11 +64,12 @@ export const seatingPlanClient = {
 
   update: async (
     eventId: IdParam,
+    id: IdParam,
     seatingPlan: Partial<SeatingPlanModel>,
   ): Promise<SeatingPlanModel> => {
     try {
-      const response = await httpApi.put<any>(
-        `/planner/events/${eventId}/seating-plan`,
+      const response = await httpApi.patch<any>(
+        `/planner/events/${eventId}/seating-plan/${id}`,
         seatingPlan,
       );
       return response.data.data;

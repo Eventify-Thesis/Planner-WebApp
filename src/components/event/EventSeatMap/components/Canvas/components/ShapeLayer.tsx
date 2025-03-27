@@ -267,7 +267,6 @@ export const ShapeLayer = memo(
 
             switch (area.type) {
               case 'rectangle':
-                console.log(area.rotation);
                 return (
                   <Group key={area.uuid} rotation={area.rotation}>
                     <Rect

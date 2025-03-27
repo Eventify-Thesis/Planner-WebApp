@@ -34,7 +34,7 @@ export const useGetSeatingPlanDetail = (eventId: IdParam, planId: IdParam) => {
   });
 };
 
-export const useSeatingPlanMutations = (eventId: IdParam) => {
+export const useSeatingPlanMutations = (eventId: IdParam, id?: IdParam) => {
   const queryClient = useQueryClient();
 
   const createMutation = useMutation({
@@ -52,11 +52,12 @@ export const useSeatingPlanMutations = (eventId: IdParam) => {
   const updateMutation = useMutation({
     mutationFn: async (data: any) => {
       if (!eventId) throw new Error('Event ID is required');
-      return await seatingPlanClient.update(eventId, data);
+      if (!id) throw new Error('Seating plan ID is required');
+      return await seatingPlanClient.update(eventId, id, data);
     },
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: [SEATING_PLAN_QUERY_KEYS.detail, eventId, variables.id],
+        queryKey: [SEATING_PLAN_QUERY_KEYS.detail, eventId],
       });
       queryClient.invalidateQueries({
         queryKey: [SEATING_PLAN_QUERY_KEYS.list, eventId],
