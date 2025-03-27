@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
-import { Layer, Text, Rect, Circle, Ellipse, Line } from 'react-konva';
-import { SeatingPlan, Selection, EditorTool } from '../../../types';
+import { Layer, Text, Rect, Circle, Ellipse, Line, Group } from 'react-konva';
+import { SeatingPlan, Selection, EditorTool } from '../../../types/index';
 import { getShapeStyles } from '../utils/styleUtils';
 import { getMousePosition } from '../utils/mouseUtils';
 
@@ -13,6 +13,96 @@ interface ShapeLayerProps {
   onSelect: (type: 'shape', id: string, event?: any) => void;
 }
 
+interface ShapeTextProps {
+  text: {
+    text: string;
+    position?: Point;
+    color?: string;
+    fontSize?: number;
+    fontFamily?: string;
+    align?: string;
+    verticalAlign?: string;
+  };
+  shape: Shape;
+}
+
+const ShapeText = memo(({ text, shape }: ShapeTextProps) => {
+  if (!text?.text) return null;
+
+  let centerX = shape.position.x;
+  let centerY = shape.position.y;
+
+  // Calculate center based on shape type
+  switch (shape.type) {
+    case 'rectangle':
+      centerX += (shape.size?.width || 0) / 2;
+      centerY += (shape.size?.height || 0) / 2;
+      break;
+    case 'circle':
+      centerX = shape.position.x;
+      centerY = shape.position.y;
+      break;
+    case 'ellipse':
+      centerX = shape.position.x;
+      centerY = shape.position.y;
+      break;
+    case 'polygon':
+      if (shape.points && shape.points.length > 0) {
+        // Calculate centroid for polygon
+        const points = shape.points;
+        let sumX = 0;
+        let sumY = 0;
+        points.forEach((point) => {
+          sumX += point.x;
+          sumY += point.y;
+        });
+        centerX = sumX / points.length;
+        centerY = sumY / points.length;
+      }
+      break;
+  }
+
+  // Use provided position or fallback to shape center
+  const x = text.position?.x ?? centerX;
+  const y = text.position?.y ?? centerY;
+
+  return (
+    <Text
+      x={x}
+      y={y}
+      text={text.text}
+      fill={text.color || '#000000'}
+      fontSize={text.fontSize || 14}
+      fontFamily={text.fontFamily || 'Arial'}
+      align={text.align || 'center'}
+      verticalAlign={text.verticalAlign || 'middle'}
+      offsetX={
+        text.align === 'left'
+          ? 0
+          : text.align === 'right'
+          ? text.text.length * 7
+          : text.text.length * 3.5
+      }
+      offsetY={
+        text.verticalAlign === 'top'
+          ? 0
+          : text.verticalAlign === 'bottom'
+          ? 14
+          : 7
+      }
+      onDragMove={(e) => {
+        // Update text position when dragged
+        const stage = e.target.getStage();
+        const position = {
+          x: e.target.x(),
+          y: e.target.y(),
+        };
+        text.position = position;
+      }}
+    />
+  );
+});
+
 export const ShapeLayer = memo(
   ({
     seatingPlan,
@@ -23,67 +113,126 @@ export const ShapeLayer = memo(
     onSelect,
   }: ShapeLayerProps) => {
     const handleDragStart = (e: any, uuid: string) => {
-      // Get all selected shapes including the one being dragged
-      const selectedShapes = seatingPlan.zones[0].areas.filter(
-        (a) =>
-          selection.selectedItems.shapes.includes(a.uuid) || a.uuid === uuid,
-      );
-      if (selectedShapes.length === 0) return;
-
-      // Store the initial positions and mouse offset for all selected shapes
       const mousePos = getMousePosition(e, zoom);
       if (!mousePos) return;
 
-      // Find the shape being dragged to calculate offset
-      const draggedShape = selectedShapes.find((s) => s.uuid === uuid);
+      // Get the shape being dragged and all selected shapes
+      const draggedShape = seatingPlan.zones[0].areas.find(
+        (a) => a.uuid === uuid,
+      );
+      const selectedShapes = seatingPlan.zones[0].areas.filter((a) =>
+        selection.selectedItems.areas.includes(a.uuid),
+      );
+
       if (!draggedShape) return;
 
-      // Calculate mouse offset from the dragged shape
-      const mouseOffset = {
-        x: mousePos.x - draggedShape.position.x,
-        y: mousePos.y - draggedShape.position.y,
-      };
+      // If dragged shape is not in selection, only move that shape
+      const shapesToMove = selectedShapes.includes(draggedShape)
+        ? selectedShapes
+        : [draggedShape];
 
-      // Store initial positions of all selected shapes
       e.target.dragStartData = {
-        selectedShapes: selectedShapes.map((shape) => ({
+        shapes: shapesToMove.map((shape) => ({
           uuid: shape.uuid,
           initialPos: { ...shape.position },
+          initialTextPos: shape.text?.position
+            ? { ...shape.text.position }
+            : { ...shape.position },
+          offset: {
+            x: mousePos.x - shape.position.x,
+            y: mousePos.y - shape.position.y,
+          },
         })),
-        mouseOffset,
       };
+    };
+
+    const handleDragMove = (e: any, uuid: string) => {
+      const mousePos = getMousePosition(e, zoom);
+      if (!mousePos || !e.target.dragStartData) return;
+
+      const { shapes } = e.target.dragStartData;
+      const draggedShapeData = shapes.find((s) => s.uuid === uuid);
+      if (!draggedShapeData) return;
+
+      // Calculate the movement based on the dragged shape
+      const dx =
+        mousePos.x - draggedShapeData.offset.x - draggedShapeData.initialPos.x;
+      const dy =
+        mousePos.y - draggedShapeData.offset.y - draggedShapeData.initialPos.y;
+
+      const updatedPlan = { ...seatingPlan };
+      updatedPlan.zones = updatedPlan.zones.map((z) => ({
+        ...z,
+        areas: z.areas.map((area) => {
+          const shapeData = shapes.find((s) => s.uuid === area.uuid);
+          if (!shapeData) return area;
+
+          const newPosition = {
+            x: shapeData.initialPos.x + dx,
+            y: shapeData.initialPos.y + dy,
+          };
+
+          return {
+            ...area,
+            position: newPosition,
+            text: area.text
+              ? {
+                  ...area.text,
+                  position: {
+                    x: shapeData.initialTextPos.x + dx,
+                    y: shapeData.initialTextPos.y + dy,
+                  },
+                }
+              : undefined,
+          };
+        }),
+      }));
+
+      onPlanChange(updatedPlan);
     };
 
     const handleDragEnd = (e: any, uuid: string) => {
       const mousePos = getMousePosition(e, zoom);
       if (!mousePos || !e.target.dragStartData) return;
 
-      const { selectedShapes, mouseOffset } = e.target.dragStartData;
+      const { shapes } = e.target.dragStartData;
+      const draggedShapeData = shapes.find((s) => s.uuid === uuid);
+      if (!draggedShapeData) return;
 
-      // Calculate the movement delta
-      const dx = mousePos.x - mouseOffset.x - selectedShapes[0].initialPos.x;
-      const dy = mousePos.y - mouseOffset.y - selectedShapes[0].initialPos.y;
+      // Calculate the movement based on the dragged shape
+      const dx =
+        mousePos.x - draggedShapeData.offset.x - draggedShapeData.initialPos.x;
+      const dy =
+        mousePos.y - draggedShapeData.offset.y - draggedShapeData.initialPos.y;
 
       const updatedPlan = { ...seatingPlan };
       updatedPlan.zones = updatedPlan.zones.map((z) => ({
         ...z,
         areas: z.areas.map((area) => {
-          // Find if this area was in the selection
-          const selectedShape = selectedShapes.find(
-            (s) => s.uuid === area.uuid,
-          );
-          if (!selectedShape) return area;
+          const shapeData = shapes.find((s) => s.uuid === area.uuid);
+          if (!shapeData) return area;
 
-          // Move the shape by the same delta from its initial position
+          const newPosition = {
+            x: shapeData.initialPos.x + dx,
+            y: shapeData.initialPos.y + dy,
+          };
+
           return {
             ...area,
-            position: {
-              x: selectedShape.initialPos.x + dx,
-              y: selectedShape.initialPos.y + dy,
-            },
+            position: newPosition,
+            text: area.text
+              ? {
+                  ...area.text,
+                  position: {
+                    x: shapeData.initialTextPos.x + dx,
+                    y: shapeData.initialTextPos.y + dy,
+                  },
+                }
+              : undefined,
           };
         }),
       }));
+
       onPlanChange(updatedPlan);
     };
 
@@ -91,16 +240,16 @@ export const ShapeLayer = memo(
       <Layer>
         {seatingPlan.zones.flatMap((zone) =>
           zone.areas.map((area) => {
-            const isSelected = selection.selectedItems.shapes.includes(
+            const isSelected = selection.selectedItems.areas.includes(
               area.uuid,
             );
-
             const commonProps = {
               draggable:
                 currentTool === EditorTool.SELECT_ROW ||
                 currentTool === EditorTool.SELECT_SHAPE,
               onClick: (e: any) => onSelect('shape', area.uuid, e),
               onDragStart: (e: any) => handleDragStart(e, area.uuid),
+              onDragMove: (e: any) => handleDragMove(e, area.uuid),
               onDragEnd: (e: any) => handleDragEnd(e, area.uuid),
               onMouseEnter: (e: any) => {
                 if (
@@ -118,63 +267,74 @@ export const ShapeLayer = memo(
 
             switch (area.type) {
               case 'rectangle':
+                console.log(area.rotation);
                 return (
-                  <Rect
-                    key={area.uuid}
-                    id={area.uuid}
-                    x={area.position.x}
-                    y={area.position.y}
-                    width={area.size?.width || 0}
-                    height={area.size?.height || 0}
-                    {...commonProps}
-                  />
+                  <Group key={area.uuid} rotation={area.rotation}>
+                    <Rect
+                      id={area.uuid}
+                      x={area.position.x}
+                      y={area.position.y}
+                      width={area.size?.width || 0}
+                      height={area.size?.height || 0}
+                      {...commonProps}
+                    />
+                    <ShapeText text={area.text} shape={area} />
+                  </Group>
                 );
               case 'circle':
                 return (
-                  <Circle
-                    key={area.uuid}
-                    id={area.uuid}
-                    x={area.position.x}
-                    y={area.position.y}
-                    radius={area.radius || 0}
-                    {...commonProps}
-                  />
+                  <Group key={area.uuid} rotationDeg={area.rotation || 0}>
+                    <Circle
+                      id={area.uuid}
+                      x={area.position.x}
+                      y={area.position.y}
+                      radius={area.radius || 0}
+                      {...commonProps}
+                    />
+                    <ShapeText text={area.text} shape={area} />
+                  </Group>
                 );
               case 'ellipse':
                 return (
-                  <Ellipse
-                    key={area.uuid}
-                    id={area.uuid}
-                    x={area.position.x}
-                    y={area.position.y}
-                    radiusX={area.size?.width ? area.size.width / 2 : 0}
-                    radiusY={area.size?.height ? area.size.height / 2 : 0}
-                    {...commonProps}
-                  />
+                  <Group key={area.uuid} rotationDeg={area.rotation || 0}>
+                    <Ellipse
+                      id={area.uuid}
+                      x={area.position.x}
+                      y={area.position.y}
+                      radiusX={area.size?.width ? area.size.width / 2 : 0}
+                      radiusY={area.size?.height ? area.size.height / 2 : 0}
+                      {...commonProps}
+                    />
+                    <ShapeText text={area.text} shape={area} />
+                  </Group>
                 );
               case 'polygon':
                 return (
-                  <Line
-                    key={area.uuid}
-                    id={area.uuid}
-                    points={area.points || []}
-                    closed={true}
-                    {...commonProps}
-                  />
+                  <Group key={area.uuid} rotationDeg={area.rotation || 0}>
+                    <Line
+                      id={area.uuid}
+                      points={area.points || []}
+                      closed={true}
+                      {...commonProps}
+                    />
+                    <ShapeText text={area.text} shape={area} />
+                  </Group>
                 );
               case 'text':
                 return (
-                  <Text
-                    key={area.uuid}
-                    id={area.uuid}
-                    x={area.position.x}
-                    y={area.position.y}
-                    text={area.text || ''}
-                    fontSize={area.fontSize || 16}
-                    fontFamily={area.fontFamily || 'Arial'}
-                    fill={area.fill || '#000'}
-                    {...commonProps}
-                  />
+                  <Group key={area.uuid} rotationDeg={area.rotation || 0}>
+                    <Text
+                      key={area.uuid}
+                      id={area.uuid}
+                      x={area.position.x}
+                      y={area.position.y}
+                      text={area.text.text || ''}
+                      fontSize={area.fontSize || 16}
+                      fontFamily={area.fontFamily || 'Arial'}
+                      fill={area.fill || '#000'}
+                      {...commonProps}
+                    />
+                  </Group>
                 );
               default:
                 return null;

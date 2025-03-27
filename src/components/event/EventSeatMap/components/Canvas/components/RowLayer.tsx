@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { Layer, Group, Rect, Text, Circle } from 'react-konva';
-import { SeatingPlan, Selection, EditorTool } from '../../../types';
+import { SeatingPlan, Selection, EditorTool } from '../../../types/index';
 import { getSeatStyles } from '../utils/styleUtils';
 import { CONSTANTS } from '../constants';
 
@@ -73,25 +73,11 @@ export const RowLayer = memo(
                         ) *
                         (180 / Math.PI);
 
-                      // Calculate offsets in the row's direction
-                      const frontOffset = 30; // Distance from first seat
-                      const backOffset = 19; // Distance from last seat - slightly smaller for better visual balance
-
-                      const frontOffsetX =
-                        Math.cos(angle * (Math.PI / 180)) * frontOffset;
-                      const frontOffsetY =
-                        Math.sin(angle * (Math.PI / 180)) * frontOffset;
-                      const backOffsetX =
-                        Math.cos(angle * (Math.PI / 180)) * backOffset;
-                      const backOffsetY =
-                        Math.sin(angle * (Math.PI / 180)) * backOffset;
-
                       return (
                         <>
-                          {/* Front label (before first seat) */}
                           <Text
-                            x={firstSeat.position.x - frontOffsetX}
-                            y={firstSeat.position.y - frontOffsetY}
+                            x={firstSeat.position.x - 30}
+                            y={firstSeat.position.y}
                             text={row.rowNumber.toString()}
                             fontSize={14}
                             fill={isSelected ? '#4444ff' : '#666'}
@@ -99,10 +85,9 @@ export const RowLayer = memo(
                             align="center"
                             verticalAlign="middle"
                           />
-                          {/* Back label (after last seat) */}
                           <Text
-                            x={lastSeat.position.x + backOffsetX}
-                            y={lastSeat.position.y + backOffsetY}
+                            x={lastSeat.position.x + 30}
+                            y={lastSeat.position.y}
                             text={row.rowNumber.toString()}
                             fontSize={14}
                             fill={isSelected ? '#4444ff' : '#666'}
@@ -124,8 +109,10 @@ export const RowLayer = memo(
                       radius={seat.radius || CONSTANTS.SEAT.RADIUS}
                       {...getSeatStyles(
                         seat,
-                        selection.selectedItems.seats.includes(seat.uuid),
+                        selection.selectedItems.seats.includes(seat.uuid) ||
+                          isSelected,
                         isSelected,
+                        seatingPlan.categories,
                       )}
                       draggable={currentTool === EditorTool.SELECT_SEAT}
                       onClick={(e) => onSelect('seat', seat.uuid, e)}
@@ -146,7 +133,7 @@ export const RowLayer = memo(
                     <Text
                       x={seat.position.x}
                       y={seat.position.y}
-                      text={(seat.number || '').toString()}
+                      text={seat.number.toString()}
                       fontSize={12}
                       fill="#000"
                       align="center"

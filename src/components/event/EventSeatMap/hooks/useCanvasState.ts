@@ -1,33 +1,27 @@
 import { useState, useCallback } from 'react';
-import { Point, Selection, PreviewShape, DragPreview, Clipboard, SeatingPlan } from '../types';
+import {
+  Point,
+  Selection,
+  PreviewShape,
+  DragPreview,
+  Clipboard,
+  SeatingPlan,
+  EditorTool,
+  CirclePreview,
+} from '../types/index';
 
-export interface CanvasState {
-  isDrawing: boolean;
-  startPoint: Point | null;
-  previewShape: PreviewShape | null;
-  draggedSeatId: string | null;
-  selection: Selection;
-  isDragging: boolean;
-  dragPreview: DragPreview | null;
-  selectionBox: { startPoint: Point; endPoint: Point } | null;
-  clipboard: Clipboard | null;
-  stageSize: { width: number; height: number };
-  history: SeatingPlan[];
-  historyIndex: number;
-}
+const MAX_HISTORY_SIZE = 50;
 
-export const useCanvasState = () => {
+export const useCanvasState = (
+  selection: Selection,
+  setSelection: (selection: Selection) => void,
+  onPlanChange: (plan: SeatingPlan) => void,
+) => {
   const [isDrawing, setIsDrawing] = useState(false);
   const [startPoint, setStartPoint] = useState<Point | null>(null);
   const [previewShape, setPreviewShape] = useState<PreviewShape | null>(null);
   const [draggedSeatId, setDraggedSeatId] = useState<string | null>(null);
-  const [selection, setSelection] = useState<Selection>({
-    selectedItems: {
-      seats: [],
-      rows: [],
-      shapes: [],
-    },
-  });
+
   const [isDragging, setIsDragging] = useState(false);
   const [dragPreview, setDragPreview] = useState<DragPreview | null>(null);
   const [selectionBox, setSelectionBox] = useState<{
@@ -36,6 +30,7 @@ export const useCanvasState = () => {
   } | null>(null);
   const [clipboard, setClipboard] = useState<Clipboard | null>(null);
   const [stageSize, setStageSize] = useState({ width: 1, height: 1 });
+  const [circlePreview, setCirclePreview] = useState<CirclePreview | null>(null);
   const [history, setHistory] = useState<SeatingPlan[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
 
@@ -52,11 +47,11 @@ export const useCanvasState = () => {
   }, []);
 
   const resetSelectionState = useCallback(() => {
-    setSelection({ 
+    setSelection({
       selectedItems: {
         seats: [],
         rows: [],
-        shapes: [],
+        areas: [],
       },
     });
     setSelectionBox(null);
@@ -70,37 +65,45 @@ export const useCanvasState = () => {
 
       const newHistory = history.slice(0, historyIndex + 1);
       newHistory.push(JSON.parse(JSON.stringify(plan))); // Deep clone to prevent reference issues
-      
+
       // Keep history size manageable
-      if (newHistory.length > 50) {
+      if (newHistory.length > MAX_HISTORY_SIZE) {
         newHistory.shift();
       }
-      
+
       setHistory(newHistory);
       setHistoryIndex(newHistory.length - 1);
     },
     [history, historyIndex],
   );
 
+  const handlePlanChangeCanvas = useCallback(
+    (plan: SeatingPlan) => {
+      addToHistory(plan);
+      onPlanChange(plan);
+    },
+    [addToHistory, onPlanChange],
+  );
+
   const undo = useCallback(() => {
     if (historyIndex > 0) {
       setHistoryIndex((prev) => {
         const newIndex = prev - 1;
-        // onPlanChange(history[newIndex]); // This function is not defined in the provided code
+        onPlanChange(history[newIndex]);
         return newIndex;
       });
     }
-  }, [historyIndex, history]);
+  }, [historyIndex, history, onPlanChange]);
 
   const redo = useCallback(() => {
     if (historyIndex < history.length - 1) {
       setHistoryIndex((prev) => {
         const newIndex = prev + 1;
-        // onPlanChange(history[newIndex]); // This function is not defined in the provided code
+        onPlanChange(history[newIndex]);
         return newIndex;
       });
     }
-  }, [historyIndex, history]);
+  }, [historyIndex, history, onPlanChange]);
 
   return {
     state: {
@@ -114,6 +117,7 @@ export const useCanvasState = () => {
       selectionBox,
       clipboard,
       stageSize,
+      circlePreview,
       history,
       historyIndex,
     },
@@ -128,6 +132,7 @@ export const useCanvasState = () => {
       setSelectionBox,
       setClipboard,
       setStageSize,
+      setCirclePreview,
       setHistory,
       setHistoryIndex,
     },
@@ -139,5 +144,6 @@ export const useCanvasState = () => {
       undo,
       redo,
     },
+    handlePlanChangeCanvas,
   };
 };

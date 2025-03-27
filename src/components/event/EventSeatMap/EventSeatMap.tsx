@@ -1,14 +1,26 @@
-import React, { useState, useCallback } from 'react';
-import { Grid } from '@mantine/core';
-import { Layout } from 'antd';
-import { SeatingPlan, Selection, EditorTool } from './types';
+import React, { useState, useCallback, useEffect } from 'react';
+import { Grid, Stack } from '@mantine/core';
+import { Layout, Modal } from 'antd';
+import { v4 as uuidv4 } from 'uuid';
+import {
+  SeatingPlan,
+  Selection,
+  EditorTool,
+  Shape,
+  Row,
+  Seat,
+  Area,
+} from './types/index';
 import PlanSettingsPanel from './components/PlanSettingsPanel';
 import SeatSettingsPanel from './components/SeatSettingsPanel';
 import RowSettingsPanel from './components/RowSettingsPanel';
+import ShapeSettingsPanel from './components/ShapeSettingsPanel';
 import Canvas from './components/Canvas';
 import SeatMapHeader from './components/SeatMapHeader/';
 import useEditorState from './hooks/useEditorState';
 import './EventSeatMap.css';
+import { useCanvasState } from './hooks/useCanvasState';
+import { useCanvasHandlers } from './hooks/useCanvasHandlers';
 
 const { Content, Sider } = Layout;
 
@@ -54,8 +66,34 @@ const EventSeatMap: React.FC = () => {
     canRedo,
   } = useEditorState();
   const [selection, setSelection] = useState<Selection>({
-    selectedItems: { seats: [], rows: [], shapes: [] },
+    selectedItems: { seats: [], rows: [], areas: [] },
   });
+
+  const { state, setters, actions, handlePlanChangeCanvas } = useCanvasState(
+    selection,
+    setSelection,
+    setSeatingPlan,
+  );
+
+  const {
+    handleMouseDown,
+    handleMouseMove,
+    handleMouseUp,
+    handleSelect,
+    handleDragStart,
+    handleDragEnd,
+    handleCopy,
+    handlePaste,
+  } = useCanvasHandlers(
+    zoom,
+    seatingPlan,
+    currentTool,
+    handlePlanChangeCanvas,
+    setSelection,
+    state,
+    setters,
+    actions,
+  );
 
   const handleSave = useCallback(() => {
     console.log('Saving seating plan:', seatingPlan);
@@ -123,15 +161,195 @@ const EventSeatMap: React.FC = () => {
     }
   };
 
-  const handleRowUpdate = (updatedRow: any) => {
+  const handleRowsUpdate = (updatedRows: Row[]) => {
     const updatedPlan = { ...seatingPlan };
-    const rowIndex = updatedPlan.zones[0].rows.findIndex(
-      (row) => row.uuid === updatedRow.uuid,
-    );
-    if (rowIndex !== -1) {
-      updatedPlan.zones[0].rows[rowIndex] = updatedRow;
-      handlePlanChange(updatedPlan);
+    updatedRows.forEach((updatedRow) => {
+      const rowIndex = updatedPlan.zones[0].rows.findIndex(
+        (row) => row.uuid === updatedRow.uuid,
+      );
+      if (rowIndex !== -1) {
+        updatedPlan.zones[0].rows[rowIndex] = updatedRow;
+      }
+    });
+    handlePlanChange(updatedPlan);
+  };
+
+  const handleShapesUpdate = (updatedShapes: Shape[]) => {
+    const updatedPlan = { ...seatingPlan };
+    updatedShapes.forEach((updatedShape) => {
+      const shapeIndex = updatedPlan.zones[0].areas.findIndex(
+        (shape) => shape.uuid === updatedShape.uuid,
+      );
+      if (shapeIndex !== -1) {
+        updatedPlan.zones[0].areas[shapeIndex] = updatedShape;
+      }
+    });
+    handlePlanChange(updatedPlan);
+  };
+
+  const findSeatById = (id: string): Seat | null => {
+    for (const zone of seatingPlan.zones) {
+      for (const row of zone.rows) {
+        const seat = row.seats.find((seat) => seat.uuid === id);
+        if (seat) return seat;
+      }
     }
+    return null;
+  };
+
+  const findRowById = (id: string): Row | null => {
+    for (const zone of seatingPlan.zones) {
+      const row = zone.rows.find((row) => row.uuid === id);
+      if (row) return row;
+    }
+    return null;
+  };
+
+  const findAreaById = (id: string): Area | null => {
+    for (const zone of seatingPlan.zones) {
+      const area = zone.areas.find((area) => area.uuid === id);
+      if (area) return area;
+    }
+    return null;
+  };
+
+  const onCopy = () => {
+    const { seats, rows, areas } = selection.selectedItems;
+
+    if (!seats.length && !rows.length && !areas.length) return;
+
+    const copiedItems = {
+      seats: seats.length
+        ? seatingPlan.zones[0].rows.flatMap((row) =>
+            row.seats.filter((seat) => seats.includes(seat.uuid)),
+          )
+        : [],
+      rows: rows.length
+        ? seatingPlan.zones[0].rows.filter((row) => rows.includes(row.uuid))
+        : [],
+      areas: areas.length
+        ? seatingPlan.zones[0].areas.filter((area) => areas.includes(area.uuid))
+        : [],
+    };
+
+    if (
+      copiedItems.seats.length ||
+      copiedItems.rows.length ||
+      copiedItems.areas.length
+    ) {
+      setters.setClipboard(copiedItems);
+    }
+  };
+
+  const handleCut = () => {
+    handleCopy(null, true);
+
+    const updatedPlan = { ...seatingPlan };
+    const { seats, rows, areas } = selection.selectedItems;
+
+    // Remove selected seats from all rows
+    if (seats.length > 0) {
+      updatedPlan.zones[0].rows = updatedPlan.zones[0].rows.map((row) => ({
+        ...row,
+        seats: row.seats.filter((seat) => !seats.includes(seat.uuid)),
+      }));
+    }
+
+    // Remove selected rows
+    if (rows.length > 0) {
+      updatedPlan.zones[0].rows = updatedPlan.zones[0].rows.filter(
+        (row) => !rows.includes(row.uuid),
+      );
+    }
+
+    // Remove selected areas
+    if (areas.length > 0) {
+      updatedPlan.zones[0].areas = updatedPlan.zones[0].areas.filter(
+        (area) => !areas.includes(area.uuid),
+      );
+    }
+
+    // Update the plan and clear selection
+    handlePlanChangeCanvas(updatedPlan);
+    setSelection({ selectedItems: { seats: [], rows: [], areas: [] } });
+  };
+
+  const onPaste = () => {
+    handlePaste(null, true);
+  };
+
+  const handleNewPlan = () => {
+    Modal.confirm({
+      title: 'Create New Plan',
+      content:
+        'Are you sure you want to create a new plan? All unsaved changes will be lost.',
+      onOk: () => {
+        const newPlan: SeatingPlan = DEFAULT_SEATING_PLAN;
+        setSeatingPlan(newPlan);
+        setSelection({ selectedItems: { seats: [], rows: [], areas: [] } });
+        setters.setClipboard(null);
+      },
+    });
+  };
+
+  const handleLoadPlan = () => {
+    // Create a hidden file input
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'application/json';
+    fileInput.style.display = 'none';
+
+    fileInput.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const plan = JSON.parse(event.target?.result as string);
+
+          // Validate the plan structure
+          if (
+            !plan.id ||
+            !plan.name ||
+            !plan.size ||
+            !Array.isArray(plan.zones)
+          ) {
+            Modal.error({
+              title: 'Invalid Plan Format',
+              content: 'The selected file is not a valid seating plan.',
+            });
+            return;
+          }
+
+          setSeatingPlan(plan);
+          addToHistory(plan);
+
+          Modal.success({
+            title: 'Plan Loaded',
+            content: `Successfully loaded plan: ${plan.name}`,
+          });
+        } catch (error) {
+          Modal.error({
+            title: 'Error Loading Plan',
+            content:
+              'Failed to parse the seating plan file. Please ensure it is a valid JSON file.',
+          });
+        }
+      };
+
+      reader.onerror = () => {
+        Modal.error({
+          title: 'Error Loading Plan',
+          content: 'Failed to read the file. Please try again.',
+        });
+      };
+
+      reader.readAsText(file);
+    };
+
+    // Trigger file selection
+    fileInput.click();
   };
 
   const selectedSeat = selection.selectedItems.seats[0]
@@ -144,20 +362,81 @@ const EventSeatMap: React.FC = () => {
         ?.seats.find((seat) => seat.uuid === selection.selectedItems.seats[0])
     : undefined;
 
-  const selectedRow = selection.selectedItems.rows[0]
-    ? seatingPlan.zones[0].rows.find(
-        (row) => row.uuid === selection.selectedItems.rows[0],
-      )
-    : undefined;
+  const selectedRows = selection.selectedItems.rows
+    .map((uuid) => seatingPlan.zones[0].rows.find((row) => row.uuid === uuid))
+    .filter((row): row is Row => row !== undefined);
+
+  const selectedShapes = selection.selectedItems.areas
+    .map((uuid) =>
+      seatingPlan.zones[0].areas.find((shape) => shape.uuid === uuid),
+    )
+    .filter((shape): shape is Shape => shape !== undefined);
+
+  const handleStartCircleAlignment = useCallback(
+    (type: 'byRadius' | 'byCenter') => {
+      if (selection.selectedItems.rows.length !== 1) return;
+
+      // Find the selected row
+      const row = seatingPlan.zones[0].rows.find(
+        (r) => r.uuid === selection.selectedItems.rows[0],
+      );
+      if (!row || row.seats.length === 0) return;
+
+      // Calculate row's bounding box
+      let minX = Infinity,
+        minY = Infinity;
+      let maxX = -Infinity,
+        maxY = -Infinity;
+
+      row.seats.forEach((seat) => {
+        minX = Math.min(minX, seat.position.x);
+        minY = Math.min(minY, seat.position.y);
+        maxX = Math.max(maxX, seat.position.x);
+        maxY = Math.max(maxY, seat.position.y);
+      });
+
+      // Calculate center of the row's bounding box
+      const centerX = (minX + maxX) / 2;
+      const centerY = (minY + maxY) / 2;
+
+      // Calculate initial radius based on row dimensions and seat spacing
+      const spacing = row.seatSpacing || 35;
+      const arcLength = spacing * (row.seats.length - 1);
+      const defaultRadius = arcLength / (Math.PI / 2); // 90-degree arc
+
+      setters.setCirclePreview({
+        type,
+        center: { x: centerX, y: centerY },
+        radius: defaultRadius,
+        originalPosition: { x: centerX, y: centerY },
+      });
+    },
+    [seatingPlan, selection.selectedItems.rows, setters],
+  );
 
   return (
-    <Layout className="seat-map-layout">
+    <Layout style={{ height: '100vh' }}>
       <SeatMapHeader
         currentTool={currentTool}
         zoom={zoom}
         showGrid={showGrid}
         canUndo={canUndo}
         canRedo={canRedo}
+        canCopy={
+          selection.selectedItems.seats.length > 0 ||
+          selection.selectedItems.rows.length > 0 ||
+          selection.selectedItems.areas.length > 0
+        }
+        canPaste={
+          state.clipboard?.areas.length > 0 ||
+          state.clipboard?.rows.length > 0 ||
+          state.clipboard?.seats.length > 0
+        }
+        canCut={
+          selection.selectedItems.seats.length > 0 ||
+          selection.selectedItems.rows.length > 0 ||
+          selection.selectedItems.areas.length > 0
+        }
         onToolChange={handleToolChange}
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
@@ -166,6 +445,11 @@ const EventSeatMap: React.FC = () => {
         onSave={handleSave}
         onUndo={handleUndo}
         onRedo={handleRedo}
+        onCopy={onCopy}
+        onPaste={onPaste}
+        onCut={handleCut}
+        onNewPlan={handleNewPlan}
+        onLoadPlan={handleLoadPlan}
       />
       <Layout>
         <Content className="seat-map-content">
@@ -174,30 +458,50 @@ const EventSeatMap: React.FC = () => {
             currentTool={currentTool}
             zoom={zoom}
             showGrid={showGrid}
-            onPlanChange={handlePlanChange}
+            onPlanChange={handlePlanChangeCanvas}
+            selection={selection}
             onSelectionChange={setSelection}
             setCurrentTool={setCurrentTool}
+            state={state}
+            setters={setters}
+            actions={actions}
+            handlePlanChangeCanvas={handlePlanChangeCanvas}
           />
         </Content>
         <Sider width={300} className="plan-settings-panel">
-          {selectedSeat ? (
-            <SeatSettingsPanel
-              seat={selectedSeat}
-              categories={seatingPlan.categories}
-              onUpdate={handleSeatUpdate}
-            />
-          ) : selectedRow ? (
-            <RowSettingsPanel
-              row={selectedRow}
-              categories={seatingPlan.categories}
-              onUpdate={handleRowUpdate}
-            />
-          ) : (
-            <PlanSettingsPanel
-              seatingPlan={seatingPlan}
-              onUpdate={handlePlanChange}
-            />
-          )}
+          <Stack spacing="md">
+            {selectedSeat ? (
+              <SeatSettingsPanel
+                seat={selectedSeat}
+                categories={seatingPlan.categories}
+                onUpdate={handleSeatUpdate}
+              />
+            ) : selectedShapes.length > 0 || selectedRows.length > 0 ? (
+              <>
+                {selectedShapes.length > 0 && (
+                  <ShapeSettingsPanel
+                    shapes={selectedShapes}
+                    onUpdate={handleShapesUpdate}
+                  />
+                )}
+                {selectedRows.length > 0 && (
+                  <RowSettingsPanel
+                    rows={seatingPlan.zones[0].rows.filter((row) =>
+                      selection.selectedItems.rows.includes(row.uuid),
+                    )}
+                    categories={seatingPlan.categories}
+                    onUpdate={handleRowsUpdate}
+                    onStartCircleAlignment={handleStartCircleAlignment}
+                  />
+                )}
+              </>
+            ) : (
+              <PlanSettingsPanel
+                seatingPlan={seatingPlan}
+                onUpdate={handlePlanChange}
+              />
+            )}
+          </Stack>
         </Sider>
       </Layout>
     </Layout>

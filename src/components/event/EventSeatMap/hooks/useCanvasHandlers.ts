@@ -1,9 +1,10 @@
 import { useCallback, useState, useEffect } from 'react';
-import { EditorTool, Point, SeatingPlan, Selection } from '../types';
+import { EditorTool, Point, SeatingPlan, Selection } from '../types/index';
 import { v4 as uuidv4 } from 'uuid';
 import { getMousePosition } from '../components/Canvas/utils/mouseUtils';
 import { updateSelection } from '../components/Canvas/utils/selectionUtils';
 import { createDragPreview } from '../components/Canvas/utils/dragUtils';
+import { text } from 'stream/consumers';
 
 export const useCanvasHandlers = (
   zoom: number,
@@ -16,12 +17,12 @@ export const useCanvasHandlers = (
   canvasActions: any,
 ) => {
   const handleCopy = useCallback(
-    (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+    (e: KeyboardEvent, isCallOutside: boolean = false) => {
+      if (isCallOutside || ((e.ctrlKey || e.metaKey) && e.key === 'c')) {
         const { selection } = canvasState;
-        const { seats, rows, shapes } = selection.selectedItems;
+        const { seats, rows, areas } = selection.selectedItems;
 
-        if (!seats.length && !rows.length && !shapes.length) return;
+        if (!seats.length && !rows.length && !areas.length) return;
 
         const copiedItems = {
           seats: seats.length
@@ -32,9 +33,9 @@ export const useCanvasHandlers = (
           rows: rows.length
             ? seatingPlan.zones[0].rows.filter((row) => rows.includes(row.uuid))
             : [],
-          shapes: shapes.length
+          areas: areas.length
             ? seatingPlan.zones[0].areas.filter((area) =>
-                shapes.includes(area.uuid),
+                areas.includes(area.uuid),
               )
             : [],
         };
@@ -42,7 +43,7 @@ export const useCanvasHandlers = (
         if (
           copiedItems.seats.length ||
           copiedItems.rows.length ||
-          copiedItems.shapes.length
+          copiedItems.areas.length
         ) {
           canvasSetters.setClipboard(copiedItems);
         }
@@ -52,14 +53,17 @@ export const useCanvasHandlers = (
   );
 
   const handlePaste = useCallback(
-    (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'v' && canvasState.clipboard) {
+    (e: KeyboardEvent, isCallOutside: boolean = false) => {
+      if (
+        isCallOutside ||
+        ((e.ctrlKey || e.metaKey) && e.key === 'v' && canvasState.clipboard)
+      ) {
         const updatedPlan = { ...seatingPlan };
         const currentZone = updatedPlan.zones[0];
         const newSelection = {
           seats: [] as string[],
           rows: [] as string[],
-          shapes: [] as string[],
+          areas: [] as string[],
         };
 
         const offset = 30; // Offset for pasted items
@@ -103,8 +107,8 @@ export const useCanvasHandlers = (
         }
 
         // Paste shapes
-        if (canvasState.clipboard.shapes?.length) {
-          canvasState.clipboard.shapes.forEach((shape: any) => {
+        if (canvasState.clipboard.areas?.length) {
+          canvasState.clipboard.areas.forEach((shape: any) => {
             const newShape = {
               ...shape,
               uuid: uuidv4(),
@@ -124,14 +128,14 @@ export const useCanvasHandlers = (
               }),
             };
             currentZone.areas.push(newShape);
-            newSelection.shapes.push(newShape.uuid);
+            newSelection.areas.push(newShape.uuid);
           });
         }
 
         if (
           newSelection.seats.length ||
           newSelection.rows.length ||
-          newSelection.shapes.length
+          newSelection.areas.length
         ) {
           onPlanChange(updatedPlan);
           canvasSetters.setSelection({ selectedItems: newSelection });
@@ -163,7 +167,7 @@ export const useCanvasHandlers = (
         });
 
         // Rotate selected shapes
-        canvasState.selection.selectedItems.shapes.forEach((shapeId) => {
+        canvasState.selection.selectedItems.areas.forEach((shapeId) => {
           const shape = updatedPlan.zones[0].areas.find(
             (a) => a.uuid === shapeId,
           );
@@ -174,7 +178,7 @@ export const useCanvasHandlers = (
 
         if (
           canvasState.selection.selectedItems.rows.length > 0 ||
-          canvasState.selection.selectedItems.shapes.length > 0
+          canvasState.selection.selectedItems.areas.length > 0
         ) {
           canvasActions.addToHistory(updatedPlan);
           onPlanChange(updatedPlan);
@@ -238,7 +242,7 @@ export const useCanvasHandlers = (
             selectedItems: {
               seats: [],
               rows: [],
-              shapes: [],
+              areas: [],
             },
             ids: [],
           });
@@ -404,6 +408,8 @@ export const useCanvasHandlers = (
 
       const updatedPlan = { ...seatingPlan };
       const currentZone = updatedPlan.zones[0];
+      const centerX = x + (width || 0) / 2;
+      const centerY = y + (height || 0) / 2;
 
       switch (currentTool) {
         case EditorTool.ADD_SHAPE: {
@@ -411,6 +417,13 @@ export const useCanvasHandlers = (
             uuid: uuidv4(),
             type: 'rectangle',
             position: { x, y },
+            text: {
+              position: { x: centerX, y: centerY },
+              color: '#000',
+              text: '',
+            },
+            fill: '#808080',
+            stroke: '#000',
             size: {
               width,
               height,
@@ -421,7 +434,7 @@ export const useCanvasHandlers = (
             selectedItems: {
               seats: [],
               rows: [],
-              shapes: [shape.uuid],
+              areas: [shape.uuid],
             },
           });
           break;
@@ -434,6 +447,13 @@ export const useCanvasHandlers = (
           const shape = {
             uuid: uuidv4(),
             type: 'circle',
+            text: {
+              position: { x: centerX, y: centerY },
+              color: '#000',
+              text: '',
+            },
+            fill: '#808080',
+            stroke: '#000',
             position: { x: centerX, y: centerY },
             radius,
           };
@@ -442,7 +462,7 @@ export const useCanvasHandlers = (
             selectedItems: {
               seats: [],
               rows: [],
-              shapes: [shape.uuid],
+              areas: [shape.uuid],
             },
           });
           break;
@@ -455,6 +475,13 @@ export const useCanvasHandlers = (
             uuid: uuidv4(),
             type: 'ellipse',
             position: { x: centerX, y: centerY },
+            text: {
+              position: { x: centerX, y: centerY },
+              color: '#000',
+              text: '',
+            },
+            fill: '#808080',
+            stroke: '#00000',
             size: {
               width,
               height,
@@ -465,7 +492,7 @@ export const useCanvasHandlers = (
             selectedItems: {
               seats: [],
               rows: [],
-              shapes: [shape.uuid],
+              areas: [shape.uuid],
             },
           });
           break;
@@ -476,17 +503,20 @@ export const useCanvasHandlers = (
             uuid: uuidv4(),
             type: 'text',
             position: { x, y },
-            text: 'Double click to edit',
+            text: {
+              position: { x, y },
+              color: '#000',
+              text: 'Double click to edit',
+            },
             fontSize: 16,
             fontFamily: 'Arial',
-            fill: '#000000',
           };
           currentZone.areas.push(shape);
           canvasSetters.setSelection({
             selectedItems: {
               seats: [],
               rows: [],
-              shapes: [shape.uuid],
+              areas: [shape.uuid],
             },
           });
           break;
@@ -514,7 +544,7 @@ export const useCanvasHandlers = (
             selectedItems: {
               seats: [],
               rows: [],
-              shapes: [shape.uuid],
+              areas: [shape.uuid],
             },
           });
           break;
@@ -533,6 +563,7 @@ export const useCanvasHandlers = (
             },
             status: 'available',
             number: i + 1,
+            radius: 15,
           }));
 
           const row = {
@@ -545,7 +576,7 @@ export const useCanvasHandlers = (
             selectedItems: {
               seats: [],
               rows: [row.uuid],
-              shapes: [],
+              areas: [],
             },
           });
           break;
@@ -583,7 +614,7 @@ export const useCanvasHandlers = (
             selectedItems: {
               seats: [],
               rows: rows.map((r) => r.uuid),
-              shapes: [],
+              areas: [],
             },
           });
           break;
@@ -615,7 +646,7 @@ export const useCanvasHandlers = (
         selectedItems: {
           seats: type === 'seat' ? [id] : [],
           rows: type === 'row' ? [id] : [],
-          shapes: type === 'shape' ? [id] : [],
+          areas: type === 'shape' ? [id] : [],
         },
       };
 
@@ -697,5 +728,7 @@ export const useCanvasHandlers = (
     handleSelect,
     handleDragStart,
     handleDragEnd,
+    handlePaste,
+    handleCopy,
   };
 };

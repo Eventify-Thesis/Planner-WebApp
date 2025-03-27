@@ -1,6 +1,21 @@
 import React, { useRef, useEffect, useCallback } from 'react';
-import { Stage, Layer, Group, Line, Circle, Rect, Ellipse } from 'react-konva';
-import { SeatingPlan, EditorTool, Selection } from '../../types';
+import {
+  Stage,
+  Layer,
+  Group,
+  Line,
+  Circle,
+  Rect,
+  Ellipse,
+  Arc,
+} from 'react-konva';
+import {
+  SeatingPlan,
+  EditorTool,
+  Selection,
+  Point,
+  CirclePreview,
+} from '../..//types/index';
 import { useCanvasState } from '../../hooks/useCanvasState';
 import { useCanvasHandlers } from '../../hooks/useCanvasHandlers';
 import { ShapeLayer } from './components/ShapeLayer';
@@ -9,6 +24,7 @@ import { renderRowPreview, renderRectRowPreview } from './utils/rowUtils';
 import './Canvas.css';
 import GridLayer from './components/GridLayer';
 import TransformerLayer from './components/TransformerLayer';
+import BackgroundLayer from './components/BackgroundLayer';
 
 interface CanvasProps {
   seatingPlan: SeatingPlan;
@@ -16,8 +32,13 @@ interface CanvasProps {
   zoom: number;
   showGrid: boolean;
   onPlanChange: (plan: SeatingPlan) => void;
+  selection: Selection;
   onSelectionChange: (selection: Selection) => void;
   setCurrentTool: (tool: EditorTool) => void;
+  state: any;
+  setters: any;
+  actions: any;
+  handlePlanChangeCanvas: (plan: SeatingPlan) => void;
 }
 
 const Canvas: React.FC<CanvasProps> = ({
@@ -26,11 +47,15 @@ const Canvas: React.FC<CanvasProps> = ({
   zoom,
   showGrid,
   onPlanChange,
+  selection,
   onSelectionChange,
   setCurrentTool,
+  state,
+  setters,
+  actions,
+  handlePlanChangeCanvas,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { state, setters, actions } = useCanvasState();
   const {
     handleMouseDown,
     handleMouseMove,
@@ -42,7 +67,7 @@ const Canvas: React.FC<CanvasProps> = ({
     zoom,
     seatingPlan,
     currentTool,
-    onPlanChange,
+    handlePlanChangeCanvas,
     onSelectionChange,
     state,
     setters,
@@ -70,18 +95,135 @@ const Canvas: React.FC<CanvasProps> = ({
     return () => window.removeEventListener('resize', updateSize);
   }, [updateSize]);
 
+  const handleSeatDoubleClick = () => {
+    if (currentTool === EditorTool.SELECT_ROW) {
+      setCurrentTool(EditorTool.SELECT_SEAT);
+    }
+  };
+
+  const handleCirclePreview = useCallback(
+    (e: Konva.KonvaEventObject<MouseEvent>) => {
+      if (!state.circlePreview) return;
+
+      const stage = e.target.getStage();
+      if (!stage) return;
+
+      const point = stage.getPointerPosition();
+      if (!point) return;
+
+      // Convert point to unscaled coordinates
+      const x = point.x / zoom;
+      const y = point.y / zoom;
+
+      // Calculate distance from original center
+      const dx = x - state.circlePreview.originalPosition.x;
+      const dy = y - state.circlePreview.originalPosition.y;
+      const radius = Math.sqrt(dx * dx + dy * dy);
+
+      setters.setCirclePreview({
+        ...state.circlePreview,
+        radius,
+        center:
+          state.circlePreview.type === 'byCenter'
+            ? { x, y }
+            : state.circlePreview.originalPosition,
+      });
+    },
+    [state.circlePreview, setters, zoom],
+  );
+
+  const handleCircleComplete = useCallback(
+    (e: Konva.KonvaEventObject<MouseEvent>) => {
+      if (!state.circlePreview || selection.selectedItems.rows.length !== 1)
+        return;
+
+      const updatedPlan = { ...seatingPlan };
+      const { circlePreview } = state;
+      const { type, radius, center } = circlePreview;
+
+      // Find the selected row
+      const rowId = selection.selectedItems.rows[0];
+      const row = updatedPlan.zones[0].rows.find((r) => r.uuid === rowId);
+      if (!row || row.seats.length === 0) return;
+
+      const spacing = row.seatSpacing || 35; // Use row's spacing or default
+      const arcLength = spacing * (row.seats.length - 1); // Total length needed
+      const centralAngle = arcLength / radius; // Angle in radians
+      const startAngle = -centralAngle / 2; // Center the arc
+
+      // For byCenter type, calculate angle based on mouse position
+      const angleOffset =
+        type === 'byCenter'
+          ? Math.atan2(
+              center.y - state.circlePreview.originalPosition.y,
+              center.x - state.circlePreview.originalPosition.x,
+            )
+          : 0;
+
+      // Distribute seats along the arc
+      row.seats = row.seats.map((seat, index) => {
+        const angle =
+          startAngle +
+          (centralAngle * index) / (row.seats.length - 1) +
+          angleOffset;
+        return {
+          ...seat,
+          position: {
+            x: center.x + radius * Math.cos(angle),
+            y: center.y + radius * Math.sin(angle),
+          },
+        };
+      });
+
+      handlePlanChangeCanvas(updatedPlan);
+      setters.setCirclePreview(null);
+      e.cancelBubble = true; // Stop event propagation
+    },
+    [
+      state.circlePreview,
+      seatingPlan,
+      selection.selectedItems.rows,
+      handlePlanChangeCanvas,
+      setters,
+    ],
+  );
+
+  const startCirclePreview = useCallback(
+    (type: 'byRadius' | 'byCenter', position: Point) => {
+      setters.setCirclePreview({
+        type,
+        center: position,
+        radius: type === 'byRadius' ? 0 : 100, // Default radius for byCenter
+        originalPosition: position,
+      });
+    },
+    [setters],
+  );
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Handle delete/backspace
-      const hasSelection = Object.values(state.selection.selectedItems).some(
-        (arr) => arr.length > 0,
-      );
-      if (!hasSelection && e.key !== 'z') return;
+      if (e.key === 'Escape' && state.circlePreview) {
+        setters.setCirclePreview(null);
+      }
+      const activeElement = document.activeElement;
+      const isInputElement =
+        activeElement instanceof HTMLElement &&
+        (activeElement.isContentEditable ||
+          activeElement.tagName === 'INPUT' ||
+          activeElement.tagName === 'TEXTAREA' ||
+          activeElement.tagName === 'SELECT');
 
-      if (e.key === 'Delete' || e.key === 'Backspace') {
+      // Only handle delete/backspace if we're not in an input element
+      if ((e.key === 'Delete' || e.key === 'Backspace') && !isInputElement) {
+        // Check if we have any selection before preventing default
+        const hasSelection = Object.values(state.selection.selectedItems).some(
+          (arr) => arr.length > 0,
+        );
+        if (!hasSelection) return;
+
         e.preventDefault();
         const updatedPlan = { ...seatingPlan };
-        const { seats, rows, shapes } = state.selection.selectedItems;
+        const { seats, rows, areas } = state.selection.selectedItems;
 
         // Remove selected seats
         if (seats.length > 0) {
@@ -99,23 +241,23 @@ const Canvas: React.FC<CanvasProps> = ({
         }
 
         // Remove selected shapes
-        if (shapes.length > 0) {
+        if (areas.length > 0) {
           updatedPlan.zones[0].areas = updatedPlan.zones[0].areas.filter(
-            (area) => !shapes.includes(area.uuid),
+            (area) => !areas.includes(area.uuid),
           );
         }
 
         actions.addToHistory(updatedPlan);
-        onPlanChange(updatedPlan);
+        handlePlanChangeCanvas(updatedPlan);
         setters.setSelection({
-          selectedItems: { seats: [], rows: [], shapes: [] },
+          selectedItems: { seats: [], rows: [], areas: [] },
         });
       }
 
       // Handle copy
       if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
         e.preventDefault();
-        const { seats, rows, shapes } = state.selection.selectedItems;
+        const { seats, rows, areas } = state.selection.selectedItems;
 
         if (seats.length > 0) {
           const selectedSeats = seatingPlan.zones[0].rows.flatMap((row) =>
@@ -131,16 +273,16 @@ const Canvas: React.FC<CanvasProps> = ({
               rows.includes(row.uuid),
             ),
             ...seatingPlan.zones[0].areas.filter((area) =>
-              shapes.includes(area.uuid),
+              areas.includes(area.uuid),
             ),
           ];
           setters.setClipboard({
             type: 'row',
             items: JSON.parse(JSON.stringify(selectedItems)),
           });
-        } else if (shapes.length > 0) {
+        } else if (areas.length > 0) {
           const selectedShapes = seatingPlan.zones[0].areas.filter((area) =>
-            shapes.includes(area.uuid),
+            areas.includes(area.uuid),
           );
           setters.setClipboard({
             type: 'shape',
@@ -214,7 +356,7 @@ const Canvas: React.FC<CanvasProps> = ({
         }
 
         actions.addToHistory(updatedPlan);
-        onPlanChange(updatedPlan);
+        handlePlanChangeCanvas(updatedPlan);
       }
 
       // Handle undo/redo
@@ -224,12 +366,12 @@ const Canvas: React.FC<CanvasProps> = ({
           if (e.shiftKey) {
             const redoResult = actions.redo();
             if (redoResult) {
-              onPlanChange(redoResult);
+              handlePlanChangeCanvas(redoResult);
             }
           } else {
             const undoResult = actions.undo();
             if (undoResult) {
-              onPlanChange(undoResult);
+              handlePlanChangeCanvas(undoResult);
             }
           }
         }
@@ -238,13 +380,15 @@ const Canvas: React.FC<CanvasProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [state.selection, seatingPlan, onPlanChange, setters, actions]);
-
-  const handleSeatDoubleClick = () => {
-    if (currentTool === EditorTool.SELECT_ROW) {
-      setCurrentTool(EditorTool.SELECT_SEAT);
-    }
-  };
+  }, [
+    state.circlePreview,
+    setters,
+    state.selection,
+    seatingPlan,
+    handlePlanChangeCanvas,
+    setters,
+    actions,
+  ]);
 
   const renderPreview = () => {
     if (!state.previewShape || !state.startPoint) return null;
@@ -357,15 +501,43 @@ const Canvas: React.FC<CanvasProps> = ({
   };
 
   return (
-    <div ref={containerRef} className="canvas-container">
+    <div
+      ref={containerRef}
+      style={{ width: '100%', height: '100%', position: 'relative' }}
+    >
       <Stage
         width={state.stageSize.width}
         height={state.stageSize.height}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        scale={{ x: zoom, y: zoom }}
+        scaleX={zoom}
+        scaleY={zoom}
+        onMouseDown={(e) => {
+          if (!state.circlePreview) {
+            handleMouseDown(e);
+          }
+        }}
+        onMouseMove={(e) => {
+          if (state.circlePreview) {
+            handleCirclePreview(e);
+          } else {
+            handleMouseMove(e);
+          }
+        }}
+        onMouseUp={(e) => {
+          if (state.circlePreview) {
+            handleCircleComplete(e);
+            // Prevent the event from triggering other handlers
+            e.evt.stopPropagation();
+            e.evt.preventDefault();
+          } else {
+            handleMouseUp(e);
+          }
+        }}
       >
+        <BackgroundLayer
+          backgroundImage={seatingPlan.backgroundImage}
+          stageSize={state.stageSize}
+        />
+
         {showGrid && (
           <GridLayer
             stageSize={state.stageSize}
@@ -380,7 +552,7 @@ const Canvas: React.FC<CanvasProps> = ({
           selection={state.selection}
           currentTool={currentTool}
           zoom={zoom}
-          onPlanChange={onPlanChange}
+          onPlanChange={handlePlanChangeCanvas}
           onSelect={handleSelect}
         />
 
@@ -408,7 +580,9 @@ const Canvas: React.FC<CanvasProps> = ({
             const nodeId = node.id();
 
             // Update shape if found
-            const shape = updatedPlan.zones[0].areas.find(a => a.uuid === nodeId);
+            const shape = updatedPlan.zones[0].areas.find(
+              (a) => a.uuid === nodeId,
+            );
             if (shape) {
               if (shape.size) {
                 shape.size.width *= scaleX;
@@ -423,14 +597,16 @@ const Canvas: React.FC<CanvasProps> = ({
             }
 
             // Update row if found
-            const row = updatedPlan.zones[0].rows.find(r => r.uuid === nodeId);
+            const row = updatedPlan.zones[0].rows.find(
+              (r) => r.uuid === nodeId,
+            );
             if (row) {
               // For rows, we only allow rotation
               node.scaleX(1);
               node.scaleY(1);
             }
 
-            onPlanChange(updatedPlan);
+            handlePlanChangeCanvas(updatedPlan);
           }}
         />
 
@@ -475,6 +651,32 @@ const Canvas: React.FC<CanvasProps> = ({
               dash={[5, 5]}
               fill="rgba(100, 150, 255, 0.1)"
             />
+          </Layer>
+        )}
+
+        {state.circlePreview && (
+          <Layer>
+            <Circle
+              x={state.circlePreview.center.x}
+              y={state.circlePreview.center.y}
+              radius={state.circlePreview.radius}
+              stroke="#1890ff"
+              strokeWidth={1 / zoom}
+              dash={[5, 5]}
+            />
+            {state.circlePreview.type === 'byRadius' && (
+              <Line
+                points={[
+                  state.circlePreview.center.x,
+                  state.circlePreview.center.y,
+                  state.circlePreview.center.x + state.circlePreview.radius,
+                  state.circlePreview.center.y,
+                ]}
+                stroke="#1890ff"
+                strokeWidth={1 / zoom}
+                dash={[5, 5]}
+              />
+            )}
           </Layer>
         )}
       </Stage>
