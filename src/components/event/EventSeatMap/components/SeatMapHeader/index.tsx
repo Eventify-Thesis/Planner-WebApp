@@ -95,7 +95,14 @@ const SeatMapHeader: React.FC<SeatMapHeaderProps> = ({
   ];
 
   return (
-    <Space size="middle" style={{ padding: '8px 16px', background: '#fff', borderBottom: '1px solid #f0f0f0' }}>
+    <Space
+      size="middle"
+      style={{
+        padding: '8px 16px',
+        background: '#fff',
+        borderBottom: '1px solid #f0f0f0',
+      }}
+    >
       {/* File Operations */}
       <ButtonGroup>
         <Dropdown menu={{ items: fileItems }} placement="bottomLeft">
@@ -109,7 +116,9 @@ const SeatMapHeader: React.FC<SeatMapHeaderProps> = ({
       <ButtonGroup>
         <Tooltip title="Select Individual Seats">
           <Button
-            type={currentTool === EditorTool.SELECT_SEAT ? 'primary' : 'default'}
+            type={
+              currentTool === EditorTool.SELECT_SEAT ? 'primary' : 'default'
+            }
             icon={<SelectOutlined />}
             onClick={() => onToolChange(EditorTool.SELECT_SEAT)}
           />
@@ -163,7 +172,9 @@ const SeatMapHeader: React.FC<SeatMapHeaderProps> = ({
         </Tooltip>
         <Tooltip title="Add Rectangle Row">
           <Button
-            type={currentTool === EditorTool.ADD_RECT_ROW ? 'primary' : 'default'}
+            type={
+              currentTool === EditorTool.ADD_RECT_ROW ? 'primary' : 'default'
+            }
             icon={<BorderlessTableOutlined />}
             onClick={() => onToolChange(EditorTool.ADD_RECT_ROW)}
           />
@@ -190,14 +201,18 @@ const SeatMapHeader: React.FC<SeatMapHeaderProps> = ({
         </Tooltip>
         <Tooltip title="Add Ellipse">
           <Button
-            type={currentTool === EditorTool.ADD_ELLIPSE ? 'primary' : 'default'}
+            type={
+              currentTool === EditorTool.ADD_ELLIPSE ? 'primary' : 'default'
+            }
             icon={<EllipsisOutlined rotate={90} />}
             onClick={() => onToolChange(EditorTool.ADD_ELLIPSE)}
           />
         </Tooltip>
         <Tooltip title="Add Polygon">
           <Button
-            type={currentTool === EditorTool.ADD_POLYGON ? 'primary' : 'default'}
+            type={
+              currentTool === EditorTool.ADD_POLYGON ? 'primary' : 'default'
+            }
             icon={<StarOutlined />}
             onClick={() => onToolChange(EditorTool.ADD_POLYGON)}
           />

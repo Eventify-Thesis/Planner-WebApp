@@ -59,6 +59,12 @@ const settingsMenuItem: MenuItem = {
   label: 'Setting',
 };
 
+const seatingPlansMenuItem: MenuItem = {
+  key: 'seating-plans',
+  icon: <SettingOutlined />,
+  label: 'Seating Plans',
+};
+
 const seatmapMenuItem: MenuItem = {
   key: 'seatmap',
   icon: <BorderOutlined />,
@@ -78,6 +84,7 @@ const eventSettingsMenuGroup: MenuGroup = {
   children: [
     membersMenuItem,
     settingsMenuItem,
+    seatingPlansMenuItem,
     seatmapMenuItem,
     questionsMenuItem,
   ],
