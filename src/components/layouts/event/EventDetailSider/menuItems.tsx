@@ -72,6 +72,12 @@ const seatmapMenuItem: MenuItem = {
   label: 'Seat Map',
 };
 
+const seatCategoryMappingMenuItem: MenuItem = {
+  key: 'seat-category-mapping',
+  icon: <Icon icon="mdi:seat-outline" width="16" height="16" />,
+  label: 'Seat Category Mapping',
+};
+
 const questionsMenuItem: MenuItem = {
   key: 'questions',
   icon: <QuestionCircleOutlined />,
@@ -87,6 +93,7 @@ const eventSettingsMenuGroup: MenuGroup = {
     settingsMenuItem,
     seatingPlansMenuItem,
     seatmapMenuItem,
+    seatCategoryMappingMenuItem,
     questionsMenuItem,
   ],
 };

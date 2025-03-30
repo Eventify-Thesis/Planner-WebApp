@@ -3,10 +3,12 @@ import { seatingPlanClient } from '@/api/seating-plan.client';
 import { AxiosError } from 'axios';
 import { IdParam, QueryFilters } from '@/types/types';
 import { SeatingPlanModel } from '@/domain/SeatingPlanModel';
+import { SeatingPlanCategoryModel } from '@/domain/SeatingPlanCategoryModel';
 
 export const SEATING_PLAN_QUERY_KEYS = {
   list: 'seatingPlanList',
   detail: 'seatingPlanDetail',
+  categories: 'seatingPlanCategories',
 };
 
 export const useGetSeatingPlanList = (
@@ -16,7 +18,10 @@ export const useGetSeatingPlanList = (
   return useQuery<{ docs: SeatingPlanModel[]; totalDocs: number }, AxiosError>({
     queryKey: [SEATING_PLAN_QUERY_KEYS.list, eventId, params],
     queryFn: async () => {
-      const data = await seatingPlanClient.getList(eventId, params);
+      const data = await seatingPlanClient.getList(eventId, {
+        limit: 100000,
+        page: 1,
+      });
       return data;
     },
     enabled: !!eventId,
@@ -31,6 +36,22 @@ export const useGetSeatingPlanDetail = (eventId: IdParam, planId: IdParam) => {
       return data;
     },
     enabled: !!eventId && !!planId,
+  });
+};
+
+export const useGetSeatingPlanCategories = (
+  eventId: IdParam,
+  planId: IdParam,
+  options?: { enabled?: boolean },
+) => {
+  return useQuery<SeatingPlanCategoryModel[], AxiosError>({
+    queryKey: [SEATING_PLAN_QUERY_KEYS.categories, eventId, planId],
+    queryFn: async () => {
+      const data = await seatingPlanClient.getCategories(eventId, planId);
+      console.log(data);
+      return data;
+    },
+    enabled: (options?.enabled ?? true) && !!eventId && !!planId,
   });
 };
 
