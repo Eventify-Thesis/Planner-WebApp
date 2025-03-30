@@ -17,8 +17,8 @@ export enum VoucherStatus {
 
 export interface ShowingVoucherDto {
   id: string;
-  isAllTickets: boolean;
-  ticketIds: string[];
+  isAllTicketTypes: boolean;
+  ticketTypeIds: string[];
 }
 
 export interface CreateVoucherDto {

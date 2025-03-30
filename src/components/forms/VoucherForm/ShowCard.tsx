@@ -3,6 +3,7 @@ import { IconTrash, IconCalendar, IconClock } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import type { TableColumnsType } from 'antd';
 import { motion, AnimatePresence } from 'framer-motion';
+import { TicketTypeModel } from '@/domain/TicketTypeModel';
 
 interface Ticket {
   id: string;
@@ -62,14 +63,16 @@ export const ShowCard = ({
       onTicketSelectionChange(show.id, false, selectedRowKeys as string[]);
     },
     selectedRowKeys:
-      show.selectedTicketIds || show.tickets.map((t: Ticket) => t.id),
+      show.selectedTicketIds || show.ticketTypes.map((t: Ticket) => t.id),
   };
 
   const handleAllTicketsChange = (checked: boolean) => {
     onTicketSelectionChange(
       show.id,
       checked,
-      checked ? show.tickets.map((ticket: Ticket) => ticket.id) : [],
+      checked
+        ? show.ticketTypes.map((ticketType: TicketTypeModel) => ticketType.id)
+        : [],
     );
   };
 
@@ -113,7 +116,7 @@ export const ShowCard = ({
         <Table
           rowSelection={!show.isAllTickets ? rowSelection : undefined}
           columns={columns}
-          dataSource={show.tickets}
+          dataSource={show.ticketTypes}
           pagination={false}
           size="small"
         />

@@ -30,16 +30,6 @@ interface VoucherFormProps {
   form: UseFormReturnType<VoucherModel>;
 }
 
-interface ShowDataType {
-  key: string;
-  id: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  availableTickets: number;
-  tickets: { id: string; name: string }[];
-}
-
 export const VoucherForm = ({ form }: VoucherFormProps) => {
   const { eventId } = useParams();
   const { t } = useTranslation();
@@ -75,15 +65,15 @@ export const VoucherForm = ({ form }: VoucherFormProps) => {
 
   const handleTicketSelectionChange = (
     showId: string,
-    isAllTickets: boolean,
+    isAllTicketTypes: boolean,
     selectedTickets: string[],
   ) => {
     const updatedShows = selectedShows.map((show) =>
       show.id === showId
         ? {
             ...show,
-            isAllTickets: isAllTickets,
-            selectedTicketIds: selectedTickets,
+            isAllTickets: isAllTicketTypes,
+            selectedTicketTypes: selectedTickets,
           }
         : show,
     );
@@ -94,8 +84,10 @@ export const VoucherForm = ({ form }: VoucherFormProps) => {
   const updateFormShowings = (shows: any[]) => {
     const showings = shows.map((show) => ({
       id: show.id,
-      isAllTickets: show.isAllTickets ?? true,
-      ticketIds: (show.selectedTicketIds ?? show.tickets.map((t: any) => t.id))
+      isAllTicketTypes: show.isAllTicketTypes ?? true,
+      ticketTypeIds: (
+        show.selectedTicketTypes ?? show.ticketTypes.map((t: any) => t.id)
+      )
         .filter((id: string) => id && typeof id === 'string')
         .map((id: string) => id.toString()),
     }));
@@ -302,7 +294,7 @@ export const VoucherForm = ({ form }: VoucherFormProps) => {
                 visible={modalVisible}
                 onCancel={() => setModalVisible(false)}
                 onSelect={handleShowSelect}
-                shows={shows?.showings || []}
+                shows={shows || []}
                 selectedShowIds={selectedShows.map((show) => show.id)}
               />
             </>

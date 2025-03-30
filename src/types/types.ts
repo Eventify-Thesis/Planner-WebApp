@@ -358,7 +358,7 @@ export interface QuestionRequestData {
   isHidden: boolean;
   type: string;
   options: string[];
-  ticketIds?: string[];
+  ticketTypeIds?: string[];
   belongsTo: string;
 }
 
@@ -430,7 +430,7 @@ export interface Voucher {
   id?: number;
   code: string;
   discount?: number;
-  applicable_ticket_ids?: number[] | string[];
+  applicable_ticket_type_ids?: number[] | string[];
   expiry_date?: string;
   event_id?: number;
   discount_type?: VoucherDiscountType | null;

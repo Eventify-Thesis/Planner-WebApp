@@ -195,20 +195,20 @@ const EventEditPage: React.FC = () => {
         throw new Error(t('event_create.start_time_before_end_time'));
       }
 
-      if (!show.tickets || show.tickets.length === 0) {
+      if (!show.ticketTypes || show.ticketTypes.length === 0) {
         throw new Error(t('event_create.at_least_one_ticket_type'));
       }
 
-      show.tickets.forEach((ticket) => {
-        if (!ticket.name || !ticket.price || !ticket.quantity) {
+      show.ticketTypes.forEach((ticketType) => {
+        if (!ticketType.name || !ticketType.price || !ticketType.quantity) {
           throw new Error(t('event_create.ticket_info_required'));
         }
 
-        if (ticket.price < 0) {
+        if (ticketType.price < 0) {
           throw new Error(t('event_create.ticket_price_positive'));
         }
 
-        if (ticket.quantity < 1) {
+        if (ticketType.quantity < 1) {
           throw new Error(t('event_create.ticket_quantity_positive'));
         }
       });

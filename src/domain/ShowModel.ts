@@ -1,7 +1,7 @@
-import { TicketModel } from './TicketModel';
+import { TicketTypeModel } from './TicketTypeModel';
 
 export interface ShowingModel {
-  tickets: TicketModel[];
+  ticketTypes: TicketTypeModel[];
   startTime: Date;
   endTime: Date;
 }
