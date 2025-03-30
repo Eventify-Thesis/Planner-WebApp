@@ -45,8 +45,6 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
   const [activeKey, setActiveKey] = useState<string | string[]>(['0']);
 
   const { data: showsData, refetch: refetchShows } = useListShows(eventId!);
-  const { createShowMutation, updateShowMutation, deleteShowMutation } =
-    useShowMutations(eventId!);
 
   const months = Array.from({ length: 12 }, (_, i) => {
     const date = dayjs().month(i);

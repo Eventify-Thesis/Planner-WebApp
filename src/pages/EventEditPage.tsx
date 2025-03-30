@@ -238,7 +238,7 @@ const EventEditPage: React.FC = () => {
       validateShows(updatedShow);
       await showMutation.mutateAsync({
         eventId,
-        showData: { showings: updatedShow },
+        showData: { shows: updatedShow },
       });
     } catch (error) {
       throw error;
