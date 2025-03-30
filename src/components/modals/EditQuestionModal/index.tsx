@@ -11,14 +11,14 @@ import { useParams } from 'react-router-dom';
 import { Modal } from '../../common/Modal';
 import { QuestionForm } from '../../forms/QuestionForm';
 import { useTranslation } from 'react-i18next';
-import { useListTickets } from '@/queries/useTicketQueries';
+import { useListTicketTypes } from '@/queries/useTicketTypeQueries';
 import {
   useGetQuestion,
   useQuestionMutations,
 } from '@/queries/useQuestionQueries';
 import { showError } from '@/utils/notifications';
 import React from 'react';
-import { QuestionModel } from '@/domain/QuestionModel';
+import { QuestionBelongsTo, QuestionModel } from '@/domain/QuestionModel';
 
 interface EditQuestionModalProps extends GenericModalProps {
   questionId: IdParam;
@@ -32,21 +32,21 @@ export const EditQuestionModal = ({
 }: EditQuestionModalProps) => {
   const { t } = useTranslation();
   const { eventId } = useParams();
-  const { data: ticketsResponse } = useListTickets(eventId!);
-  const tickets = ticketsResponse?.data || [];
+  const { data: ticketTypesResponse } = useListTicketTypes(eventId!);
+  const ticketTypes = ticketTypesResponse?.data || [];
   const { data: questionResponse, isLoading: isLoadingQuestion } =
     useGetQuestion(eventId!, questionId as string);
   const { updateQuestionMutation } = useQuestionMutations(eventId!);
 
-  const form = useForm<QuestionRequestData>({
+  const form = useForm<QuestionModel>({
     initialValues: {
       title: '',
       description: '',
-      type: QuestionType.SINGLE_LINE_TEXT.toString(),
+      type: QuestionType.SINGLE_LINE_TEXT,
       required: false,
       options: [],
-      ticketIds: [],
-      belongsTo: 'ORDER',
+      ticketTypeIds: [],
+      belongsTo: QuestionBelongsTo.ORDER,
       isHidden: false,
     },
   });
@@ -61,7 +61,7 @@ export const EditQuestionModal = ({
         type: question.type,
         required: question.required,
         options: question.options,
-        ticketIds: question.ticketIds?.map((id) => String(id)),
+        ticketTypeIds: question.ticketTypeIds?.map((id) => String(id)),
         belongsTo: question.belongsTo,
         isHidden: question.isHidden,
       });
@@ -90,7 +90,7 @@ export const EditQuestionModal = ({
   return (
     <Modal opened onClose={onClose} heading={t('questions.edit.title')}>
       <form onSubmit={form.onSubmit(handleSubmit)}>
-        <QuestionForm form={form} tickets={tickets} />
+        <QuestionForm form={form} ticketTypes={ticketTypes} />
         {isLoadingQuestion && <LoadingOverlay visible />}
         <Button
           loading={updateQuestionMutation.isPending}

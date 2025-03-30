@@ -16,7 +16,7 @@ import {
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
-import { ShowingModel, TicketModel } from '@/domain/ShowModel';
+import { ShowingModel } from '@/domain/ShowModel';
 import { TicketModal } from './TicketModal';
 import { ShowHeader, StyledCollapse } from './ShowAndTicketForm.styles';
 import { notificationController } from '@/controllers/notificationController';
@@ -25,6 +25,7 @@ import { TimePickerSection } from './components/TimePickerSection';
 import { TicketSection } from './components/TicketSection';
 import { useParams } from 'react-router-dom';
 import { useListShows, useShowMutations } from '@/queries/useShowQueries';
+import { TicketTypeModel } from '@/domain/TicketTypeModel';
 
 export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
   const { t } = useTranslation();
@@ -34,18 +35,16 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
     {
       startTime: undefined,
       endTime: undefined,
-      tickets: [],
+      ticketTypes: [],
     },
   ]);
   const [selectedMonth, setSelectedMonth] = useState<string>();
   const [ticketModalVisible, setTicketModalVisible] = useState(false);
   const [currentShow, setCurrentShow] = useState<number>();
-  const [currentTicket, setCurrentTicket] = useState<TicketModel>();
+  const [currentTicketType, setCurrentTicketType] = useState<TicketTypeModel>();
   const [activeKey, setActiveKey] = useState<string | string[]>(['0']);
 
   const { data: showsData, refetch: refetchShows } = useListShows(eventId!);
-  const { createShowMutation, updateShowMutation, deleteShowMutation } =
-    useShowMutations(eventId!);
 
   const months = Array.from({ length: 12 }, (_, i) => {
     const date = dayjs().month(i);
@@ -61,7 +60,7 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
       {
         startTime: undefined,
         endTime: undefined,
-        tickets: [],
+        ticketTypes: [],
       },
     ]);
   };
@@ -75,7 +74,7 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
         ...show,
         startTime: show.startTime ? dayjs(show.startTime) : undefined,
         endTime: show.endTime ? dayjs(show.endTime) : undefined,
-        tickets: Array.isArray(show.tickets) ? show.tickets : [],
+        ticketTypes: Array.isArray(show.ticketTypes) ? show.ticketTypes : [],
       }));
 
       if (formattedShows.length > 0) setShows(formattedShows);
@@ -84,7 +83,7 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
           {
             startTime: undefined,
             endTime: undefined,
-            tickets: [],
+            ticketTypes: [],
           },
         ]);
 
@@ -103,7 +102,7 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
       setShows(
         existingValues.shows.map((show: ShowingModel) => ({
           ...show,
-          tickets: show.tickets || [],
+          ticketTypes: show.ticketTypes || [],
         })),
       );
     } else {
@@ -122,7 +121,9 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
         ...show,
         startTime: show.startTime ? dayjs(show.startTime) : undefined,
         endTime: show.endTime ? dayjs(show.endTime) : undefined,
-        tickets: Array.isArray(show.tickets) ? [...show.tickets] : [],
+        ticketTypes: Array.isArray(show.ticketTypes)
+          ? [...show.ticketTypes]
+          : [],
       })),
     };
     formRef.current?.setFieldsValue(updatedValues);
@@ -143,7 +144,7 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
       // return;
     }
     setCurrentShow(showIndex);
-    setCurrentTicket(undefined);
+    setCurrentTicketType(undefined);
     setTicketModalVisible(true);
   };
 
@@ -158,32 +159,34 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
     handleOpenTicketModal(showIndex);
   };
 
-  const handleEditTicket = (showIndex: number, ticketId: string) => {
-    const ticket = shows[showIndex].tickets.find((t) => t.id === ticketId);
+  const handleEditTicket = (showIndex: number, ticketTypeId: string) => {
+    const ticketType = shows[showIndex].ticketTypes.find(
+      (t) => t.id === ticketTypeId,
+    );
     setCurrentShow(showIndex);
-    setCurrentTicket(ticket);
+    setCurrentTicketType(ticketType);
     setTicketModalVisible(true);
   };
 
-  const handleSaveTicket = (ticket: TicketModel) => {
+  const handleSaveTicket = (ticketType: TicketTypeModel) => {
     if (currentShow !== undefined) {
       const newShows = [...shows];
-      if (currentTicket) {
-        const ticketIndex = newShows[currentShow].tickets.findIndex(
-          (t) => t.id === currentTicket.id,
+      if (currentTicketType) {
+        const ticketIndex = newShows[currentShow].ticketTypes.findIndex(
+          (t) => t.id === currentTicketType.id,
         );
-        newShows[currentShow].tickets[ticketIndex] = ticket;
+        newShows[currentShow].ticketTypes[ticketIndex] = ticketType;
       } else {
-        newShows[currentShow].tickets.push({
-          ...ticket,
-          id: `${Date.now()}`, // Ensure each ticket has a unique ID
-          position: newShows[currentShow].tickets.length,
+        newShows[currentShow].ticketTypes.push({
+          ...ticketType,
+          id: `${Date.now()}`, // Ensure each ticketType has a unique ID
+          position: newShows[currentShow].ticketTypes.length,
         });
       }
 
       setShows(newShows);
       setTicketModalVisible(false);
-      setCurrentTicket(undefined);
+      setCurrentTicketType(undefined);
     }
   };
 
@@ -191,7 +194,7 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
     const newShows = [...shows];
     newShows[index] = {
       ...updatedShow,
-      tickets: updatedShow.tickets || [],
+      ticketTypes: updatedShow.ticketTypes || [],
     };
     setShows(newShows);
   };
@@ -258,7 +261,7 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
         <>
           <Typography.Text
             style={{
-              color: show.tickets.length === 0 ? 'red' : 'black',
+              color: show.ticketTypes.length === 0 ? 'red' : 'black',
               fontSize: FONT_SIZE.md,
               fontWeight: FONT_WEIGHT.semibold,
             }}
@@ -266,9 +269,9 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
             {show.startTime.format('MMMM D, YYYY h:mm A')}
           </Typography.Text>
           <Typography.Text type="secondary" style={{ fontSize: FONT_SIZE.xs }}>
-            {show.tickets.length > 0
+            {show.ticketTypes.length > 0
               ? t('show_and_ticket.ticket_types_count', {
-                  count: show.tickets.length,
+                  count: show.ticketTypes.length,
                 })
               : t('show_and_ticket.please_create_ticket')}
           </Typography.Text>
@@ -322,7 +325,9 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
               show={show}
               showIndex={index}
               onAddTicket={() => handleAddTicket(index)}
-              onEditTicket={(ticketId) => handleEditTicket(index, ticketId)}
+              onEditTicket={(ticketTypeId) =>
+                handleEditTicket(index, ticketTypeId)
+              }
               onShowUpdate={(updatedShow) =>
                 handleShowUpdate(index, updatedShow)
               }
@@ -359,7 +364,7 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
         showEndTime={
           currentShow !== undefined ? shows[currentShow].endTime : undefined
         }
-        initialValues={currentTicket}
+        initialValues={currentTicketType}
       />
     </Form>
   );

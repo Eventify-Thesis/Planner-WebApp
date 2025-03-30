@@ -178,6 +178,17 @@ export const eventsClient = {
     }
   },
 
+  getListShows: async (eventId: IdParam): Promise<any> => {
+    try {
+      const response = await httpApi.get<any>(
+        `/planner/events/${eventId}/shows`,
+      );
+      return response.data.result;
+    } catch (e: any) {
+      throw new Error(e);
+    }
+  },
+
   getSetting: async (eventId: IdParam): Promise<any> => {
     try {
       const response = await httpApi.get<any>(

@@ -29,6 +29,9 @@ const EventQuestions = React.lazy(
 const EventVouchers = React.lazy(
   () => import('@/components/event/EventVouchers/EventVouchers'),
 );
+const EventSeatCategoryMapping = React.lazy(
+  () => import('@/components/event/EventSeatCategoryMapping/EventSeatCategoryMapping'),
+);
 
 const LoadingFallback = () => <div>Loading...</div>;
 
@@ -90,6 +93,14 @@ export const eventDetailRoutes: RouteObject[] = [
         element: (
           <React.Suspense fallback={<LoadingFallback />}>
             <EventSeatMap />
+          </React.Suspense>
+        ),
+      },
+      {
+        path: 'seat-category-mapping',
+        element: (
+          <React.Suspense fallback={<LoadingFallback />}>
+            <EventSeatCategoryMapping />
           </React.Suspense>
         ),
       },

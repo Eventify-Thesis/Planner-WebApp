@@ -10,7 +10,7 @@ interface ShowDataType {
   date: string;
   startTime: string;
   endTime: string;
-  availableTickets: number;
+  availableTicketTypes: number;
 }
 
 interface ShowSelectionModalProps {
@@ -58,9 +58,9 @@ export const ShowSelectionModal = ({
           {t('Available Tickets')}
         </Space>
       ),
-      dataIndex: 'availableTickets',
-      key: 'availableTickets',
-      sorter: (a, b) => a.availableTickets - b.availableTickets,
+      dataIndex: 'availableTicketTypes',
+      key: 'availableTicketTypes',
+      sorter: (a, b) => a.availableTicketTypes - b.availableTicketTypes,
       render: (tickets) => (
         <Tag color={tickets > 0 ? 'success' : 'error'}>
           {tickets} {t('tickets')}
@@ -68,7 +68,7 @@ export const ShowSelectionModal = ({
       ),
     },
   ];
-
+  console.log('show', shows);
   const showData: ShowDataType[] =
     shows?.map((showing) => ({
       key: showing.id || '',
@@ -76,7 +76,7 @@ export const ShowSelectionModal = ({
       date: new Date(showing.startTime).toLocaleDateString(),
       startTime: new Date(showing.startTime).toLocaleTimeString(),
       endTime: new Date(showing.endTime).toLocaleTimeString(),
-      availableTickets: showing.tickets.length || 0,
+      availableTicketTypes: showing.ticketTypes.length || 0,
     })) || [];
 
   const filteredData = showData.filter(

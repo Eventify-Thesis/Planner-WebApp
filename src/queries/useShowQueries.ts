@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 import { showClient, ShowResponse } from '@/api/show.client';
-import { ShowingModel } from '@/domain/ShowModel';
+import { ShowingModel, ShowModel } from '@/domain/ShowModel';
 import { IdParam } from '@/types/types';
 
 export const SHOW_QUERY_KEYS = {
@@ -30,24 +30,13 @@ export const useListShows = (eventId: IdParam) => {
 export const useShowMutations = (eventId: IdParam) => {
   const queryClient = useQueryClient();
 
-  const createShowMutation = useMutation({
-    mutationFn: async (data: ShowingModel) => {
-      return await showClient.create(eventId, data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [SHOW_QUERY_KEYS.list, eventId],
-      });
-    },
-  });
-
   const updateShowMutation = useMutation({
     mutationFn: async ({
       showId,
       data,
     }: {
       showId: IdParam;
-      data: ShowingModel;
+      data: ShowModel;
     }) => {
       return await showClient.update(eventId, showId, data);
     },
@@ -73,7 +62,6 @@ export const useShowMutations = (eventId: IdParam) => {
   });
 
   return {
-    createShowMutation,
     updateShowMutation,
     deleteShowMutation,
   };

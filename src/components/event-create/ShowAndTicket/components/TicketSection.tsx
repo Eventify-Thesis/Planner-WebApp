@@ -14,7 +14,7 @@ interface TicketSectionProps {
   show: ShowingModel;
   showIndex: number;
   onAddTicket: () => void;
-  onEditTicket: (ticketId: string) => void;
+  onEditTicket: (ticketTypeId: string) => void;
   onShowUpdate: (updatedShow: ShowingModel) => void;
 }
 
@@ -28,30 +28,30 @@ export const TicketSection: React.FC<TicketSectionProps> = ({
   const { t } = useTranslation();
 
   const handleDeleteTicket = (ticketIndex: number) => {
-    const updatedTickets = [...show.tickets];
+    const updatedTickets = [...show.ticketTypes];
     updatedTickets.splice(ticketIndex, 1);
-    onShowUpdate({ ...show, tickets: updatedTickets });
+    onShowUpdate({ ...show, ticketTypes: updatedTickets });
   };
 
   return (
     <Form.Item
-      name={['shows', showIndex, 'tickets']}
-      initialValue={show.tickets}
+      name={['shows', showIndex, 'ticketTypes']}
+      initialValue={show.ticketTypes}
       trigger="onChange"
       validateTrigger={['onChange']}
     >
       <StyledTicketContainer>
-        {show.tickets.map((ticket, ticketIndex) => (
+        {show.ticketTypes.map((ticketType, ticketIndex) => (
           <TicketCard
-            key={ticket.id || ticketIndex}
+            key={ticketType.id || ticketIndex}
             size="small"
-            title={ticket.name}
+            title={ticketType.name}
             extra={
               <Space>
                 <Button
                   type="text"
                   icon={<SettingOutlined />}
-                  onClick={() => onEditTicket(ticket.id)}
+                  onClick={() => onEditTicket(ticketType.id)}
                 />
                 <Button
                   type="text"
@@ -62,7 +62,7 @@ export const TicketSection: React.FC<TicketSectionProps> = ({
               </Space>
             }
           >
-            <p>{ticket.isFree ? 'Free' : `$${ticket.price}`}</p>
+            <p>{ticketType.isFree ? 'Free' : `$${ticketType.price}`}</p>
           </TicketCard>
         ))}
         <div

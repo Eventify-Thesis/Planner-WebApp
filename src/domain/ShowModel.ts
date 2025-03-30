@@ -1,13 +1,15 @@
-import { TicketModel } from './TicketModel';
+import { BaseModel } from './BaseModel';
+import { SeatingPlanModel } from './SeatingPlanModel';
+import { TicketTypeModel } from './TicketTypeModel';
 
-export interface ShowingModel {
-  tickets: TicketModel[];
-  startTime: Date;
-  endTime: Date;
-}
-
-export interface ShowModel {
+export interface ShowModel extends BaseModel {
   id?: string;
   eventId: string;
-  showings: ShowingModel[];
+  name: string;
+  description?: string;
+  ticketTypes: TicketTypeModel[];
+  startTime: string;
+  endTime: string;
+  seatingPlanId?: string;
+  seatingPlan?: SeatingPlanModel;
 }

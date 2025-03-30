@@ -9,7 +9,8 @@ export const useGetEventShow = (eventId: IdParam) => {
   return useQuery<any, AxiosError>({
     queryKey: [GET_EVENT_SHOW_QUERY_KEY, eventId],
     queryFn: async () => {
-      const data = await eventsClient.getShow(eventId);
+      const data = await eventsClient.getListShows(eventId);
+      console.log(data);
       return data;
     },
     staleTime: 5,

@@ -20,7 +20,7 @@ import classes from './QuestionForm.module.scss';
 import { Editor } from '../../common/Editor';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TicketModel } from '@/domain/TicketModel';
+import { TicketTypeModel } from '@/domain/TicketTypeModel';
 
 const Options = ({ form }: { form: UseFormReturnType<any> }) => {
   const { t } = useTranslation();
@@ -87,10 +87,10 @@ const Options = ({ form }: { form: UseFormReturnType<any> }) => {
 
 interface QuestionFormProps {
   form: UseFormReturnType<any>;
-  tickets?: TicketModel[];
+  ticketTypes?: TicketTypeModel[];
 }
 
-export const QuestionForm = ({ form, tickets }: QuestionFormProps) => {
+export const QuestionForm = ({ form, ticketTypes }: QuestionFormProps) => {
   const { t } = useTranslation();
   const [showDescription, setShowDescription] = useState(false);
 
@@ -183,10 +183,10 @@ export const QuestionForm = ({ form, tickets }: QuestionFormProps) => {
           label={t('What tickets should this question be apply to?')}
           multiple
           placeholder={t('Select tickets')}
-          data={tickets?.map((ticket) => {
+          data={ticketTypes?.map((ticketType) => {
             return {
-              value: String(ticket.id),
-              label: ticket.name,
+              value: String(ticketType.id),
+              label: ticketType.name,
             };
           })}
           leftSection={<IconTicket size="1rem" />}

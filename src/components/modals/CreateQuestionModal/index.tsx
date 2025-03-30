@@ -12,9 +12,9 @@ import { Modal } from '../../common/Modal';
 import { QuestionForm } from '../../forms/QuestionForm';
 import { showError } from '@/utils/notifications.tsx';
 import { useTranslation } from 'react-i18next';
-import { useListTickets } from '@/queries/useTicketQueries';
+import { useListTicketTypes } from '@/queries/useTicketTypeQueries';
 import { useQuestionMutations } from '@/queries/useQuestionQueries';
-import { QuestionModel } from '@/domain/QuestionModel';
+import { QuestionBelongsTo, QuestionModel } from '@/domain/QuestionModel';
 
 interface CreateQuestionModalProps extends GenericModalProps {
   onCompleted: (question: Question) => void;
@@ -28,19 +28,19 @@ export const CreateQuestionModal = ({
 }: CreateQuestionModalProps) => {
   const { t } = useTranslation();
   const { eventId } = useParams();
-  const { data: ticketsResponse } = useListTickets(eventId!);
-  const tickets = ticketsResponse || [];
+  const { data: ticketTypesResponse } = useListTicketTypes(eventId!);
+  const ticketTypes = ticketTypesResponse || [];
   const { createQuestionMutation } = useQuestionMutations(eventId!);
 
   const form = useForm({
     initialValues: {
       title: '',
       description: '',
-      type: QuestionType.SINGLE_LINE_TEXT.toString(),
+      type: QuestionType.SINGLE_LINE_TEXT,
       required: false,
       options: [],
-      ticketIds: [],
-      belongsTo: 'ORDER',
+      ticketTypeIds: [],
+      belongsTo: QuestionBelongsTo.ORDER,
       isHidden: false,
     },
   });
@@ -67,7 +67,7 @@ export const CreateQuestionModal = ({
   return (
     <Modal opened onClose={onClose} heading={t('questions.create.title')}>
       <form onSubmit={form.onSubmit(handleSubmit)}>
-        <QuestionForm form={form} tickets={tickets} />
+        <QuestionForm form={form} ticketTypes={ticketTypes} />
         <Button
           loading={createQuestionMutation.isPending}
           type="submit"

@@ -1,12 +1,12 @@
 import { SeatingPlanModel } from '@/domain/SeatingPlanModel';
 import { IdParam, PaginationResponse } from '@/types/types';
 import { httpApi } from './http.api';
-import { EventModel } from '@/domain/EventModel';
+import { SeatingPlanCategoryModel } from '@/domain/SeatingPlanCategoryModel';
 
 export interface SeatingPlanListQueryModel {
   page: number;
   limit: number;
-  keyword: string | null;
+  keyword?: string | null;
 }
 
 export interface CreateSeatingPlanDto {
@@ -84,6 +84,20 @@ export const seatingPlanClient = {
         `/planner/events/${eventId}/seating-plan/${id}`,
       );
       return response.data.data;
+    } catch (e: any) {
+      throw new Error(e);
+    }
+  },
+
+  getCategories: async (
+    eventId: IdParam,
+    id: IdParam,
+  ): Promise<SeatingPlanCategoryModel[]> => {
+    try {
+      const response = await httpApi.get<any>(
+        `/planner/events/${eventId}/seating-plan/${id}/categories`,
+      );
+      return response.data.data.result;
     } catch (e: any) {
       throw new Error(e);
     }
