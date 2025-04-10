@@ -1,5 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Select, Table, Button, Space, Card, message, Tag } from 'antd';
+import {
+  Select,
+  Table,
+  Button,
+  Space,
+  Card,
+  message,
+  Tag,
+  Form,
+  Typography,
+  Row,
+  Col,
+  Divider,
+} from 'antd';
 import { useParams } from 'react-router-dom';
 import { useListShows } from '@/queries/useShowQueries';
 import { useListTicketTypesOfShow } from '@/queries/useTicketTypeQueries';
@@ -8,8 +21,8 @@ import {
   useGetSeatingPlanList,
   useGetSeatingPlanCategories,
 } from '@/queries/useSeatingPlanQueries';
-import { SeatCategoryMapping } from '@/api/seatCategoryMapping.client';
-import { SeatingPlanCategoryModel } from '@/domain/SeatingPlanCategoryModel';
+
+const { Title, Paragraph } = Typography;
 
 interface MappingFormData {
   category: string;
@@ -24,6 +37,7 @@ interface ExistingMapping extends MappingFormData {
 
 const EventSeatCategoryMapping: React.FC = () => {
   const { eventId } = useParams<{ eventId: string }>();
+
   const [selectedShow, setSelectedShow] = useState<string | null>(null);
   const [selectedSeatingPlan, setSelectedSeatingPlan] = useState<string | null>(
     null,
@@ -33,19 +47,18 @@ const EventSeatCategoryMapping: React.FC = () => {
     [],
   );
 
+  // Query hooks
   const { data: shows } = useListShows(eventId!);
   const { data: seatingPlansData } = useGetSeatingPlanList(eventId!, {
     limit: 100000,
     page: 1,
   });
-
-  const seatingPlans = seatingPlansData?.docs;
-
   const {
     useGetByShowId,
     batchCreateMutation,
     batchUpdateMutation,
     deleteByShowIdMutation,
+    lockMutation,
   } = useSeatCategoryMappingQueries();
 
   const { data: fetchedExistingMappings, isLoading: isLoadingMappings } =
@@ -61,13 +74,18 @@ const EventSeatCategoryMapping: React.FC = () => {
       enabled: !!selectedSeatingPlan,
     });
 
+  // Derived data
+  const seatingPlans = seatingPlansData?.docs;
+  const currentShow = shows?.find((s) => s.id === selectedShow);
+  const isLocked = currentShow?.locked;
+
+  // Effects
   useEffect(() => {
     if (fetchedExistingMappings) {
       setExistingMappings(fetchedExistingMappings);
     }
   }, [fetchedExistingMappings]);
 
-  // Handle pre-selected seating plan when show changes
   useEffect(() => {
     if (selectedShow && shows) {
       const show = shows.find((s) => s.id === selectedShow);
@@ -77,11 +95,10 @@ const EventSeatCategoryMapping: React.FC = () => {
     }
   }, [selectedShow, shows]);
 
-  // Update mappings when categories change
   useEffect(() => {
     if (categories) {
       const newMappings = categories.map((category) => {
-        const existingMapping = existingMappings?.find(
+        const existingMapping = existingMappings.find(
           (m) => m.category === category.name,
         );
         return {
@@ -95,6 +112,7 @@ const EventSeatCategoryMapping: React.FC = () => {
     }
   }, [categories, existingMappings]);
 
+  // Handlers
   const handleShowChange = (showId: string) => {
     setSelectedShow(showId);
     if (!shows?.find((s) => s.id === showId)?.seatingPlanId) {
@@ -109,6 +127,7 @@ const EventSeatCategoryMapping: React.FC = () => {
   };
 
   const handleTicketTypeChange = (category: string, ticketTypeId: string) => {
+    if (isLocked) return; // Extra safety: do nothing if locked
     setMappings((prev) =>
       prev.map((mapping) =>
         mapping.category === category ? { ...mapping, ticketTypeId } : mapping,
@@ -118,13 +137,18 @@ const EventSeatCategoryMapping: React.FC = () => {
 
   const handleSave = async () => {
     if (!selectedShow || !selectedSeatingPlan) {
-      message.error('Please select both a show and a seating plan');
+      message.error('Please select both a show and a seating plan.');
+      return;
+    }
+
+    if (isLocked) {
+      message.warning('This show is locked and cannot be modified.');
       return;
     }
 
     const invalidMappings = mappings.filter((m) => !m.ticketTypeId);
     if (invalidMappings.length > 0) {
-      message.error('Please select ticket types for all categories');
+      message.error('Please select ticket types for all categories.');
       return;
     }
 
@@ -159,14 +183,22 @@ const EventSeatCategoryMapping: React.FC = () => {
           })),
         });
       }
+
+      setExistingMappings(mappings);
+      message.success('Mappings saved successfully.');
     } catch (error) {
-      // Error is handled by the mutation
+      // Error handled by mutation or error boundary
     }
   };
 
   const handleDelete = async () => {
     if (!selectedShow) {
-      message.error('Please select a show first');
+      message.error('Please select a show first.');
+      return;
+    }
+
+    if (isLocked) {
+      message.warning('This show is locked and cannot be modified.');
       return;
     }
 
@@ -177,14 +209,34 @@ const EventSeatCategoryMapping: React.FC = () => {
       });
       setMappings([]);
       setExistingMappings([]);
+      message.success('All mappings deleted.');
     } catch (error) {
-      // Error is handled by the mutation
+      // Error handled by mutation or error boundary
     }
   };
 
+  const handleLock = async (locked: boolean) => {
+    if (!selectedShow || !selectedSeatingPlan) {
+      message.error('Please select both a show and a seating plan first.');
+      return;
+    }
+
+    try {
+      await lockMutation.mutateAsync({
+        eventId: eventId!,
+        showId: selectedShow,
+        id: selectedSeatingPlan,
+        locked,
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  // Table definition
   const columns = [
     {
-      title: 'Category',
+      title: 'Seat Category',
       dataIndex: 'category',
       key: 'category',
       render: (_: any, record: MappingFormData) => (
@@ -201,10 +253,11 @@ const EventSeatCategoryMapping: React.FC = () => {
           value={record.ticketTypeId}
           onChange={(value) => handleTicketTypeChange(record.category, value)}
           placeholder={
-            isLoadingTickets ? 'Loading tickets...' : 'Select ticket type'
+            isLoadingTickets ? 'Loading ticket types...' : 'Select ticket type'
           }
           loading={isLoadingTickets}
-          disabled={isLoadingTickets}
+          disabled={isLoadingTickets || isLocked} // Disable if locked
+          allowClear
         >
           {tickets?.map((ticket) => (
             <Select.Option key={ticket.id} value={ticket.id}>
@@ -217,78 +270,110 @@ const EventSeatCategoryMapping: React.FC = () => {
   ];
 
   return (
-    <Card title="Seat Category Mapping">
-      <Space direction="vertical" style={{ width: '100%' }} size="large">
-        <Select
-          style={{ width: '100%' }}
-          placeholder="Select a show"
-          value={selectedShow}
-          onChange={handleShowChange}
-        >
-          {shows?.map((show) => (
-            <Select.Option key={show.id} value={show.id}>
-              {show.name}
-            </Select.Option>
-          ))}
-        </Select>
+    <Card>
+      <Title level={3} style={{ marginBottom: 4 }}>
+        Seat Category Mapping
+      </Title>
+      <Paragraph style={{ marginBottom: 24 }}>
+        Use this tool to map each seat category in the selected seating plan to
+        a corresponding ticket type for the chosen show.
+      </Paragraph>
 
-        <Select
-          style={{ width: '100%' }}
-          placeholder="Select a seating plan"
-          value={selectedSeatingPlan}
-          onChange={handleSeatingPlanChange}
-          disabled={!selectedShow || isLoadingMappings}
-          loading={isLoadingMappings}
-        >
-          {seatingPlans?.map((plan) => (
-            <Select.Option
-              key={plan.id}
-              value={plan.id}
-              disabled={
-                shows?.find((s) => s.id === selectedShow)?.seatingPlanId &&
-                shows?.find((s) => s.id === selectedShow)?.seatingPlanId !==
-                  plan.id
-              }
-            >
-              {plan.name}
-              {shows?.find((s) => s.id === selectedShow)?.seatingPlanId ===
-              plan.id
-                ? ' (Current)'
-                : ''}
-            </Select.Option>
-          ))}
-        </Select>
+      <Form layout="vertical">
+        <Row gutter={16}>
+          <Col xs={24} sm={12}>
+            <Form.Item label="Show" style={{ marginBottom: 16 }}>
+              <Select
+                placeholder="Select a show"
+                value={selectedShow}
+                onChange={handleShowChange}
+                allowClear
+              >
+                {shows?.map((show) => (
+                  <Select.Option key={show.id} value={show.id}>
+                    {show.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col xs={24} sm={12}>
+            <Form.Item label="Seating Plan" style={{ marginBottom: 16 }}>
+              <Select
+                placeholder="Select a seating plan"
+                value={selectedSeatingPlan}
+                onChange={handleSeatingPlanChange}
+                disabled={!selectedShow || isLoadingMappings}
+                loading={isLoadingMappings}
+                allowClear
+              >
+                {seatingPlans?.map((plan) => {
+                  const showSeatingPlanId = currentShow?.seatingPlanId;
+                  const isPlanDisabled =
+                    showSeatingPlanId && showSeatingPlanId !== plan.id;
 
-        <Table
-          dataSource={mappings}
-          columns={columns}
-          rowKey="category"
-          pagination={false}
-          loading={isLoadingMappings || isLoadingTickets || isLoadingCategories}
-        />
+                  return (
+                    <Select.Option
+                      key={plan.id}
+                      value={plan.id}
+                      disabled={isPlanDisabled}
+                    >
+                      {plan.name}
+                      {showSeatingPlanId === plan.id ? ' (Current)' : ''}
+                    </Select.Option>
+                  );
+                })}
+              </Select>
+            </Form.Item>
+          </Col>
+        </Row>
+      </Form>
 
-        <Space>
+      <Divider />
+
+      <Table
+        dataSource={mappings}
+        columns={columns}
+        rowKey="category"
+        pagination={false}
+        loading={isLoadingMappings || isLoadingTickets || isLoadingCategories}
+        style={{ marginBottom: 16 }}
+      />
+
+      <Space>
+        {existingMappings.length > 0 && (
           <Button
             type="primary"
-            onClick={handleSave}
-            loading={
-              batchCreateMutation.isPending || batchUpdateMutation.isPending
-            }
-            disabled={
-              !selectedShow || !selectedSeatingPlan || mappings.length === 0
-            }
+            onClick={() => handleLock(!isLocked)}
+            loading={lockMutation.isPending}
           >
-            Save Mappings
+            {isLocked ? 'Unlock' : 'Lock'}
           </Button>
-          <Button
-            danger
-            onClick={handleDelete}
-            loading={deleteByShowIdMutation.isPending}
-            disabled={!selectedShow}
-          >
-            Delete All Mappings
-          </Button>
-        </Space>
+        )}
+
+        <Button
+          type="primary"
+          onClick={handleSave}
+          loading={
+            batchCreateMutation.isPending || batchUpdateMutation.isPending
+          }
+          disabled={
+            !selectedShow ||
+            !selectedSeatingPlan ||
+            mappings.length === 0 ||
+            isLocked
+          }
+        >
+          Save Mappings
+        </Button>
+        <Button
+          danger
+          onClick={handleDelete}
+          loading={deleteByShowIdMutation.isPending}
+          disabled={!selectedShow || isLocked}
+        >
+          Delete All Mappings
+        </Button>
       </Space>
     </Card>
   );

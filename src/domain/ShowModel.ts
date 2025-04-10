@@ -1,8 +1,7 @@
-import { BaseModel } from './BaseModel';
 import { SeatingPlanModel } from './SeatingPlanModel';
 import { TicketTypeModel } from './TicketTypeModel';
 
-export interface ShowModel extends BaseModel {
+export interface ShowModel {
   id?: string;
   eventId: string;
   name: string;
@@ -12,4 +11,5 @@ export interface ShowModel extends BaseModel {
   endTime: string;
   seatingPlanId?: string;
   seatingPlan?: SeatingPlanModel;
+  locked?: boolean;
 }

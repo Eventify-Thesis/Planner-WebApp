@@ -1,3 +1,4 @@
+import { IdParam } from '@/types/types';
 import { httpApi } from './http.api';
 
 export interface SeatCategoryMapping {
@@ -55,6 +56,13 @@ export const seatCategoryMappingClient = {
   deleteByShowId: (eventId: string, showId: string) => {
     return httpApi.delete(
       `/planner/events/${eventId}/shows/${showId}/seat-category-mappings`,
+    );
+  },
+
+  lock: (eventId: IdParam, showId: IdParam, id: IdParam, locked: boolean) => {
+    return httpApi.post(
+      `/planner/events/${eventId}/shows/${showId}/seat-category-mappings/${id}/lock`,
+      { locked },
     );
   },
 };

@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { seatCategoryMappingClient } from '@/api/seatCategoryMapping.client';
 import { message } from 'antd';
+import { IdParam } from '@/types/types';
+import { SHOW_QUERY_KEYS } from './useShowQueries';
 
 export const SEAT_CATEGORY_MAPPING_QUERY_KEYS = {
   list: 'seatCategoryMappings',
@@ -90,10 +92,35 @@ export const useSeatCategoryMappingQueries = () => {
     },
   });
 
+  const lockMutation = useMutation({
+    mutationFn: ({
+      eventId,
+      showId,
+      id,
+      locked,
+    }: {
+      eventId: IdParam;
+      showId: IdParam;
+      id: IdParam;
+      locked: boolean;
+    }) => seatCategoryMappingClient.lock(eventId, showId, id, locked),
+    onSuccess: (_, variables) => {
+      message.success('Seat category mappings locked successfully');
+
+      queryClient.invalidateQueries({
+        queryKey: [SHOW_QUERY_KEYS.list, variables.eventId],
+      });
+    },
+    onError: (error: any) => {
+      message.error(error.message || 'Failed to lock seat category mappings');
+    },
+  });
+
   return {
     useGetByShowId,
     batchCreateMutation,
     batchUpdateMutation,
     deleteByShowIdMutation,
+    lockMutation,
   };
 };
