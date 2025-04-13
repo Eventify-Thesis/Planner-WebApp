@@ -57,14 +57,14 @@ export const VoucherForm = ({ form }: VoucherFormProps) => {
     updateFormShowings(newSelectedShows);
   };
 
-  const handleShowRemove = (showId: string) => {
+  const handleShowRemove = (showId: number) => {
     const newSelectedShows = selectedShows.filter((show) => show.id !== showId);
     setSelectedShows(newSelectedShows);
     updateFormShowings(newSelectedShows);
   };
 
   const handleTicketSelectionChange = (
-    showId: string,
+    showId: number,
     isAllTicketTypes: boolean,
     selectedTickets: string[],
   ) => {

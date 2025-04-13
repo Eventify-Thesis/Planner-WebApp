@@ -2,8 +2,8 @@ import { SeatingPlanModel } from './SeatingPlanModel';
 import { TicketTypeModel } from './TicketTypeModel';
 
 export interface ShowModel {
-  id?: string;
-  eventId: string;
+  id?: number;
+  eventId: number;
   name: string;
   description?: string;
   ticketTypes: TicketTypeModel[];

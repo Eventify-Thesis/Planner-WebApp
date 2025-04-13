@@ -30,7 +30,10 @@ const EventVouchers = React.lazy(
   () => import('@/components/event/EventVouchers/EventVouchers'),
 );
 const EventSeatCategoryMapping = React.lazy(
-  () => import('@/components/event/EventSeatCategoryMapping/EventSeatCategoryMapping'),
+  () =>
+    import(
+      '@/components/event/EventSeatCategoryMapping/EventSeatCategoryMapping'
+    ),
 );
 
 const LoadingFallback = () => <div>Loading...</div>;

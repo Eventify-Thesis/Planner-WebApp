@@ -1,5 +1,5 @@
 export interface TicketTypeModel {
-  id?: string;
+  id?: number;
   name: string;
   price: number;
   isFree?: boolean;

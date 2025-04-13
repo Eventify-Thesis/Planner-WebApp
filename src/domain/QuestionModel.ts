@@ -16,14 +16,14 @@ export enum QuestionBelongsTo {
 }
 
 export interface QuestionModel {
-  id: string;
+  id?: number;
   title: string;
   type: QuestionType;
   options?: string[];
   description?: string;
   sortOrder: number;
   required: boolean;
-  eventId: string;
+  eventId: number;
   belongsTo: QuestionBelongsTo;
   isHidden: boolean;
   ticketTypeIds?: string[];

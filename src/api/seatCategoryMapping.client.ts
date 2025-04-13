@@ -4,8 +4,8 @@ import { httpApi } from './http.api';
 export interface SeatCategoryMapping {
   id: string;
   seatingPlanId: string;
-  eventId: string;
-  showId: string;
+  eventId: number;
+  showId: number;
   category: string;
   ticketTypeId: string;
 }
@@ -19,7 +19,7 @@ export interface BatchUpdateSeatCategoryMappingDto {
 }
 
 export const seatCategoryMappingClient = {
-  getByShowId: (eventId: string, showId: string) => {
+  getByShowId: (eventId: number, showId: number) => {
     return httpApi
       .get<any>(
         `/planner/events/${eventId}/shows/${showId}/seat-category-mappings`,
@@ -28,8 +28,8 @@ export const seatCategoryMappingClient = {
   },
 
   batchCreate: (
-    eventId: string,
-    showId: string,
+    eventId: number,
+    showId: number,
     dto: BatchCreateSeatCategoryMappingDto,
   ) => {
     return httpApi
@@ -41,8 +41,8 @@ export const seatCategoryMappingClient = {
   },
 
   batchUpdate: (
-    eventId: string,
-    showId: string,
+    eventId: number,
+    showId: number,
     dto: BatchUpdateSeatCategoryMappingDto,
   ) => {
     return httpApi
@@ -53,7 +53,7 @@ export const seatCategoryMappingClient = {
       .then((response) => response.data);
   },
 
-  deleteByShowId: (eventId: string, showId: string) => {
+  deleteByShowId: (eventId: number, showId: number) => {
     return httpApi.delete(
       `/planner/events/${eventId}/shows/${showId}/seat-category-mappings`,
     );

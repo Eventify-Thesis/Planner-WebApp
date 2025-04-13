@@ -167,7 +167,7 @@ export const PaymentInfoForm: React.FC<PaymentInfoFormProps> = ({
 
         <Form.Item
           label={t('payment_info.company_name')}
-          name="companyName"
+          name="name"
           rules={[
             {
               max: 100,
@@ -180,7 +180,7 @@ export const PaymentInfoForm: React.FC<PaymentInfoFormProps> = ({
 
         <Form.Item
           label={t('payment_info.company_address')}
-          name="companyAddress"
+          name="address"
           rules={[
             {
               max: 200,

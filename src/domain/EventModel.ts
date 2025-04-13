@@ -1,8 +1,7 @@
 import { EventType, EventStatus } from '@/constants/enums/event';
 
 export interface EventModel {
-  id?: string;
-  _id?: string;
+  id?: number;
   paymentInfo?: string;
   setting?: string;
   show?: string;

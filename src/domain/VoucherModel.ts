@@ -49,7 +49,7 @@ export interface UpdateVoucherDto extends Partial<CreateVoucherDto> {
 }
 
 export interface VoucherModel extends CreateVoucherDto {
-  id?: string;
+  id?: number;
   createdAt?: Date;
   updatedAt?: Date;
 }

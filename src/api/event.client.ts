@@ -24,7 +24,7 @@ export interface EventListQueryModel {
 }
 
 export interface CreateDraftEventDto {
-  id?: string; // Optional MongoDB ID
+  id?: number;
   eventLogoUrl: string;
   eventBannerUrl: string;
   eventName: string;
@@ -43,7 +43,7 @@ export interface CreateDraftEventDto {
 }
 
 export interface EventBriefResponse {
-  id: string;
+  id: number;
   eventName: string;
   eventLogoUrl: string;
   eventBannerUrl: string;

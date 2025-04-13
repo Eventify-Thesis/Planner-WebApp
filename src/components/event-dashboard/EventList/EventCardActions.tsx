@@ -49,7 +49,7 @@ export const EventCardActions = ({
       <ActionItem>
         <ActionLink
           isMobile={isMobile}
-          onClick={() => navigate(`/events/${id}/seatmap`)}
+          onClick={() => navigate(`/events/${id}/seatmap/new`)}
         >
           <Icon icon="mdi:chair" width="24" height="24" />
           {isDesktop && <ActionText>{t('eventDashboard.seating')}</ActionText>}

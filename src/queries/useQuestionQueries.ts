@@ -27,7 +27,7 @@ export const useListQuestions = (eventId: IdParam) => {
   };
 };
 
-export const useGetQuestion = (eventId: string, questionId: string) => {
+export const useGetQuestion = (eventId: number, questionId: string) => {
   return useQuery<QuestionModel, AxiosError>({
     queryKey: [QUESTION_QUERY_KEYS.detail, eventId, questionId],
     queryFn: async () => {
@@ -36,7 +36,7 @@ export const useGetQuestion = (eventId: string, questionId: string) => {
   });
 };
 
-export const useQuestionMutations = (eventId: string) => {
+export const useQuestionMutations = (eventId: number) => {
   const queryClient = useQueryClient();
 
   const createQuestionMutation = useMutation({

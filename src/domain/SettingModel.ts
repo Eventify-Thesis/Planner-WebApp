@@ -1,8 +1,8 @@
 import { AgeRestriction } from '@/constants/enums/event';
 
 export interface SettingModel {
-  id?: string;
-  eventId?: string;
+  id?: number;
+  eventId?: number;
   url?: string;
   messageAttendees?: string;
   isPrivate?: boolean;

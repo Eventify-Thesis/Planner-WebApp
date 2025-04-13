@@ -1,14 +1,14 @@
 import { BusinessType } from '@/constants/enums/event';
 
 export interface PaymentInfoModel {
-  id?: string;
-  eventId?: string;
+  id?: number;
+  eventId?: number;
   bankAccount?: string;
   bankAccountName?: string;
   bankAccountNumber?: string;
   bankOffice?: string;
   businessType?: BusinessType;
-  companyName?: string;
-  companyAddress?: string;
+  name?: string;
+  address?: string;
   taxNumber?: string;
 }

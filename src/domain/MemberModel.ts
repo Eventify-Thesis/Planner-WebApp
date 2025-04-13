@@ -1,11 +1,11 @@
 import { EventRole } from '@/constants/enums/event';
 
 export interface MemberModel {
-  id: string;
+  id: number;
   email: string;
   firstName: string;
   lastName: string;
-  eventId: string;
+  eventId: number;
   role: EventRole;
   createdAt: Date;
   updatedAt: Date;

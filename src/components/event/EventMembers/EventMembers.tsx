@@ -41,7 +41,7 @@ const { Text } = Typography;
 
 const EventMembers: React.FC = () => {
   const { t } = useTranslation();
-  const { eventId } = useParams<{ eventId: string }>();
+  const { eventId } = useParams<{ eventId: number }>();
   const { eventBrief } = useEvent();
   const [searchText, setSearchText] = useState('');
   const [isModalVisible, setIsModalVisible] = useState(false);

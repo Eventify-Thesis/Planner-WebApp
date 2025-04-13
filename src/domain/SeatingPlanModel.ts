@@ -1,5 +1,5 @@
 export interface SeatingPlanModel {
-  id?: string;
+  id?: number;
   name: string;
   description: string;
   locked: boolean;

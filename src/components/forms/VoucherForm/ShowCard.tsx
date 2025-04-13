@@ -15,9 +15,9 @@ interface Ticket {
 
 interface ShowCardProps {
   show: any;
-  onRemove: (showId: string) => void;
+  onRemove: (showId: number) => void;
   onTicketSelectionChange: (
-    showId: string,
+    showId: number,
     isAllTickets: boolean,
     selectedTickets: string[],
   ) => void;
