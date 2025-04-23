@@ -11,9 +11,17 @@ import {
   Button,
   Tabs,
   Text,
+  Paper,
+  Container,
 } from '@mantine/core';
 import { DateTimePicker } from '@mantine/dates';
-import { IconAlertCircle, IconPercentage } from '@tabler/icons-react';
+import {
+  IconAlertCircle,
+  IconPercentage,
+  IconTicket,
+  IconSettings,
+  IconTarget,
+} from '@tabler/icons-react';
 import { useParams } from 'react-router-dom';
 import { LoadingMask } from '../../common/LoadingMask';
 import { InputGroup } from '../../common/InputGroup';
@@ -25,6 +33,7 @@ import { useGetEventShow } from '@/queries/useGetEventShow';
 import { useGetEvent } from '@/queries/useGetEvent';
 import { ShowSelectionModal } from './ShowSelectionModal';
 import { ShowCard } from './ShowCard';
+import './VoucherForm.css';
 
 interface VoucherFormProps {
   form: UseFormReturnType<VoucherModel>;
@@ -106,201 +115,237 @@ export const VoucherForm = ({ form }: VoucherFormProps) => {
   }
 
   return (
-    <Stack gap="xl">
-      {/* Ticket Creation Type Selection */}
-      <Tabs
-        value={ticketCreationType}
-        onChange={(value) => setTicketCreationType(value as 'single' | 'bulk')}
-      >
-        <Tabs.List>
-          <Tabs.Tab value="single">{t('voucher.single_ticket')}</Tabs.Tab>
-          <Tabs.Tab value="bulk">{t('voucher.bulk_tickets')}</Tabs.Tab>
-        </Tabs.List>
+    <Container
+      size="lg"
+      className="voucher-form"
+      style={{
+        padding: 0,
+      }}
+    >
+      <Stack gap="xl">
+        <Paper shadow="sm" p="md" className="form-section">
+          <Tabs
+            value={ticketCreationType}
+            onChange={(value) =>
+              setTicketCreationType(value as 'single' | 'bulk')
+            }
+            variant="pills"
+            className="tabs-container"
+          >
+            <Tabs.List>
+              <Tabs.Tab value="single" leftSection={<IconTicket size={16} />}>
+                {t('voucher.single_ticket')}
+              </Tabs.Tab>
+              <Tabs.Tab value="bulk" leftSection={<IconTicket size={16} />}>
+                {t('voucher.bulk_tickets')}
+              </Tabs.Tab>
+            </Tabs.List>
 
-        <Tabs.Panel value="single">
-          {/* Basic Information Section */}
-          <div>
-            <Title order={4} my="md">
-              {t('voucher.basic_information')}
-            </Title>
-            <Stack gap="md">
-              <TextInput
-                {...form.getInputProps('name')}
-                label={t('voucher.name')}
-                placeholder={t('voucher.name_placeholder')}
-                required
-              />
-              <TextInput
-                {...form.getInputProps('discountCode')}
-                label={t('voucher.discount_code')}
-                placeholder={t('voucher.discount_code_placeholder')}
-                required={ticketCreationType === 'single'}
-              />
+            <Tabs.Panel value="single" pt="xl">
+              <div>
+                <Title order={4} className="section-title">
+                  {t('voucher.basic_information')}
+                </Title>
+                <Stack gap="md">
+                  <TextInput
+                    {...form.getInputProps('name')}
+                    label={t('voucher.name')}
+                    placeholder={t('voucher.name_placeholder')}
+                    description="Program name will not be displayed to customers"
+                    required
+                  />
+                  <TextInput
+                    {...form.getInputProps('discountCode')}
+                    label={t('voucher.discount_code')}
+                    placeholder={t('voucher.discount_code_placeholder')}
+                    description="Only uppercase letters (A-Z) and numbers (0-9) are allowed, length 6-12 characters"
+                    pattern="[A-Z0-9]{6,12}"
+                    required={ticketCreationType === 'single'}
+                  />
 
-              <InputGroup>
-                <DateTimePicker
-                  {...form.getInputProps('startTime')}
-                  label={t('voucher.start_time')}
-                  placeholder={t('voucher.start_time_placeholder')}
-                  valueFormat="DD/MM/YYYY HH:mm"
-                />
-                <DateTimePicker
-                  {...form.getInputProps('endTime')}
-                  label={t('voucher.end_time')}
-                  placeholder={t('voucher.end_time_placeholder')}
-                  valueFormat="DD/MM/YYYY HH:mm"
-                />
-              </InputGroup>
-            </Stack>
-          </div>
-        </Tabs.Panel>
+                  <InputGroup>
+                    <DateTimePicker
+                      {...form.getInputProps('startTime')}
+                      label={t('voucher.start_time')}
+                      placeholder={t('voucher.start_time_placeholder')}
+                      valueFormat="DD/MM/YYYY HH:mm"
+                    />
+                    <DateTimePicker
+                      {...form.getInputProps('endTime')}
+                      label={t('voucher.end_time')}
+                      placeholder={t('voucher.end_time_placeholder')}
+                      valueFormat="DD/MM/YYYY HH:mm"
+                    />
+                  </InputGroup>
+                </Stack>
+              </div>
+            </Tabs.Panel>
 
-        <Tabs.Panel value="bulk">
-          {/* Bulk Ticket Information */}
-          <div>
-            <Title order={4} my="md">
-              {t('voucher.basic_information')}
-            </Title>
-            <Stack gap="md">
-              <TextInput
-                {...form.getInputProps('name')}
-                label={t('voucher.name')}
-                placeholder={t('voucher.name_placeholder')}
-                required
+            <Tabs.Panel value="bulk" pt="xl">
+              <div>
+                <Title order={4} className="section-title">
+                  {t('voucher.basic_information')}
+                </Title>
+                <Stack gap="md">
+                  <TextInput
+                    {...form.getInputProps('name')}
+                    label={t('voucher.name')}
+                    placeholder={t('voucher.name_placeholder')}
+                    description="Program name will not be displayed to customers"
+                    required
+                  />
+                  <TextInput
+                    {...form.getInputProps('bulkCodePrefix')}
+                    label={t('voucher.bulk_code_prefix')}
+                    placeholder={t('voucher.bulk_code_prefix_placeholder')}
+                    required={ticketCreationType === 'bulk'}
+                  />
+                  <NumberInput
+                    {...form.getInputProps('bulkCodeNumber')}
+                    label={t('voucher.bulk_code_number')}
+                    placeholder={t('voucher.bulk_code_number_placeholder')}
+                    min={1}
+                    required={ticketCreationType === 'bulk'}
+                  />
+                </Stack>
+              </div>
+            </Tabs.Panel>
+          </Tabs>
+        </Paper>
+
+        <Paper shadow="sm" p="md" className="form-section">
+          <Title
+            order={4}
+            className="section-title"
+            leftSection={<IconSettings size={20} />}
+          >
+            {t('voucher.set_up_voucher')}
+          </Title>
+          <Stack gap="md">
+            <InputGroup>
+              <div>
+                <Text size="sm" fw={500} mb="xs">
+                  {t('voucher.discount_type')}
+                </Text>
+                <Radio.Group {...form.getInputProps('discountType')} required>
+                  <Group mt="xs">
+                    <Radio
+                      value={VoucherDiscountType.PERCENT}
+                      label={t('voucher.discount_type_percent')}
+                    />
+                    <Radio
+                      value={VoucherDiscountType.FIXED}
+                      label={t('voucher.discount_type_fixed')}
+                    />
+                  </Group>
+                </Radio.Group>
+              </div>
+              <NumberInput
+                {...form.getInputProps('discountValue')}
+                label={t('voucher.discount_value')}
+                min={0}
+                max={
+                  form.values.discountType === VoucherDiscountType.PERCENT
+                    ? 100
+                    : undefined
+                }
+                leftSection={<DiscountIcon />}
               />
-              <TextInput
-                {...form.getInputProps('bulkCodePrefix')}
-                label={t('voucher.bulk_code_prefix')}
-                placeholder={t('voucher.bulk_code_prefix_placeholder')}
-                required={ticketCreationType === 'bulk'}
+            </InputGroup>
+
+            <Switch
+              {...form.getInputProps('isUnlimited', { type: 'checkbox' })}
+              label={t('voucher.unlimited_quantity')}
+            />
+
+            {!form.values.isUnlimited && (
+              <NumberInput
+                {...form.getInputProps('quantity')}
+                label={t('voucher.quantity')}
+                placeholder={t('voucher.quantity_placeholder')}
+                description="Total number of times this voucher can be used"
+                min={1}
+              />
+            )}
+
+            <InputGroup>
+              <NumberInput
+                {...form.getInputProps('maxOrderPerUser')}
+                label={t('voucher.max_order_per_user')}
+                placeholder={t('voucher.max_order_per_user_placeholder')}
+                description="The maximum number of orders a user can apply this voucher to"
+                min={1}
               />
               <NumberInput
-                {...form.getInputProps('bulkCodeNumber')}
-                label={t('voucher.bulk_code_number')}
-                placeholder={t('voucher.bulk_code_number_placeholder')}
+                {...form.getInputProps('minQtyPerOrder')}
+                label={t('voucher.min_qty_per_order')}
+                placeholder={t('voucher.min_qty_per_order_placeholder')}
+                description="The minimum number of tickets required in an order to use this voucher"
                 min={1}
-                required={ticketCreationType === 'bulk'}
               />
-            </Stack>
-          </div>
-        </Tabs.Panel>
-      </Tabs>
+              <NumberInput
+                {...form.getInputProps('maxQtyPerOrder')}
+                label={t('voucher.max_qty_per_order')}
+                placeholder={t('voucher.max_qty_per_order_placeholder')}
+                description="The maximum number of tickets that can be discounted in a single order"
+                min={1}
+              />
+            </InputGroup>
+          </Stack>
+        </Paper>
 
-      {/* Set Up Voucher Section */}
-      <div>
-        <Title order={4} mb="md">
-          {t('voucher.set_up_voucher')}
-        </Title>
-        <Stack gap="md">
-          <InputGroup>
-            <div>
-              <Text size="sm" fw={500} mb="xs">
-                {t('voucher.discount_type')}
-              </Text>
-              <Radio.Group {...form.getInputProps('discountType')} required>
-                <Group mt="xs">
-                  <Radio
-                    value={VoucherDiscountType.PERCENT}
-                    label={t('voucher.discount_type_percent')}
-                  />
-                  <Radio
-                    value={VoucherDiscountType.FIXED}
-                    label={t('voucher.discount_type_fixed')}
-                  />
-                </Group>
-              </Radio.Group>
-            </div>
-            <NumberInput
-              {...form.getInputProps('discountValue')}
-              label={t('voucher.discount_value')}
-              min={0}
-              max={
-                form.values.discountType === VoucherDiscountType.PERCENT
-                  ? 100
-                  : undefined
-              }
-              leftSection={<DiscountIcon />}
-            />
-          </InputGroup>
+        <Paper shadow="sm" p="md" className="form-section">
+          <Title
+            order={4}
+            className="section-title"
+            leftSection={<IconTarget size={20} />}
+          >
+            {t('voucher.scope_of_apply')}
+          </Title>
+          <Stack gap="md">
+            <Group justify="space-between" align="center">
+              <Switch
+                {...form.getInputProps('isAllShowings', { type: 'checkbox' })}
+                label={t('voucher.apply_to_all_shows')}
+                size="md"
+                className="switch-container"
+              />
+              {!form.values.isAllShowings && (
+                <Button
+                  onClick={() => setModalVisible(true)}
+                  className="add-show-button"
+                  leftSection={<IconTicket size={16} />}
+                >
+                  {t('voucher.add_show')}
+                </Button>
+              )}
+            </Group>
 
-          <Switch
-            {...form.getInputProps('isUnlimited', { type: 'checkbox' })}
-            label={t('voucher.unlimited_quantity')}
-          />
-
-          {!form.values.isUnlimited && (
-            <NumberInput
-              {...form.getInputProps('quantity')}
-              label={t('voucher.quantity')}
-              placeholder={t('voucher.quantity_placeholder')}
-              min={1}
-            />
-          )}
-
-          <InputGroup>
-            <NumberInput
-              {...form.getInputProps('maxOrderPerUser')}
-              label={t('voucher.max_order_per_user')}
-              placeholder={t('voucher.max_order_per_user_placeholder')}
-              min={1}
-            />
-            <NumberInput
-              {...form.getInputProps('minQtyPerOrder')}
-              label={t('voucher.min_qty_per_order')}
-              placeholder={t('voucher.min_qty_per_order_placeholder')}
-              min={1}
-            />
-            <NumberInput
-              {...form.getInputProps('maxQtyPerOrder')}
-              label={t('voucher.max_qty_per_order')}
-              placeholder={t('voucher.max_qty_per_order_placeholder')}
-              min={1}
-            />
-          </InputGroup>
-        </Stack>
-      </div>
-
-      {/* Scope of Apply Section */}
-      <div>
-        <Title order={4} mb="md">
-          {t('voucher.scope_of_apply')}
-        </Title>
-        <Stack gap="md">
-          <Group justify="space-between" align="center">
-            <Switch
-              {...form.getInputProps('isAllShowings', { type: 'checkbox' })}
-              label={t('voucher.apply_to_all_shows')}
-            />
             {!form.values.isAllShowings && (
-              <Button onClick={() => setModalVisible(true)}>
-                {t('voucher.add_show')}
-              </Button>
+              <>
+                <Stack gap="md">
+                  {selectedShows.map((show) => (
+                    <ShowCard
+                      key={show.id}
+                      show={show}
+                      onRemove={handleShowRemove}
+                      onTicketSelectionChange={handleTicketSelectionChange}
+                      className="show-card"
+                    />
+                  ))}
+                </Stack>
+                <ShowSelectionModal
+                  visible={modalVisible}
+                  onCancel={() => setModalVisible(false)}
+                  onSelect={handleShowSelect}
+                  shows={shows || []}
+                  selectedShowIds={selectedShows.map((show) => show.id)}
+                />
+              </>
             )}
-          </Group>
-
-          {!form.values.isAllShowings && (
-            <>
-              <Stack gap="md">
-                {selectedShows.map((show) => (
-                  <ShowCard
-                    key={show.id}
-                    show={show}
-                    onRemove={handleShowRemove}
-                    onTicketSelectionChange={handleTicketSelectionChange}
-                  />
-                ))}
-              </Stack>
-              <ShowSelectionModal
-                visible={modalVisible}
-                onCancel={() => setModalVisible(false)}
-                onSelect={handleShowSelect}
-                shows={shows || []}
-                selectedShowIds={selectedShows.map((show) => show.id)}
-              />
-            </>
-          )}
-        </Stack>
-      </div>
-    </Stack>
+          </Stack>
+        </Paper>
+      </Stack>
+    </Container>
   );
 };
