@@ -10,7 +10,6 @@ export const useGetEventShow = (eventId: IdParam) => {
     queryKey: [GET_EVENT_SHOW_QUERY_KEY, eventId],
     queryFn: async () => {
       const data = await eventsClient.getListShows(eventId);
-      console.log(data);
       return data;
     },
     staleTime: 5,

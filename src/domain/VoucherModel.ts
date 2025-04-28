@@ -35,7 +35,7 @@ export interface CreateVoucherDto {
   minQtyPerOrder: number;
   maxQtyPerOrder: number;
   discountCode: string;
-  showings: ShowingVoucherDto[];
+  showingConfigs: ShowingVoucherDto[];
   isAllShowings: boolean;
   source: number;
   status?: VoucherStatus;

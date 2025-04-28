@@ -15,6 +15,19 @@ export enum QuestionBelongsTo {
   TICKET = 'TICKET',
 }
 
+export interface QuestionAnswer {
+  questionId: number;
+  title: string;
+  answer: string[] | string;
+  textAnswer: string;
+  orderId: number;
+  belongsTo: string;
+  questionType: string;
+  attendeeId?: number;
+  firstName?: string;
+  lastName?: string;
+}
+
 export interface QuestionModel {
   id?: number;
   title: string;

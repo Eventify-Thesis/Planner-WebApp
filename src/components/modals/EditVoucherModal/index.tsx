@@ -40,7 +40,7 @@ export const EditVoucherModal = ({
       minQtyPerOrder: 1,
       maxQtyPerOrder: 1,
       discountCode: '',
-      showings: [],
+      showingConfigs: [],
       isAllShowings: false,
       startTime: new Date(),
       endTime: new Date(),
@@ -60,7 +60,7 @@ export const EditVoucherModal = ({
   const handleSubmit = (values: VoucherModel) => {
     if (
       !values.isAllShowings &&
-      (!values.showings || values.showings.length === 0)
+      (!values.showingConfigs || values.showingConfigs.length === 0)
     ) {
       showError(t('voucher.validation.at_least_one_ticket'));
       return;
@@ -89,6 +89,7 @@ export const EditVoucherModal = ({
 
     form.setValues({
       ...voucherQuery.data,
+      discountValue: Number(voucherQuery.data.discountValue),
       startTime: new Date(voucherQuery.data.startTime),
       endTime: new Date(voucherQuery.data.endTime),
     });

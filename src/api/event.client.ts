@@ -183,7 +183,7 @@ export const eventsClient = {
       const response = await httpApi.get<any>(
         `/planner/events/${eventId}/shows`,
       );
-      return response.data.result;
+      return response.data.data.result;
     } catch (e: any) {
       throw new Error(e);
     }
@@ -225,7 +225,7 @@ export const eventsClient = {
   listTickets: async (eventId: IdParam): Promise<any[]> => {
     try {
       const response = await httpApi.get<any>(
-        `/planner/events/${eventId}/tickets`,
+        `/planner/events/${eventId}/ticket-types`,
       );
       return response.data.data.result;
     } catch (e: any) {
@@ -240,5 +240,10 @@ export const eventsClient = {
     } catch (e: any) {
       throw new Error(e);
     }
+  },
+
+  getEventStats: async (eventId: IdParam) => {
+    const response = await httpApi.get<any>('planner/events/' + eventId + '/stats');
+    return response.data.data;
   },
 };

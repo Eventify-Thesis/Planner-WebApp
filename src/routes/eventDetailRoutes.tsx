@@ -4,12 +4,17 @@ import { EventDetailPage } from '../pages/EventDetailPage/EventDetailPage';
 import EventEditPage from '@/pages/EventEditPage';
 
 // Lazy load components for better performance
-const EventAnalytics = React.lazy(
-  () => import('@/components/event/EventAnalytics/EventAnalytics'),
+const EventDashboard = React.lazy(
+  () => import('@/components/event/EventDashboard/EventDashboard'),
 );
 const EventOrders = React.lazy(
   () => import('@/components/event/EventOrders/EventOrders'),
 );
+
+const EventAttendees = React.lazy(
+  () => import('@/components/event/EventAttendees/EventAttendees'),
+);
+
 const EventCheckin = React.lazy(
   () => import('@/components/event/EventCheckin/EventCheckin'),
 );
@@ -44,10 +49,18 @@ export const eventDetailRoutes: RouteObject[] = [
     element: <EventDetailPage />,
     children: [
       {
-        path: 'analytics',
+        path: 'dashboard',
         element: (
           <React.Suspense fallback={<LoadingFallback />}>
-            <EventAnalytics />
+            <EventDashboard />
+          </React.Suspense>
+        ),
+      },
+      {
+        path: '',
+        element: (
+          <React.Suspense fallback={<LoadingFallback />}>
+            <EventDashboard />
           </React.Suspense>
         ),
       },
@@ -56,6 +69,14 @@ export const eventDetailRoutes: RouteObject[] = [
         element: (
           <React.Suspense fallback={<LoadingFallback />}>
             <EventOrders />
+          </React.Suspense>
+        ),
+      },
+      {
+        path: 'attendees',
+        element: (
+          <React.Suspense fallback={<LoadingFallback />}>
+            <EventAttendees />
           </React.Suspense>
         ),
       },

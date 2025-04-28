@@ -1,14 +1,16 @@
 import {
-  BarChartOutlined,
-  OrderedListOutlined,
-  UserOutlined,
-  SettingOutlined,
-  QuestionCircleOutlined,
-  GiftOutlined,
-  ScanOutlined,
-  BorderOutlined,
-} from '@ant-design/icons';
-import { Icon } from '@iconify/react/dist/iconify.js';
+  IconChartBar,
+  IconList,
+  IconUser,
+  IconSettings,
+  IconQuestionMark,
+  IconGift,
+  IconScan,
+  IconUsers,
+  IconMap,
+  IconArmchair,
+  IconArmchair2,
+} from '@tabler/icons-react';
 
 interface MenuItem {
   key: string;
@@ -23,21 +25,27 @@ interface MenuGroup {
   children: MenuItem[];
 }
 
-const analyticsMenuItem: MenuItem = {
-  key: 'analytics',
-  icon: <BarChartOutlined />,
-  label: 'Analytics',
+const dashboardMenuItem: MenuItem = {
+  key: 'dashboard',
+  icon: <IconChartBar size={16} />,
+  label: 'Dashboard',
 };
 
 const ordersMenuItem: MenuItem = {
   key: 'orders',
-  icon: <OrderedListOutlined />,
+  icon: <IconList size={16} />,
   label: 'Order',
+};
+
+const attendeesMenuItem: MenuItem = {
+  key: 'attendees',
+  icon: <IconUsers size={16} />,
+  label: 'Attendee',
 };
 
 const checkinMenuItem: MenuItem = {
   key: 'checkin',
-  icon: <ScanOutlined />,
+  icon: <IconScan size={16} />,
   label: 'Check-in',
 };
 
@@ -45,62 +53,71 @@ const reportMenuGroup: MenuGroup = {
   key: 'report',
   type: 'group',
   label: 'Report',
-  children: [analyticsMenuItem, ordersMenuItem, checkinMenuItem],
+  children: [
+    dashboardMenuItem,
+    ordersMenuItem,
+    attendeesMenuItem,
+    checkinMenuItem,
+  ],
 };
 
 const membersMenuItem: MenuItem = {
   key: 'members',
-  icon: <UserOutlined />,
+  icon: <IconUser size={16} />,
   label: 'Member',
 };
 
 const settingsMenuItem: MenuItem = {
   key: 'edit-event',
-  icon: <SettingOutlined />,
+  icon: <IconSettings size={16} />,
   label: 'Setting',
 };
 
 const seatingPlansMenuItem: MenuItem = {
   key: 'seating-plans',
-  icon: <Icon icon="material-symbols:map" width="16" height="16" />,
+  icon: <IconMap size={16} />,
   label: 'Seating Plans',
 };
 
 const seatmapMenuItem: MenuItem = {
   key: 'seatmap/new',
-  icon: <Icon icon="fluent:seat-16-filled" width="16" height="16" />,
+  icon: <IconArmchair size={16} />,
   label: 'Seat Map',
 };
 
 const seatCategoryMappingMenuItem: MenuItem = {
   key: 'seat-category-mapping',
-  icon: <Icon icon="mdi:seat-outline" width="16" height="16" />,
+  icon: <IconArmchair2 size={16} />,
   label: 'Seat Category Mapping',
 };
 
 const questionsMenuItem: MenuItem = {
   key: 'questions',
-  icon: <QuestionCircleOutlined />,
+  icon: <IconQuestionMark size={16} />,
   label: 'Question',
+};
+
+const seatingMenuGroup: MenuGroup = {
+  key: 'seating',
+  type: 'group',
+  label: 'Seating',
+  children: [
+    seatingPlansMenuItem,
+    seatmapMenuItem,
+    seatCategoryMappingMenuItem,
+  ],
 };
 
 const eventSettingsMenuGroup: MenuGroup = {
   key: 'settings',
   type: 'group',
   label: 'Event Settings',
-  children: [
-    membersMenuItem,
-    settingsMenuItem,
-    seatingPlansMenuItem,
-    seatmapMenuItem,
-    seatCategoryMappingMenuItem,
-    questionsMenuItem,
-  ],
+  children: [membersMenuItem, settingsMenuItem, questionsMenuItem],
 };
 
 const vouchersMenuItem: MenuItem = {
   key: 'vouchers',
-  icon: <GiftOutlined />,
+  icon: <IconGift size={16} />,
   label: 'Voucher',
 };
 
@@ -113,6 +130,7 @@ const marketingMenuGroup: MenuGroup = {
 
 export const menuItems = [
   reportMenuGroup,
+  seatingMenuGroup,
   eventSettingsMenuGroup,
   marketingMenuGroup,
 ];

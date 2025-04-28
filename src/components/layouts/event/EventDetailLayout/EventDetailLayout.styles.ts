@@ -15,9 +15,11 @@ export const LayoutMain = styled(BaseLayout)`
     margin-left: unset;
   }
 
-  background: #70e1f5;
-  background: -webkit-linear-gradient(to bottom, #ffd194, #70e1f5);
-  background: linear-gradient(to bottom, #ffd194, #70e1f5);
+    background: var(--tk-color-gray) !important;
+
+  // background: #70e1f5;
+  // background: -webkit-linear-gradient(to bottom, #ffd194, #70e1f5);
+  // background: linear-gradient(to bottom, #ffd194, #70e1f5);
 `;
 
 export const MainContent = styled.main`

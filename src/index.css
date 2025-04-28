@@ -59,6 +59,77 @@
   --chart-5: hsl(340 75% 55%);
 }
 
+:root {
+  --tk-text: #4b3b5d;
+  --tk-primary: #472e78;
+  --tk-secondary: #efebf7;
+  --tk-secondary-text: #7c7091;
+  --tk-color-gray: #f7f6f8;
+  --tk-color-gray-2: #e2e2e2;
+  --tk-color-gray-dark: #838383;
+  --tk-color-money-green: #00b894;
+  --tk-color-blue: rgba(49, 105, 255, 0.62);
+  --tk-link-color: var(--tk-primary);
+
+  --tk-color-white: #ffffff;
+  --tk-color-black: #000000;
+
+  --tk-spacing-xs: 3px;
+  --tk-spacing-sm: 5px;
+  --tk-spacing-md: 10px;
+  --tk-spacing-lg: 20px;
+  --tk-spacing-xl: 25px;
+
+  --tk-radius-xs: 3px;
+  --tk-radius-sm: 5px;
+  --tk-radius-md: 7px;
+  --tk-radius-lg: 10px;
+  --tk-radius-xl: 15px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  height:auto;
+}
+
+body {
+  font-family: 'Varela Round', sans-serif;
+  color: var(--tk-text);
+  background-color: var(--tk-color-gray) !important;
+  height: auto;
+}
+
+fieldset {
+  border: none;
+  padding: 0;
+}
+
+a {
+  text-decoration: none;
+  color: var(--tk-link-color);
+}
+
+.mantine-InputWrapper-root, .mantine-Switch-root {
+  margin-bottom: var(--tk-spacing-lg);
+}
+
+.mantine-ScrollArea-viewport {
+  padding-bottom: 0;
+}
+
+.mantine-Modal-content {
+  @include scrollbar();
+}
+
+.mantine-SimpleGrid-root {
+  .mantine-InputWrapper-root, .mantine-Switch-root {
+    margin-bottom: 0;
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -79,11 +150,6 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
