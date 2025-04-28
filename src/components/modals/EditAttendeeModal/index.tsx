@@ -85,14 +85,14 @@ export const EditAttendeeModal = ({
       <form onSubmit={form.onSubmit(handleSubmit)}>
         <InputGroup>
           <TextInput
-            {...form.getInputProps('first_name')}
+            {...form.getInputProps('firstName')}
             label={t`First name`}
             placeholder={t`Homer`}
             required
           />
 
           <TextInput
-            {...form.getInputProps('last_name')}
+            {...form.getInputProps('lastName')}
             label={t`Last name`}
             placeholder={t`Simpson`}
             required
