@@ -16,13 +16,7 @@ import { notificationController } from '@/controllers/notificationController';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import dayjs from 'dayjs';
-import {
-  useEventInfoDraft,
-  useUpdateEventShow,
-  useUpdateEventSetting,
-  useUpdateEventPayment,
-} from '@/mutations/useEventMutations';
-
+import { useEventMutations } from '@/queries/useEventQueries';
 const { Step } = Steps;
 
 const StyledFormContainer = styled.div`
@@ -43,13 +37,10 @@ const EventEditPage: React.FC = () => {
   const { eventId } = params;
   const { t } = useTranslation();
   const [current, setCurrent] = useState(0);
-  const formRefs = [useRef(), useRef(), useRef(), useRef()];
+  const formRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
 
-  // React Query mutations
-  const eventInfoMutation = useEventInfoDraft();
-  const showMutation = useUpdateEventShow();
-  const settingMutation = useUpdateEventSetting();
-  const paymentMutation = useUpdateEventPayment();
+  const { infoDraftMutation, showMutation, settingMutation, paymentMutation } =
+    useEventMutations(eventId);
 
   const steps = [
     { title: 'Event Info', key: 'info', content: EventInfoForm },
@@ -164,7 +155,7 @@ const EventEditPage: React.FC = () => {
 
   const handleSaveAsDraft = async (values: any) => {
     try {
-      const event = await eventInfoMutation.mutateAsync({
+      const event = await infoDraftMutation.mutateAsync({
         ...values,
         id: eventId,
       });

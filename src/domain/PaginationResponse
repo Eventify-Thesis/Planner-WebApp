@@ -1,4 +1,4 @@
-export interface PaginationResponse {
+export interface PaginationResponse<T> {
   totalDocs: number;
   limit: number;
   totalPages: number;
@@ -8,5 +8,5 @@ export interface PaginationResponse {
   hasNextPage: boolean;
   prevPage: number | null;
   nextPage: number | null;
-  docs: MemberModel[];
+  docs: T[];
 }

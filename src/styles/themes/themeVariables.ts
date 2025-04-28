@@ -63,20 +63,6 @@ const getThemeVariables = (theme: ThemeType) => css`
   --dashboard-map-control-disabled-background-color: ${themeObject[theme]
     .dashboardMapControlDisabledBackground};
 
-  --chart-tooltip-label-color: ${themeObject[theme].chartTooltipLabel};
-  --chart-color1: ${themeObject[theme].chartColor1};
-  --chart-rgb-color1: ${hexToRGB(themeObject[theme].chartColor1)};
-  --chart-color1-tint: ${themeObject[theme].chartColor1Tint};
-  --chart-color2: ${themeObject[theme].chartColor2};
-  --chart-color2-tint: ${themeObject[theme].chartColor2Tint};
-  --chart-color3: ${themeObject[theme].chartColor3};
-  --chart-color3-tint: ${themeObject[theme].chartColor3Tint};
-  --chart-color4: ${themeObject[theme].chartColor4};
-  --chart-color4-tint: ${themeObject[theme].chartColor4Tint};
-  --chart-color5: ${themeObject[theme].chartColor5};
-  --chart-rgb-color5: ${hexToRGB(themeObject[theme].chartColor5)};
-  --chart-color5-tint: ${themeObject[theme].chartColor5Tint};
-
   --notification-success-color: ${themeObject[theme].notificationSuccess};
   --notification-primary-color: ${themeObject[theme].notificationPrimary};
   --notification-warning-color: ${themeObject[theme].notificationWarning};

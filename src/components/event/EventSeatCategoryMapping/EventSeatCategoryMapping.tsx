@@ -21,6 +21,8 @@ import {
   useGetSeatingPlanList,
   useGetSeatingPlanCategories,
 } from '@/queries/useSeatingPlanQueries';
+import { PageBody } from '@/components/common/PageBody';
+import { PageTitle } from '@/components/common/MantinePageTitle';
 
 const { Title, Paragraph } = Typography;
 
@@ -270,112 +272,112 @@ const EventSeatCategoryMapping: React.FC = () => {
   ];
 
   return (
-    <Card>
-      <Title level={3} style={{ marginBottom: 4 }}>
-        Seat Category Mapping
-      </Title>
-      <Paragraph style={{ marginBottom: 24 }}>
-        Use this tool to map each seat category in the selected seating plan to
-        a corresponding ticket type for the chosen show.
-      </Paragraph>
+    <div style={{ padding: 24 }}>
+      <PageBody>
+        <PageTitle>Seat Category Mapping</PageTitle>
+        <Paragraph style={{ marginBottom: 24 }}>
+          Use this tool to map each seat category in the selected seating plan
+          to a corresponding ticket type for the chosen show.
+        </Paragraph>
 
-      <Form layout="vertical">
-        <Row gutter={16}>
-          <Col xs={24} sm={12}>
-            <Form.Item label="Show" style={{ marginBottom: 16 }}>
-              <Select
-                placeholder="Select a show"
-                value={selectedShow}
-                onChange={handleShowChange}
-                allowClear
-              >
-                {shows?.map((show) => (
-                  <Select.Option key={show.id} value={show.id}>
-                    {show.name}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </Col>
-          <Col xs={24} sm={12}>
-            <Form.Item label="Seating Plan" style={{ marginBottom: 16 }}>
-              <Select
-                placeholder="Select a seating plan"
-                value={selectedSeatingPlan}
-                onChange={handleSeatingPlanChange}
-                disabled={!selectedShow || isLoadingMappings}
-                loading={isLoadingMappings}
-                allowClear
-              >
-                {seatingPlans?.map((plan) => {
-                  const showSeatingPlanId = currentShow?.seatingPlanId;
-                  const isPlanDisabled =
-                    showSeatingPlanId && showSeatingPlanId !== plan.id;
-
-                  return (
-                    <Select.Option
-                      key={plan.id}
-                      value={plan.id}
-                      disabled={isPlanDisabled}
-                    >
-                      {plan.name}
-                      {showSeatingPlanId === plan.id ? ' (Current)' : ''}
+        <Form layout="vertical">
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
+              <Form.Item label="Show" style={{ marginBottom: 16 }}>
+                <Select
+                  placeholder="Select a show"
+                  value={selectedShow}
+                  onChange={handleShowChange}
+                  allowClear
+                >
+                  {shows?.map((show) => (
+                    <Select.Option key={show.id} value={show.id}>
+                      {show.name}
                     </Select.Option>
-                  );
-                })}
-              </Select>
-            </Form.Item>
-          </Col>
-        </Row>
-      </Form>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item label="Seating Plan" style={{ marginBottom: 16 }}>
+                <Select
+                  placeholder="Select a seating plan"
+                  value={selectedSeatingPlan}
+                  onChange={handleSeatingPlanChange}
+                  disabled={!selectedShow || isLoadingMappings}
+                  loading={isLoadingMappings}
+                  allowClear
+                >
+                  {seatingPlans?.map((plan) => {
+                    const showSeatingPlanId = currentShow?.seatingPlanId;
+                    const isPlanDisabled =
+                      showSeatingPlanId && showSeatingPlanId !== plan.id;
 
-      <Divider />
+                    return (
+                      <Select.Option
+                        key={plan.id}
+                        value={plan.id}
+                        disabled={isPlanDisabled}
+                      >
+                        {plan.name}
+                        {showSeatingPlanId === plan.id ? ' (Current)' : ''}
+                      </Select.Option>
+                    );
+                  })}
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
 
-      <Table
-        dataSource={mappings}
-        columns={columns}
-        rowKey="category"
-        pagination={false}
-        loading={isLoadingMappings || isLoadingTickets || isLoadingCategories}
-        style={{ marginBottom: 16 }}
-      />
+        <Divider />
 
-      <Space>
-        {existingMappings.length > 0 && (
+        <Table
+          dataSource={mappings}
+          columns={columns}
+          rowKey="category"
+          pagination={false}
+          loading={isLoadingMappings || isLoadingTickets || isLoadingCategories}
+          style={{ marginBottom: 16 }}
+        />
+
+        <Space>
+          {existingMappings.length > 0 && (
+            <Button
+              type="primary"
+              onClick={() => handleLock(!isLocked)}
+              loading={lockMutation.isPending}
+            >
+              {isLocked ? 'Unlock' : 'Lock'}
+            </Button>
+          )}
+
           <Button
             type="primary"
-            onClick={() => handleLock(!isLocked)}
-            loading={lockMutation.isPending}
+            onClick={handleSave}
+            loading={
+              batchCreateMutation.isPending || batchUpdateMutation.isPending
+            }
+            disabled={
+              !selectedShow ||
+              !selectedSeatingPlan ||
+              mappings.length === 0 ||
+              isLocked
+            }
           >
-            {isLocked ? 'Unlock' : 'Lock'}
+            Save Mappings
           </Button>
-        )}
-
-        <Button
-          type="primary"
-          onClick={handleSave}
-          loading={
-            batchCreateMutation.isPending || batchUpdateMutation.isPending
-          }
-          disabled={
-            !selectedShow ||
-            !selectedSeatingPlan ||
-            mappings.length === 0 ||
-            isLocked
-          }
-        >
-          Save Mappings
-        </Button>
-        <Button
-          danger
-          onClick={handleDelete}
-          loading={deleteByShowIdMutation.isPending}
-          disabled={!selectedShow || isLocked}
-        >
-          Delete All Mappings
-        </Button>
-      </Space>
-    </Card>
+          <Button
+            danger
+            onClick={handleDelete}
+            loading={deleteByShowIdMutation.isPending}
+            disabled={!selectedShow || isLocked}
+          >
+            Delete All Mappings
+          </Button>
+        </Space>
+      </PageBody>
+    </div>
   );
 };
 

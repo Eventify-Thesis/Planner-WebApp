@@ -23,7 +23,7 @@ interface SearchBarWrapperProps {
 export const SearchBarWrapper = ({
   setSearchParams,
   searchParams,
-  pagination,
+  // pagination,
   placeholder,
 }: SearchBarWrapperProps) => {
   const { t } = useTranslation();
@@ -43,25 +43,25 @@ export const SearchBarWrapper = ({
         })
       }
       placeholder={placeholder || t`Search...`}
-      sortProps={
-        pagination
-          ? {
-              selected:
-                searchParams.sortBy && searchParams.sortDirection
-                  ? searchParams.sortBy + ':' + searchParams.sortDirection
-                  : pagination?.default_sort +
-                    ':' +
-                    pagination?.default_sort_direction,
-              options: pagination?.allowed_sorts,
-              onSortSelect: (key, sortDirection) => {
-                setSearchParams({
-                  sortBy: key,
-                  sortDirection: sortDirection,
-                });
-              },
-            }
-          : undefined
-      }
+      // sortProps={
+      //   pagination
+      //     ? {
+      //         selected:
+      //           searchParams.sortBy && searchParams.sortDirection
+      //             ? searchParams.sortBy + ':' + searchParams.sortDirection
+      //             : pagination?.default_sort +
+      //               ':' +
+      //               pagination?.default_sort_direction,
+      //         options: pagination?.allowed_sorts,
+      //         onSortSelect: (key, sortDirection) => {
+      //           setSearchParams({
+      //             sortBy: key,
+      //             sortDirection: sortDirection,
+      //           });
+      //         },
+      //       }
+      //     : undefined
+      // }
     />
   );
 };

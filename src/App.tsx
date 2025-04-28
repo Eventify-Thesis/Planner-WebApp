@@ -15,7 +15,6 @@ import { viVN } from '@clerk/localizations';
 import { enUS } from '@clerk/localizations';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './utils/queryClient';
-import './styles/global.scss';
 
 // Import your Publishable Key
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;

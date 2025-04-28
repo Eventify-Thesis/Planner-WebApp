@@ -89,7 +89,22 @@ export enum EventLifecycleStatus {
   UPCOMING = 'UPCOMING',
   ENDED = 'ENDED',
 }
-
+export interface Message {
+  id?: IdParam;
+  subject: string;
+  message: string;
+  message_preview: string;
+  type: 'TICKET' | 'EVENT';
+  is_test: boolean;
+  order_id?: number;
+  attendee_ids?: IdParam[];
+  ticket_type_ids?: IdParam[];
+  created_at?: string;
+  updated_at?: string;
+  sent_at?: string;
+  sent_by_user?: string;
+  status?: 'SENT' | 'PROCESSING' | 'FAILED';
+}
 export interface Event extends EventBase {
   id?: IdParam;
   slug: string;
@@ -490,4 +505,34 @@ export interface QuestionAnswer {
   attendee_id?: number;
   first_name?: string;
   last_name?: string;
+}
+
+export interface EventDailyStats {
+  date: string;
+  total_fees: number;
+  total_tax: number;
+  total_sales_gross: number;
+  tickets_sold: number;
+  orders_created: number;
+}
+
+export interface CheckInStats {
+  total_checked_in_attendees: number;
+  total_attendees: number;
+}
+
+export interface EventStats {
+  daily_stats: EventDailyStats[];
+  start_date: string;
+  end_date: string;
+  check_in_stats: CheckInStats;
+  total_tickets_sold: number;
+  total_ticket_sold_percentage_change: number;
+  total_orders: number;
+  total_orders_percentage_change: number;
+  total_gross_sales: number;
+  total_gross_sales_percentage_change: number;
+  total_tax: number;
+  total_fees: number;
+  total_views: number;
 }

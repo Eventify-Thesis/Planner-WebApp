@@ -36,6 +36,8 @@ import { ToolBar } from '@/components/common/ToolBar';
 import { SearchBarWrapper } from '@/components/common/SearchBar';
 import { useFilterQueryParamSync } from '@/hooks/useFilterQueryParamSync';
 import { QueryFilters } from '@tanstack/react-query';
+import { PageBody } from '@/components/common/PageBody';
+import { PageTitle } from '@/components/common/MantinePageTitle';
 
 const { Text } = Typography;
 
@@ -249,140 +251,146 @@ const EventMembers: React.FC = () => {
         padding: 24,
       }}
     >
-      <ToolBar
-        searchComponent={() => (
-          <SearchBarWrapper
-            placeholder={t`Search by name, email...`}
-            setSearchParams={setSearchParams}
-            searchParams={searchParams}
-            // pagination={pagination}
-          />
-        )}
-      >
-        <Button
-          type="primary"
-          icon={<UserAddOutlined />}
-          onClick={showAddModal}
-          style={{
-            color: BASE_COLORS.black,
-            fontWeight: FONT_WEIGHT.bold,
-            backgroundColor: 'var(--primary-color)',
-          }}
+      <PageBody>
+        <PageTitle>Members</PageTitle>
+        <ToolBar
+          searchComponent={() => (
+            <SearchBarWrapper
+              placeholder={t`Search by name, email...`}
+              setSearchParams={setSearchParams}
+              searchParams={searchParams}
+              // pagination={pagination}
+            />
+          )}
         >
-          {t('members.addMember')}
-        </Button>
-      </ToolBar>
-      <Card>
-        <Table
-          columns={columns}
-          dataSource={members}
-          rowKey="id"
-          loading={isLoading}
-          pagination={{
-            current: pagination.current,
-            pageSize: pagination.limit,
-            total: totalDocs,
-            onChange: (page, pageSize) =>
-              setPagination({ current: page, limit: pageSize }),
-          }}
-        />
-      </Card>
+          <Button
+            type="primary"
+            icon={<UserAddOutlined />}
+            onClick={showAddModal}
+            style={{
+              color: BASE_COLORS.black,
+              fontWeight: FONT_WEIGHT.bold,
+              backgroundColor: 'var(--primary-color)',
+            }}
+          >
+            {t('members.addMember')}
+          </Button>
+        </ToolBar>
+        <Card>
+          <Table
+            columns={columns}
+            dataSource={members}
+            rowKey="id"
+            loading={isLoading}
+            pagination={{
+              current: pagination.current,
+              pageSize: pagination.limit,
+              total: totalDocs,
+              onChange: (page, pageSize) =>
+                setPagination({ current: page, limit: pageSize }),
+            }}
+          />
+        </Card>
 
-      <Modal
-        title={
-          editingMember
-            ? t('members.modal.editTitle')
-            : t('members.modal.addTitle')
-        }
-        open={isModalVisible}
-        onOk={handleModalOk}
-        onCancel={() => setIsModalVisible(false)}
-        confirmLoading={
-          addMemberMutation.isPending || updateMemberRoleMutation.isPending
-        }
-        width={1200}
-      >
-        <Form form={form} layout="vertical">
-          <div style={{ padding: '0 24px' }}>
-            {!editingMember && (
+        <Modal
+          title={
+            editingMember
+              ? t('members.modal.editTitle')
+              : t('members.modal.addTitle')
+          }
+          open={isModalVisible}
+          onOk={handleModalOk}
+          onCancel={() => setIsModalVisible(false)}
+          confirmLoading={
+            addMemberMutation.isPending || updateMemberRoleMutation.isPending
+          }
+          width={1200}
+        >
+          <Form form={form} layout="vertical">
+            <div style={{ padding: '0 24px' }}>
+              {!editingMember && (
+                <Form.Item
+                  name="email"
+                  label={t('members.form.email')}
+                  rules={[
+                    {
+                      required: true,
+                      message: t('members.form.emailRequired'),
+                    },
+                    { type: 'email', message: t('members.form.emailInvalid') },
+                  ]}
+                >
+                  <Input />
+                </Form.Item>
+              )}
               <Form.Item
-                name="email"
-                label={t('members.form.email')}
+                name="role"
+                label={t('members.form.role')}
                 rules={[
-                  { required: true, message: t('members.form.emailRequired') },
-                  { type: 'email', message: t('members.form.emailInvalid') },
+                  { required: true, message: t('members.form.roleRequired') },
                 ]}
               >
-                <Input />
-              </Form.Item>
-            )}
-            <Form.Item
-              name="role"
-              label={t('members.form.role')}
-              rules={[
-                { required: true, message: t('members.form.roleRequired') },
-              ]}
-            >
-              <Select>
-                {Object.entries(EVENT_ROLE_LABELS)
-                  .filter(([value]) => {
-                    const roleHierarchy = {
-                      [EventRole.OWNER]: 5,
-                      [EventRole.ADMIN]: 4,
-                      [EventRole.MANAGER]: 3,
-                      [EventRole.ENTRY_STAFF]: 2,
-                      [EventRole.VENDOR]: 1,
-                    };
+                <Select>
+                  {Object.entries(EVENT_ROLE_LABELS)
+                    .filter(([value]) => {
+                      const roleHierarchy = {
+                        [EventRole.OWNER]: 5,
+                        [EventRole.ADMIN]: 4,
+                        [EventRole.MANAGER]: 3,
+                        [EventRole.ENTRY_STAFF]: 2,
+                        [EventRole.VENDOR]: 1,
+                      };
 
-                    return (
-                      roleHierarchy[value as EventRole] <
-                      roleHierarchy[
-                        EventRole[eventBrief!.role] || EventRole.VENDOR
-                      ]
-                    );
-                  })
-                  .map(([value, label]) => (
-                    <Select.Option key={value} value={value}>
-                      {t(`members.role.${value}`)}
-                    </Select.Option>
-                  ))}
-              </Select>
-            </Form.Item>
-
-            <Divider>{t('members.permissions.title')}</Divider>
-            <div style={{ marginTop: 24 }}>
-              <Table
-                columns={[
-                  {
-                    title: t('members.permissions.permission'),
-                    dataIndex: 'permission',
-                    key: 'permission',
-                    width: 200,
-                    fixed: 'left',
-                    render: (permission: EventPermission) => {
-                      const permissionKey = permission.replace(
-                        'org:event:',
-                        '',
+                      return (
+                        roleHierarchy[value as EventRole] <
+                        roleHierarchy[
+                          EventRole[eventBrief!.role] || EventRole.VENDOR
+                        ]
                       );
-                      return t(`event.${permissionKey}`);
+                    })
+                    .map(([value, label]) => (
+                      <Select.Option key={value} value={value}>
+                        {t(`members.role.${value}`)}
+                      </Select.Option>
+                    ))}
+                </Select>
+              </Form.Item>
+
+              <Divider>{t('members.permissions.title')}</Divider>
+              <div style={{ marginTop: 24 }}>
+                <Table
+                  columns={[
+                    {
+                      title: t('members.permissions.permission'),
+                      dataIndex: 'permission',
+                      key: 'permission',
+                      width: 200,
+                      fixed: 'left',
+                      render: (permission: EventPermission) => {
+                        const permissionKey = permission.replace(
+                          'org:event:',
+                          '',
+                        );
+                        return t(`event.${permissionKey}`);
+                      },
                     },
-                  },
-                  ...permissionColumns,
-                ]}
-                dataSource={Object.entries(EVENT_PERMISSION_LABELS).map(
-                  ([permission]) => ({
-                    permission,
-                  }),
-                )}
-                rowKey="permission"
-                pagination={false}
-                scroll={{ x: 1000 }}
-                size="small"
-              />
+                    ...permissionColumns,
+                  ]}
+                  dataSource={Object.entries(EVENT_PERMISSION_LABELS).map(
+                    ([permission]) => ({
+                      permission,
+                    }),
+                  )}
+                  rowKey="permission"
+                  pagination={false}
+                  scroll={{ x: 1000 }}
+                  size="small"
+                />
+              </div>
             </div>
-          </div>
-        </Form>
-      </Modal>
+          </Form>
+        </Modal>
+      </PageBody>
     </div>
   );
 };

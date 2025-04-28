@@ -13,8 +13,10 @@ import {
   Text,
   Paper,
   Container,
+  Grid,
 } from '@mantine/core';
-import { DateTimePicker } from '@mantine/dates';
+import { DatePicker, Form } from 'antd';
+import dayjs from 'dayjs';
 import {
   IconAlertCircle,
   IconPercentage,
@@ -44,6 +46,7 @@ export const VoucherForm = ({ form }: VoucherFormProps) => {
   const { t } = useTranslation();
   const { data: event } = useGetEvent(eventId);
   const { data: shows } = useGetEventShow(eventId);
+
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedShows, setSelectedShows] = useState<any[]>([]);
   const [ticketCreationType, setTicketCreationType] = useState<
@@ -163,20 +166,56 @@ export const VoucherForm = ({ form }: VoucherFormProps) => {
                     required={ticketCreationType === 'single'}
                   />
 
-                  <InputGroup>
-                    <DateTimePicker
-                      {...form.getInputProps('startTime')}
-                      label={t('voucher.start_time')}
-                      placeholder={t('voucher.start_time_placeholder')}
-                      valueFormat="DD/MM/YYYY HH:mm"
-                    />
-                    <DateTimePicker
-                      {...form.getInputProps('endTime')}
-                      label={t('voucher.end_time')}
-                      placeholder={t('voucher.end_time_placeholder')}
-                      valueFormat="DD/MM/YYYY HH:mm"
-                    />
-                  </InputGroup>
+                  <Grid gutter="md">
+                    <Grid.Col span={6}>
+                      <Form.Item label={t('voucher.start_time')} required>
+                        <DatePicker
+                          value={
+                            form.values.startTime
+                              ? dayjs(form.values.startTime)
+                              : null
+                          }
+                          showTime
+                          format="DD/MM/YYYY HH:mm"
+                          placeholder={t('voucher.start_time_placeholder')}
+                          style={{ width: '100%' }}
+                          onChange={(date) =>
+                            form.setFieldValue(
+                              'startTime',
+                              date?.toDate() || null,
+                            )
+                          }
+                        />
+                      </Form.Item>
+                    </Grid.Col>
+                    <Grid.Col span={6}>
+                      <Form.Item label={t('voucher.end_time')} required>
+                        <DatePicker
+                          value={
+                            form.values.endTime
+                              ? dayjs(form.values.endTime)
+                              : null
+                          }
+                          showTime
+                          format="DD/MM/YYYY HH:mm"
+                          placeholder={t('voucher.end_time_placeholder')}
+                          style={{ width: '100%' }}
+                          disabledDate={(current) => {
+                            const startTime = form.values.startTime;
+                            return startTime
+                              ? current && current < dayjs(startTime)
+                              : false;
+                          }}
+                          onChange={(date) =>
+                            form.setFieldValue(
+                              'endTime',
+                              date?.toDate() || null,
+                            )
+                          }
+                        />
+                      </Form.Item>
+                    </Grid.Col>
+                  </Grid>
                 </Stack>
               </div>
             </Tabs.Panel>
