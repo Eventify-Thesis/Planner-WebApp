@@ -233,6 +233,17 @@ export const eventsClient = {
     }
   },
 
+  listTicketsByShow: async (eventId: IdParam, showId: number): Promise<any[]> => {
+    try {
+      const response = await httpApi.get<any>(
+        `/planner/events/${eventId}/shows/${showId}/ticket-types`,
+      );
+      return response.data.data.result;
+    } catch (e: any) {
+      throw new Error(e);
+    }
+  },
+
   createDraft: async (data: any): Promise<any> => {
     try {
       const response = await httpApi.post<any>('/planner/events/draft', data);

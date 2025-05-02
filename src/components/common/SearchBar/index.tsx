@@ -1,4 +1,4 @@
-import { TextInput, TextInputProps } from '@mantine/core';
+import { Select, TextInput, TextInputProps } from '@mantine/core';
 import { IconSearch, IconX } from '@tabler/icons-react';
 import classes from './SearchBar.module.scss';
 import { useEffect, useState } from 'react';
@@ -11,6 +11,9 @@ import { useTranslation } from 'react-i18next';
 interface SearchBarProps extends TextInputProps {
   onClear: () => void;
   sortProps?: SortSelectorProps | undefined;
+  shows?: { value: string; label: string }[];
+  setSearchParams: (updates: Partial<QueryFilters>) => void;
+  searchParams: Partial<QueryFilters>;
 }
 
 interface SearchBarWrapperProps {
@@ -18,12 +21,13 @@ interface SearchBarWrapperProps {
   setSearchParams: (updates: Partial<QueryFilters>) => void;
   searchParams: Partial<QueryFilters>;
   pagination?: PaginationData;
+  shows?: { value: string; label: string }[];
 }
 
 export const SearchBarWrapper = ({
   setSearchParams,
   searchParams,
-  // pagination,
+  shows,
   placeholder,
 }: SearchBarWrapperProps) => {
   const { t } = useTranslation();
@@ -42,6 +46,9 @@ export const SearchBarWrapper = ({
           page: 1,
         })
       }
+      shows={shows}
+      setSearchParams={setSearchParams}
+      searchParams={searchParams}
       placeholder={placeholder || t`Search...`}
       // sortProps={
       //   pagination
@@ -71,6 +78,9 @@ export const SearchBar = ({
   onClear,
   value,
   onChange,
+  shows,
+  setSearchParams,
+  searchParams,
   ...props
 }: SearchBarProps) => {
   const { t } = useTranslation();
@@ -105,6 +115,18 @@ export const SearchBar = ({
           />
         }
       />
+
+      {shows && (
+        <Select
+          placeholder={t`Select show`}
+          data={shows}
+          value={searchParams.showId || undefined}
+          onChange={(value) => setSearchParams({ showId: value, page: 1 })}
+          clearable
+          style={{ width: '200px', flex: '0 0 auto' }}
+          size="md"
+        />
+      )}
 
       {/* {sortProps && (
         <SortSelector

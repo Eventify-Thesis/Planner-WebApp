@@ -16,7 +16,7 @@ const EventAttendees = React.lazy(
 );
 
 const EventCheckin = React.lazy(
-  () => import('@/components/event/EventCheckin/EventCheckin'),
+  () => import('@/components/event/EventCheckInLists/EventCheckInLists'),
 );
 const EventMembers = React.lazy(
   () => import('@/components/event/EventMembers/EventMembers'),

@@ -418,6 +418,7 @@ export interface QueryFilters {
   page?: number;
   limit?: number;
   keyword?: string;
+  showId?: string;
   sortBy?: string;
   sortDirection?: string;
   filterFields?: QueryFilterFields;

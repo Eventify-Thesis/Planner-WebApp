@@ -33,7 +33,9 @@ const EventDashboardPage: React.FC = () => {
   const renderContent = () => {
     if (isLoading) {
       return (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
+        <div
+          style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}
+        >
           <Spin size="large" />
         </div>
       );
