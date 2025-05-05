@@ -40,6 +40,9 @@ const EventSeatCategoryMapping = React.lazy(
       '@/components/event/EventSeatCategoryMapping/EventSeatCategoryMapping'
     ),
 );
+const EventMarketing = React.lazy(
+  () => import('@/pages/EventDetailPage/MarketingPage/MarketingPage'),
+);
 
 const LoadingFallback = () => <div>Loading...</div>;
 
@@ -48,6 +51,14 @@ export const eventDetailRoutes: RouteObject[] = [
     path: '/events/:eventId',
     element: <EventDetailPage />,
     children: [
+      {
+        path: 'marketing',
+        element: (
+          <React.Suspense fallback={<LoadingFallback />}>
+            <EventMarketing />
+          </React.Suspense>
+        ),
+      },
       {
         path: 'dashboard',
         element: (

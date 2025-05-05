@@ -12,13 +12,13 @@ interface SearchBarProps extends TextInputProps {
   onClear: () => void;
   sortProps?: SortSelectorProps | undefined;
   shows?: { value: string; label: string }[];
-  setSearchParams: (updates: Partial<QueryFilters>) => void;
-  searchParams: Partial<QueryFilters>;
+  setSearchParams?: (updates: Partial<QueryFilters>) => void;
+  searchParams?: Partial<QueryFilters>;
 }
 
 interface SearchBarWrapperProps {
   placeholder?: string;
-  setSearchParams: (updates: Partial<QueryFilters>) => void;
+  setSearchParams?: (updates: Partial<QueryFilters>) => void;
   searchParams: Partial<QueryFilters>;
   pagination?: PaginationData;
   shows?: { value: string; label: string }[];

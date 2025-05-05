@@ -10,6 +10,7 @@ import {
   IconMap,
   IconArmchair,
   IconArmchair2,
+  IconBrandFacebook,
 } from '@tabler/icons-react';
 
 interface MenuItem {
@@ -49,6 +50,12 @@ const checkinMenuItem: MenuItem = {
   label: 'Check-in',
 };
 
+const marketingMenuItem: MenuItem = {
+  key: 'marketing',
+  icon: <IconBrandFacebook size={16} />,
+  label: 'Marketing',
+};
+
 const reportMenuGroup: MenuGroup = {
   key: 'report',
   type: 'group',
@@ -58,6 +65,7 @@ const reportMenuGroup: MenuGroup = {
     ordersMenuItem,
     attendeesMenuItem,
     checkinMenuItem,
+    marketingMenuItem,
   ],
 };
 

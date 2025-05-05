@@ -197,7 +197,7 @@ export const CheckInListList = ({
                             onClick: () => {
                               navigator.clipboard
                                 .writeText(
-                                  `${window.location.origin}/check-in/${list.shortId}`,
+                                  `${window.location.origin}/events/${list.eventId}/check-in/${list.shortId}`,
                                 )
                                 .then(() => {
                                   showSuccess(
@@ -211,7 +211,7 @@ export const CheckInListList = ({
                             icon: <IconExternalLink size={14} />,
                             onClick: () => {
                               window.open(
-                                `/check-in/${list.shortId}`,
+                                `/events/${list.eventId}/check-in/${list.shortId}`,
                                 '_blank',
                               );
                             },

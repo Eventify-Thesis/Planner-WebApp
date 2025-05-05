@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { useGetCheckInListPublic } from '../../../queries/useGetCheckInListPublic.ts';
+import { useGetCheckInListDetail } from '../../../queries/useGetCheckInListDetail.ts';
 import { useState } from 'react';
 import { useDebouncedValue, useDisclosure, useNetwork } from '@mantine/hooks';
 import { QueryFilters } from '@/types/types.ts';
@@ -10,9 +10,9 @@ import { ActionIcon, Button, Loader, Modal, Progress } from '@mantine/core';
 import { SearchBar } from '../../common/SearchBar';
 import { IconInfoCircle, IconQrcode, IconTicket } from '@tabler/icons-react';
 import { QRScannerComponent } from '../../common/AttendeeCheckInTable/QrScanner.tsx';
-import { useGetCheckInListAttendees } from '../../../queries/useGetCheckInListAttendeesPublic.ts';
-import { useCreateCheckInPublic } from '../../../mutations/useCreateCheckInPublic.ts';
-import { useDeleteCheckInPublic } from '../../../mutations/useDeleteCheckInPublic.ts';
+import { useGetCheckInListAttendees } from '../../../queries/useGetCheckInListAttendees.ts';
+import { useCreateCheckIn } from '../../../mutations/useCreateCheckIn.ts';
+import { useDeleteCheckIn } from '../../../mutations/useDeleteCheckIn.ts';
 import { NoResultsSplash } from '../../common/NoResultsSplash';
 import { Countdown } from './Countdown';
 import Truncate from '@/components/common/Truncate';
@@ -21,10 +21,11 @@ import { AttendeeModel } from '@/domain/OrderModel.ts';
 import { Trans, useTranslation } from 'react-i18next';
 
 const CheckIn = () => {
+  const { eventId } = useParams();
   const { t } = useTranslation();
   const networkStatus = useNetwork();
   const { checkInListShortId } = useParams();
-  const CheckInListQuery = useGetCheckInListPublic(checkInListShortId);
+  const CheckInListQuery = useGetCheckInListDetail(eventId, checkInListShortId);
   const checkInList = CheckInListQuery?.data?.data;
   const [searchQuery, setSearchQuery] = useState('');
   const [searchQueryDebounced] = useDebouncedValue(searchQuery, 200);
@@ -34,36 +35,44 @@ const CheckIn = () => {
       CheckInListQuery.refetch();
     },
   });
-  const tickets = checkInList?.tickets;
+  const ticketTypes = checkInList?.ticketTypes;
   const queryFilters: QueryFilters = {
     pageNumber: 1,
-    query: searchQueryDebounced,
+    keyword: searchQueryDebounced,
     perPage: 100,
     filterFields: {
       status: { operator: 'eq', value: 'ACTIVE' },
     },
   };
   const attendeesQuery = useGetCheckInListAttendees(
+    eventId,
     checkInListShortId,
     queryFilters,
-    checkInList?.is_active && !checkInList?.is_expired,
+    checkInList?.isActive && !checkInList?.isExpired,
   );
-  const attendees = attendeesQuery?.data?.data;
-  const checkInMutation = useCreateCheckInPublic(queryFilters);
-  const deleteCheckInMutation = useDeleteCheckInPublic(queryFilters);
+  const attendees = attendeesQuery?.data?.items;
+
+  const checkInMutation = useCreateCheckIn({
+    eventId,
+    pagination: queryFilters,
+  });
+  const deleteCheckInMutation = useDeleteCheckIn({
+    eventId,
+    pagination: queryFilters,
+  });
 
   const handleCheckInToggle = (attendee: AttendeeModel) => {
-    if (attendee.check_in) {
+    if (attendee.checkIn) {
       deleteCheckInMutation.mutate(
         {
           checkInListShortId: checkInListShortId,
-          checkInShortId: attendee.check_in.short_id,
+          checkInShortId: attendee.checkIn.shortId,
         },
         {
           onSuccess: () => {
             showSuccess(
               <Trans>
-                {attendee.first_name} <b>checked out</b> successfully
+                {attendee.firstName} <b>checked out</b> successfully
               </Trans>,
             );
           },
@@ -73,9 +82,7 @@ const CheckIn = () => {
               return;
             }
 
-            showError(
-              error?.response?.data.message || t`Unable to check out attendee`,
-            );
+            showError(error?.data.message || t`Unable to check out attendee`);
           },
         },
       );
@@ -85,20 +92,20 @@ const CheckIn = () => {
     checkInMutation.mutate(
       {
         checkInListShortId: checkInListShortId,
-        attendeePublicId: attendee.public_id,
+        attendeePublicId: attendee.publicId,
       },
       {
         onSuccess: ({ errors }) => {
           // Show error if there is an error for this specific attendee
           // It's a bulk endpoint, so even if there's an error it returns a 200
-          if (errors && errors[attendee.public_id]) {
-            showError(errors[attendee.public_id]);
+          if (errors && errors[attendee.publicId]) {
+            showError(errors[attendee.publicId]);
             return;
           }
 
           showSuccess(
             <Trans>
-              {attendee.first_name} <b>checked in</b> successfully
+              {attendee.firstName} <b>checked in</b> successfully
             </Trans>,
           );
         },
@@ -109,9 +116,7 @@ const CheckIn = () => {
           }
 
           if (error instanceof AxiosError) {
-            showError(
-              error?.response?.data.message || t`Unable to check in attendee`,
-            );
+            showError(error?.data.message || t`Unable to check in attendee`);
           }
         },
       },
@@ -150,6 +155,11 @@ const CheckIn = () => {
             return;
           }
 
+          if (error.message == 'Check-in not found') {
+            showError(t`User not checked in`);
+            return;
+          }
+
           if (error instanceof AxiosError) {
             showError(
               error?.response?.data.message || t`Unable to check in attendee`,
@@ -160,9 +170,43 @@ const CheckIn = () => {
     );
   };
 
+  const handleQrCheckOut = (
+    attendeePublicId: string,
+    onRequestComplete: (didSucceed: boolean) => void,
+    onFailure: () => void,
+  ) => {
+    deleteCheckInMutation.mutate(
+      {
+        checkInListShortId: checkInListShortId,
+        checkInShortId: attendeePublicId,
+      },
+      {
+        onSuccess: () => {
+          onRequestComplete(true);
+          showSuccess(t`Checked out successfully`);
+        },
+        onError: (error) => {
+          onFailure();
+
+          if (!networkStatus.online) {
+            showError(t`You are offline`);
+            return;
+          }
+          if (error.message == 'Check-in not found') {
+            showError(t`User not checked in`);
+            return;
+          }
+
+          showError(
+            error?.response?.data.message || t`Unable to check out attendee`,
+          );
+        },
+      },
+    );
+  };
   const Attendees = () => {
     const Container = () => {
-      if (attendeesQuery.isFetching || !attendees || !tickets) {
+      if (attendeesQuery.isFetching || !attendees || !ticketTypes) {
         return (
           <div className={classes.loading}>
             <Loader size={40} />
@@ -178,19 +222,20 @@ const CheckIn = () => {
         <div className={classes.attendees}>
           {attendees.map((attendee) => {
             return (
-              <div className={classes.attendee} key={attendee.public_id}>
+              <div className={classes.attendee} key={attendee.publicId}>
                 <div className={classes.details}>
                   <div>
-                    {attendee.first_name} {attendee.last_name}
+                    {attendee.firstName} {attendee.lastName}
                   </div>
                   <div>
-                    <b>{attendee.public_id}</b>
+                    <b>{attendee.publicId}</b>
                   </div>
                   <div className={classes.ticket}>
                     <IconTicket size={15} />{' '}
                     {
-                      tickets.find((ticket) => ticket.id === attendee.ticket_id)
-                        ?.title
+                      ticketTypes.find(
+                        (ticketType) => ticketType.id === attendee.ticketTypeId,
+                      )?.title
                     }
                   </div>
                 </div>
@@ -205,9 +250,9 @@ const CheckIn = () => {
                       checkInMutation.isPending ||
                       deleteCheckInMutation.isPending
                     }
-                    color={attendee.check_in ? 'red' : 'teal'}
+                    color={attendee.checkIn ? 'red' : 'teal'}
                   >
-                    {attendee.check_in ? t`Check Out` : t`Check In`}
+                    {attendee.checkIn ? t`Check Out` : t`Check In`}
                   </Button>
                   {/*{attendee.check_in && (*/}
                   {/*    <div style={{color: 'gray', fontSize: 12, marginTop: 10}}>*/}
@@ -246,7 +291,7 @@ const CheckIn = () => {
     );
   }
 
-  if (checkInList?.is_expired) {
+  if (checkInList?.isExpired) {
     return (
       <NoResultsSplash
         heading={t`Check-in list has expired`}
@@ -265,7 +310,7 @@ const CheckIn = () => {
     );
   }
 
-  if (checkInList && !checkInList?.is_active) {
+  if (checkInList && !checkInList?.isActive) {
     return (
       <NoResultsSplash
         heading={t`Check-in list is not active`}
@@ -358,7 +403,9 @@ const CheckIn = () => {
           <Modal.Content>
             <QRScannerComponent
               onCheckIn={handleQrCheckIn}
+              onCheckOut={handleQrCheckOut}
               onClose={() => setQrScannerOpen(false)}
+              attendees={attendees || []}
             />
           </Modal.Content>
         </Modal.Root>
@@ -386,15 +433,15 @@ const CheckIn = () => {
                   <>
                     <h4>
                       <Trans>
-                        {`${checkInList.checked_in_attendees}/${checkInList.total_attendees}`}{' '}
+                        {`${checkInList.checkedInAttendees}/${checkInList.totalAttendees}`}{' '}
                         checked in
                       </Trans>
                     </h4>
 
                     <Progress
                       value={
-                        (checkInList.checked_in_attendees /
-                          checkInList.total_attendees) *
+                        (checkInList.checkedInAttendees /
+                          checkInList.totalAttendees) *
                         100
                       }
                       color={'teal'}

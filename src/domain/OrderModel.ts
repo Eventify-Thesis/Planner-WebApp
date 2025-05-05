@@ -126,6 +126,7 @@ export interface AttendeeModel {
 
     bookingAnswers: BookingAnswerModel[];
     ticketType: TicketTypeModel;
+    checkIn: AttendeeCheckInModel;
 }
 
 export interface BookingAnswerModel {
@@ -141,4 +142,18 @@ export interface BookingAnswerModel {
     updatedAt: Date;
 
     question: QuestionModel;
+}
+
+export interface AttendeeCheckInModel {
+    id: number;
+    shortId: string;
+    attendeeId: number;
+    checkInListId: number;
+    ticketTypeId: number;
+    showId: number;
+    eventId: number;
+    ipAddress: string;
+    createdAt: Date;
+    updatedAt: Date;
+    deletedAt: Date;
 }
