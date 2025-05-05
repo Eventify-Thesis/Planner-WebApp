@@ -21,7 +21,7 @@ export const EventCardActions = ({
     <ActionsContainer>
       <ActionItem>
         <ActionLink
-          onClick={() => navigate(`/events/${id}/overview`)}
+          onClick={() => navigate(`/events/${id}/dashboard`)}
           isMobile={isMobile}
         >
           <Icon icon="mdi:home" width="24" height="24" />

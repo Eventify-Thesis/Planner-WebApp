@@ -20,6 +20,7 @@ const EventDashboardPage = React.lazy(
 
 const EventCreatePage = React.lazy(() => import('@/pages/EventCreatePage'));
 const EventEditPage = React.lazy(() => import('@/pages/EventEditPage'));
+const CheckInPage = React.lazy(() => import('@/components/layouts/CheckIn'));
 
 const AuthLayoutFallback = withLoading(AuthLayout);
 export const HOME_PATH = '/';
@@ -62,6 +63,11 @@ export const AppRouter: React.FC = () => {
             ))}
           </Route>
         ))}
+
+        <Route
+          path="/events/:eventId/check-in/:checkInListShortId"
+          element={<CheckInPage />}
+        />
 
         <Route path="/auth" element={<AuthLayoutFallback />}>
           <Route path="login" element={<SignIn signUpUrl="/auth/sign-up" />} />

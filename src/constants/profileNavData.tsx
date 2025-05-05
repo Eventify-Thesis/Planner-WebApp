@@ -1,6 +1,12 @@
-// @ts-nocheck 
-// @ts-ignore 
-import { BellOutlined, ContainerOutlined, DollarOutlined, SecurityScanOutlined, UserOutlined } from '@ant-design/icons';
+// @ts-nocheck
+// @ts-ignore
+import {
+  BellOutlined,
+  ContainerOutlined,
+  DollarOutlined,
+  SecurityScanOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
 import React from 'react';
 
 interface ProfileNavItem {
@@ -32,5 +38,5 @@ export const profileNavData: ProfileNavItem[] = [
     icon: <ContainerOutlined />,
     color: 'error',
     href: 'cv',
-  }
+  },
 ];

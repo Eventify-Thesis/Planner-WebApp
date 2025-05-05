@@ -8,6 +8,18 @@ import postcssPresetMantine from 'postcss-preset-mantine';
 export default defineConfig({
   server: {
     port: 5174,
+    https: {
+      key: './localhost-key.pem',
+      cert: './localhost.pem',
+    },
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
   },
   plugins: [react(), tailwindcss()],
   resolve: {

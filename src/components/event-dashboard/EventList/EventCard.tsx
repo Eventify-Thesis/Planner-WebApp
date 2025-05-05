@@ -40,7 +40,11 @@ export const EventCard = ({
       <CardContent>
         <EventImage src={eventBannerUrl} alt={eventName} />
         <EventDetails>
-          <EventTitle href={`/${url}`}>{eventName}</EventTitle>
+          <EventTitle
+            href={`${import.meta.env.VITE_USER_BASE_URL}/${url}-${id}`}
+          >
+            {eventName}
+          </EventTitle>
           <EventInfo>
             <DateInfo>
               <Icon icon="mdi:calendar" width="24" height="24" color="white" />
