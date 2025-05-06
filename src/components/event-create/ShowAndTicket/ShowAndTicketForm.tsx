@@ -359,10 +359,14 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
         onCancel={() => setTicketModalVisible(false)}
         onSave={handleSaveTicket}
         showStartTime={
-          currentShow !== undefined ? shows[currentShow].startTime : undefined
+          currentShow !== undefined && shows[currentShow]?.startTime
+            ? shows[currentShow]?.startTime
+            : undefined
         }
         showEndTime={
-          currentShow !== undefined ? shows[currentShow].endTime : undefined
+          currentShow !== undefined && shows[currentShow]?.endTime
+            ? shows[currentShow]?.endTime
+            : undefined
         }
         initialValues={currentTicketType}
       />
