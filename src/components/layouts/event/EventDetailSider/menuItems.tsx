@@ -11,11 +11,14 @@ import {
   IconArmchair,
   IconArmchair2,
   IconBrandFacebook,
+  IconCalendarEvent,
 } from '@tabler/icons-react';
+
+import React from 'react';
 
 interface MenuItem {
   key: string;
-  icon: JSX.Element;
+  icon: React.ReactNode;
   label: string;
 }
 
@@ -56,6 +59,12 @@ const marketingMenuItem: MenuItem = {
   label: 'Marketing',
 };
 
+const showScheduleMenuItem: MenuItem = {
+  key: 'show-schedule',
+  icon: <IconCalendarEvent size={16} />,
+  label: 'Show Schedule',
+};
+
 const reportMenuGroup: MenuGroup = {
   key: 'report',
   type: 'group',
@@ -66,6 +75,7 @@ const reportMenuGroup: MenuGroup = {
     attendeesMenuItem,
     checkinMenuItem,
     marketingMenuItem,
+    showScheduleMenuItem,
   ],
 };
 

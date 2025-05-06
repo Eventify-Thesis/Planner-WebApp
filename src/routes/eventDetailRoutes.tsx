@@ -44,6 +44,10 @@ const EventMarketing = React.lazy(
   () => import('@/pages/EventDetailPage/MarketingPage/MarketingPage'),
 );
 
+const ShowSchedulePage = React.lazy(
+  () => import('@/pages/EventDetailPage/ShowSchedulePage/ShowSchedulePage'),
+);
+
 const LoadingFallback = () => <div>Loading...</div>;
 
 export const eventDetailRoutes: RouteObject[] = [
@@ -152,6 +156,14 @@ export const eventDetailRoutes: RouteObject[] = [
         element: (
           <React.Suspense fallback={<LoadingFallback />}>
             <EventVouchers />
+          </React.Suspense>
+        ),
+      },
+      {
+        path: 'show-schedule',
+        element: (
+          <React.Suspense fallback={<LoadingFallback />}>
+            <ShowSchedulePage />
           </React.Suspense>
         ),
       },
