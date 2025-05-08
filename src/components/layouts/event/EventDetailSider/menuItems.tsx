@@ -12,6 +12,7 @@ import {
   IconArmchair2,
   IconBrandFacebook,
   IconCalendarEvent,
+  IconLayoutKanban,
 } from '@tabler/icons-react';
 
 import React from 'react';
@@ -65,6 +66,12 @@ const showScheduleMenuItem: MenuItem = {
   label: 'Show Schedule',
 };
 
+const kanbanBoardMenuItem: MenuItem = {
+  key: 'kanban-board',
+  icon: <IconLayoutKanban size={16} />,
+  label: 'Kanban Board',
+};
+
 const reportMenuGroup: MenuGroup = {
   key: 'report',
   type: 'group',
@@ -76,6 +83,7 @@ const reportMenuGroup: MenuGroup = {
     checkinMenuItem,
     marketingMenuItem,
     showScheduleMenuItem,
+    kanbanBoardMenuItem,
   ],
 };
 

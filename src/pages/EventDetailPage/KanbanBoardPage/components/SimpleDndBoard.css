@@ -1,0 +1,82 @@
+/* Kanban Board Styles */
+.kanban-board {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  min-height: calc(100vh - 180px);
+  background: #f5f6f8;
+}
+
+.kanban-toolbar {
+  margin-bottom: 16px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+}
+
+.search-input-wrapper {
+  position: relative;
+  flex: 1;
+  max-width: 300px;
+}
+
+.filter-wrapper {
+  position: relative;
+  width: 180px;
+}
+
+.board-columns-wrapper {
+  display: flex;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.kanban-columns-container {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.add-column-button {
+  margin: 8px;
+  min-width: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Animation for drag overlays */
+@keyframes task-drag-start {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+  100% {
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  }
+}
+
+.task-drag-overlay {
+  animation: task-drag-start 0.2s forwards;
+}
+
+/* Scrollbar styling */
+.kanban-board::-webkit-scrollbar {
+  height: 8px;
+}
+
+.kanban-board::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+}
+
+.kanban-board::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.kanban-board::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}

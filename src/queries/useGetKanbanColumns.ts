@@ -12,6 +12,6 @@ export const useGetKanbanColumns = (eventId: IdParam) => {
       const data = await kanbanClient.getColumns(eventId);
       return data;
     },
-    staleTime: 30000, // 30 seconds
+    refetchOnWindowFocus: 'always',
   });
 };

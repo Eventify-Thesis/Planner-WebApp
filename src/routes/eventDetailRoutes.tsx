@@ -48,6 +48,10 @@ const ShowSchedulePage = React.lazy(
   () => import('@/pages/EventDetailPage/ShowSchedulePage/ShowSchedulePage'),
 );
 
+const KanbanBoardPage = React.lazy(
+  () => import('@/pages/EventDetailPage/KanbanBoardPage/KanbanBoardPage'),
+);
+
 const LoadingFallback = () => <div>Loading...</div>;
 
 export const eventDetailRoutes: RouteObject[] = [
@@ -164,6 +168,14 @@ export const eventDetailRoutes: RouteObject[] = [
         element: (
           <React.Suspense fallback={<LoadingFallback />}>
             <ShowSchedulePage />
+          </React.Suspense>
+        ),
+      },
+      {
+        path: 'kanban-board',
+        element: (
+          <React.Suspense fallback={<LoadingFallback />}>
+            <KanbanBoardPage />
           </React.Suspense>
         ),
       },

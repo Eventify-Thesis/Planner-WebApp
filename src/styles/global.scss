@@ -66,6 +66,10 @@ a {
   @include scrollbar();
 }
 
+.mantine-InputWrapper-root.mantine-Select-root {
+  margin-bottom: 0 !important;
+}
+
 .mantine-SimpleGrid-root {
   .mantine-InputWrapper-root, .mantine-Switch-root {
     //margin-bottom: 0;
