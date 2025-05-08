@@ -437,8 +437,8 @@ export const SimpleDndBoard: React.FC<SimpleDndBoardProps> = () => {
     // Optimistically update the UI
     setTasks((prevTasks) =>
       prevTasks.map((t) =>
-        t.id === taskId ? { ...t, columnId, position: newPosition } : t
-      )
+        t.id === taskId ? { ...t, columnId, position: newPosition } : t,
+      ),
     );
 
     // Update on the server
@@ -449,9 +449,7 @@ export const SimpleDndBoard: React.FC<SimpleDndBoardProps> = () => {
       alert('Failed to change task status. Please try again.');
       // Revert the optimistic update
       setTasks((prevTasks) =>
-        prevTasks.map((t) =>
-          t.id === taskId ? { ...task } : t
-        )
+        prevTasks.map((t) => (t.id === taskId ? { ...task } : t)),
       );
     }
   };
@@ -551,7 +549,7 @@ export const SimpleDndBoard: React.FC<SimpleDndBoardProps> = () => {
             {columns.map((column) => {
               const columnTasks = getFilteredTasksByColumn(column.id);
               const isHighlighted = isDraggingOver === column.id;
-              
+
               // Create available columns data for dropdown
               const availableColumns = columns.map((col) => ({
                 value: col.id.toString(),
