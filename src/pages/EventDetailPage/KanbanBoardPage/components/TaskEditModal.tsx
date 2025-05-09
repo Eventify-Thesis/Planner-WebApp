@@ -1,25 +1,27 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Modal,
-  TextInput,
-  Button,
-  Group,
-  Stack,
-  MultiSelect,
-  Select,
   Box,
-  Paper,
-  Text,
-  Badge,
-  Divider,
   Title,
   Grid,
+  Stack,
+  Group,
+  Text,
+  TextInput,
+  Button,
+  Paper,
+  Select,
+  MultiSelect,
+  Divider,
+  rem,
+  useMantineTheme,
+  Badge,
 } from '@mantine/core';
 import ReactDatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useForm } from '@mantine/form';
 
-// Rich text editor imports
+// Tiptap rich text editor
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -30,16 +32,15 @@ import {
   IconListNumbers,
   IconH1,
   IconH2,
-  IconH3,
+  IconCalendar,
+  IconUser,
+  IconTag,
+  IconChevronDown,
+  IconX,
+  IconCheck,
 } from '@tabler/icons-react';
 
-import {
-  KanbanTask,
-  TaskAssignment,
-  KanbanColumn,
-  TaskPriority,
-  TaskLabel,
-} from '@/api/kanban.client';
+import { KanbanTask, TaskAssignment, KanbanColumn } from '@/api/kanban.client';
 import { useUpdateKanbanTask } from '@/mutations/useUpdateKanbanTask';
 import { useUpdateTaskAssignments } from '@/mutations/useUpdateTaskAssignments';
 import { useListMembers } from '@/queries/useMemberQueries';
@@ -52,24 +53,55 @@ interface TaskEditModalProps {
   onClose: () => void;
 }
 
-interface MemberOption {
-  value: string; // For MultiSelect compatibility
+interface Option {
+  value: string;
   label: string;
-  description: string;
 }
 
-// Rich text editor menu button component
-const MenuButton = ({ icon: Icon, onClick, isActive = false }) => (
-  <Button
-    variant={isActive ? 'filled' : 'subtle'}
-    size="xs"
-    p={6}
-    onClick={onClick}
-    sx={{ height: 30, width: 30, padding: 0 }}
-  >
-    <Icon size={18} />
-  </Button>
-);
+// Styled toolbar button (reduced size)
+interface ToolbarButtonProps {
+  icon: React.FC<any>;
+  onClick: () => void;
+  active?: boolean;
+  tooltip?: string;
+}
+
+const ToolbarButton: React.FC<{
+  icon: React.FC<any>;
+  onClick: () => void;
+  active?: boolean;
+  tooltip?: string;
+}> = ({ icon: Icon, onClick, active, tooltip }) => {
+  const theme = useMantineTheme();
+  return (
+    <Button
+      variant="subtle"
+      size="xs"
+      title={tooltip}
+      onClick={onClick}
+      style={{
+        minWidth: rem(28),
+        height: rem(28),
+        padding: 0,
+        backgroundColor: active ? theme.colors.blue[1] : 'transparent',
+        color: active ? theme.colors.blue[7] : theme.colors.gray[7],
+        border: active ? `1px solid ${theme.colors.blue[3]}` : 'none',
+        transition: 'all 0.2s ease',
+      }}
+      styles={(theme) => ({
+        root: {
+          '&:hover': {
+            backgroundColor: active
+              ? theme.colors.blue[2]
+              : theme.colors.gray[1],
+          },
+        },
+      })}
+    >
+      <Icon size={16} stroke={1.5} />
+    </Button>
+  );
+};
 
 export const TaskEditModal: React.FC<TaskEditModalProps> = ({
   task,
@@ -78,371 +110,463 @@ export const TaskEditModal: React.FC<TaskEditModalProps> = ({
   columns,
   onClose,
 }) => {
-  const [memberOptions, setMemberOptions] = useState<MemberOption[]>([]);
-
+  const theme = useMantineTheme();
   const updateTask = useUpdateKanbanTask(eventId);
   const updateTaskAssignments = useUpdateTaskAssignments(eventId);
 
-  // Rich text editor setup
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Placeholder.configure({
-        placeholder: 'Add a description...',
-      }),
-    ],
-    content: task.description || '',
-    onUpdate: ({ editor }) => {
-      form.setFieldValue('description', editor.getHTML());
-    },
-  });
+  // State for title editing
+  const [titleEditMode, setTitleEditMode] = useState(false);
+  const [tempTitle, setTempTitle] = useState('');
 
-  // Form setup
   const form = useForm({
     initialValues: {
       title: task.title,
       description: task.description || '',
       dueDate: task.dueDate ? new Date(task.dueDate) : null,
-      assignees: assignments.map((assignment) => assignment.memberId),
-      columnId: task.columnId,
+      assignees: assignments.map((a) => a.memberId.toString()),
+      columnId: task.columnId.toString(),
       priority: task.priority || 'medium',
       labels: task.labels || [],
     },
-    validate: {
-      title: (value) =>
-        value.trim().length === 0 ? 'Title is required' : null,
-    },
+    validate: { title: (v) => (!v.trim() ? 'Title is required' : null) },
   });
 
-  // Load members using the proper query hook
-  const { data: membersData, isLoading: isLoadingMembers } = useListMembers(
-    eventId,
-    { page: 1, limit: 100 } as any,
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Placeholder.configure({ placeholder: 'Describe the task...' }),
+    ],
+    content: form.values.description,
+    onUpdate: ({ editor }) =>
+      form.setFieldValue('description', editor.getHTML()),
+  });
+
+  const { data: md, isLoading: loading } = useListMembers(eventId, {
+    page: 1,
+    limit: 100,
+  } as any);
+  const memberOptions: Option[] = useMemo(
+    () =>
+      md?.docs.map((m) => ({
+        value: m.id.toString(),
+        label: `${m.firstName} ${m.lastName}`,
+      })) || [],
+    [md],
   );
 
-  // Update member options when data changes
-  useEffect(() => {
-    if (membersData?.docs) {
-      const options = membersData.docs.map((member) => ({
-        value: String(member.id),
-        label: `${member.firstName} ${member.lastName}`,
-        description: member.email,
-      }));
-      setMemberOptions(options);
-    }
-  }, [membersData]);
+  const columnOptions: Option[] = useMemo(
+    () => columns.map((c) => ({ value: c.id.toString(), label: c.name })),
+    [columns],
+  );
+  const priorityOptions: Option[] = useMemo(
+    () => [
+      { value: 'lowest', label: 'Lowest' },
+      { value: 'low', label: 'Low' },
+      { value: 'medium', label: 'Medium' },
+      { value: 'high', label: 'High' },
+      { value: 'highest', label: 'Highest' },
+    ],
+    [],
+  );
 
-  const handleSubmit = async (values: typeof form.values) => {
+  const getColumnColor = (id: string) => {
+    const col = columns.find((c) => c.id.toString() === id);
+    const name = col?.name.toLowerCase() || '';
+    if (name.includes('todo') || name.includes('backlog')) return 'blue';
+    if (name.includes('in progress')) return 'yellow';
+    if (name.includes('done')) return 'green';
+    if (name.includes('blocked')) return 'red';
+    return 'gray';
+  };
+  const getPriorityColor = (p: string) => {
+    if (p === 'highest') return 'red';
+    if (p === 'high') return 'orange';
+    if (p === 'medium') return 'blue';
+    if (p === 'low') return 'green';
+    return 'gray';
+  };
+
+  // Title editing handlers
+  const handleTitleDoubleClick = () => {
+    setTempTitle(form.values.title);
+    setTitleEditMode(true);
+  };
+
+  const handleSaveTitle = () => {
+    if (tempTitle.trim()) {
+      form.setFieldValue('title', tempTitle);
+    }
+    setTitleEditMode(false);
+  };
+
+  const handleCancelEditTitle = () => {
+    setTitleEditMode(false);
+  };
+
+  const handleSubmit = async (vals: typeof form.values) => {
     try {
-      // Update task details
       await updateTask.mutateAsync({
         taskId: task.id,
-        data: {
-          title: values.title,
-          description: values.description,
-          dueDate: values.dueDate,
-          columnId: values.columnId,
-          priority: values.priority,
-          labels: values.labels,
-        },
+        data: { ...vals, columnId: parseInt(vals.columnId, 10) },
       });
-
-      // Update task assignments if changed
-      const currentAssignees = assignments.map((a) => a.memberId);
-      const newAssignees = values.assignees || [];
-
+      const current = assignments.map((a) => a.memberId.toString());
       if (
-        newAssignees.length !== currentAssignees.length ||
-        !newAssignees.every((id) => currentAssignees.includes(id))
+        vals.assignees.length !== current.length ||
+        !vals.assignees.every((id) => current.includes(id))
       ) {
         await updateTaskAssignments.mutateAsync({
           taskId: task.id,
-          data: { assignees: newAssignees },
+          data: { assignees: vals.assignees },
         });
       }
-
       onClose();
-    } catch (error) {
-      console.error('Error updating task:', error);
+    } catch (e) {
+      console.error(e);
     }
-  };
-
-  // Prepare column options for select dropdown
-  const columnOptions = useMemo(() => {
-    return columns.map((column) => ({
-      value: column.id.toString(),
-      label: column.name,
-    }));
-  }, [columns]);
-
-  // Function to get column color by column name
-  const getColumnColor = (columnId: number) => {
-    const column = columns.find((col) => col.id === columnId);
-    if (!column) return 'blue';
-
-    const name = column.name.toLowerCase();
-    if (
-      name.includes('to do') ||
-      name.includes('todo') ||
-      name.includes('backlog')
-    ) {
-      return 'blue';
-    } else if (name.includes('in progress') || name.includes('doing')) {
-      return 'yellow';
-    } else if (name.includes('done') || name.includes('completed')) {
-      return 'green';
-    } else if (name.includes('blocked') || name.includes('impediment')) {
-      return 'red';
-    }
-    return 'gray';
   };
 
   return (
     <Modal
-      opened={true}
+      opened
       onClose={onClose}
-      title={<Title order={3}>Task Details</Title>}
-      size="lg"
-      centered
+      size="xl"
+      overlayColor={
+        theme.colorScheme === 'dark'
+          ? theme.colors.dark[9]
+          : theme.colors.gray[2]
+      }
+      overlayOpacity={0.55}
+      overlayBlur={4}
+      withCloseButton
       styles={{
-        body: { padding: '20px' },
-        header: { borderBottom: '1px solid #eaeaea', padding: '15px 20px' },
+        modal: {
+          backgroundColor:
+            theme.colorScheme === 'dark' ? theme.colors.dark[7] : theme.white,
+          padding: 0,
+        },
+        header: {
+          display: 'none', // Hide default header
+        },
       }}
-      trapFocus
     >
+      {/* Custom header */}
+      <Box
+        style={{
+          backgroundColor: 'white',
+          color: theme.black,
+          padding: `${theme.spacing.xs}px ${theme.spacing.md}px`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          minHeight: rem(42),
+        }}
+      >
+        {/* Editable Title with double-click functionality */}
+        {titleEditMode ? (
+          <Box style={{ flexGrow: 1, marginTop: rem(4) }}>
+            <TextInput
+              value={tempTitle}
+              onChange={(e) => setTempTitle(e.target.value)}
+              size="md"
+              style={{ flexGrow: 1 }}
+              autoFocus
+              rightSection={
+                <Box
+                  style={{
+                    display: 'flex',
+                    gap: 0,
+                    justifyContent: 'flex-end',
+                    marginRight: 5,
+                  }}
+                >
+                  <Button
+                    variant="transparent"
+                    color="green"
+                    size="xs"
+                    onClick={handleSaveTitle}
+                    style={{ height: 28, width: 28, padding: 0 }}
+                    title="Save title"
+                  >
+                    <IconCheck size={16} />
+                  </Button>
+                  <Button
+                    variant="transparent"
+                    color="red"
+                    size="xs"
+                    onClick={handleCancelEditTitle}
+                    style={{ height: 28, width: 28, padding: 0 }}
+                    title="Cancel"
+                  >
+                    <IconX size={16} />
+                  </Button>
+                </Box>
+              }
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSaveTitle();
+                if (e.key === 'Escape') handleCancelEditTitle();
+              }}
+            />
+          </Box>
+        ) : (
+          <Title
+            order={4}
+            style={{ lineHeight: 1, cursor: 'pointer' }}
+            onDoubleClick={handleTitleDoubleClick}
+          >
+            {form.values.title || 'Task Details'}
+          </Title>
+        )}
+        <Button
+          variant="subtle"
+          color="black"
+          size="xs"
+          onClick={onClose}
+          style={{ padding: rem(4) }}
+        >
+          <IconX size={18} />
+        </Button>
+      </Box>
+
       <form onSubmit={form.onSubmit(handleSubmit)}>
-        <Stack spacing="md">
-          <Grid>
-            <Grid.Col span={8}>
-              <TextInput
-                label="Title"
-                placeholder="Task title"
-                required
-                size="md"
-                {...form.getInputProps('title')}
-              />
-            </Grid.Col>
-            <Grid.Col span={4}>
+        <Grid gutter={16}>
+          <Grid.Col
+            span={8}
+            sx={{
+              backgroundColor: theme.white,
+              borderRight: `1px solid ${theme.colors.gray[3]}`,
+            }}
+          >
+            <Stack spacing="md">
+              <Text weight={500} size="lg">
+                Description
+              </Text>
+              <Paper
+                withBorder
+                shadow="sm"
+                sx={{ borderColor: theme.colors.gray[3] }}
+              >
+                {/* Toolbar inside editor container */}
+                <Paper
+                  shadow="xs"
+                  p="sm"
+                  withBorder={false}
+                  style={{
+                    borderBottom: `1px solid ${theme.colors.gray[3]}`,
+                    backgroundColor: theme.white,
+                    borderTopLeftRadius: theme.radius.sm,
+                    borderTopRightRadius: theme.radius.sm,
+                  }}
+                >
+                  <Group gap="xs" align="center">
+                    <Group gap={0}>
+                      <ToolbarButton
+                        icon={IconBold}
+                        onClick={() =>
+                          editor?.chain().focus().toggleBold().run()
+                        }
+                        active={editor?.isActive('bold')}
+                        tooltip="Bold"
+                      />
+                      <ToolbarButton
+                        icon={IconItalic}
+                        onClick={() =>
+                          editor?.chain().focus().toggleItalic().run()
+                        }
+                        active={editor?.isActive('italic')}
+                        tooltip="Italic"
+                      />
+                    </Group>
+
+                    <Divider orientation="vertical" mx="xs" />
+
+                    <Group gap={0}>
+                      <ToolbarButton
+                        icon={IconH1}
+                        onClick={() =>
+                          editor
+                            ?.chain()
+                            .focus()
+                            .toggleHeading({ level: 1 })
+                            .run()
+                        }
+                        active={editor?.isActive('heading', { level: 1 })}
+                        tooltip="Heading 1"
+                      />
+                      <ToolbarButton
+                        icon={IconH2}
+                        onClick={() =>
+                          editor
+                            ?.chain()
+                            .focus()
+                            .toggleHeading({ level: 2 })
+                            .run()
+                        }
+                        active={editor?.isActive('heading', { level: 2 })}
+                        tooltip="Heading 2"
+                      />
+                    </Group>
+
+                    <Divider orientation="vertical" mx="xs" />
+
+                    <Group gap={0}>
+                      <ToolbarButton
+                        icon={IconList}
+                        onClick={() =>
+                          editor?.chain().focus().toggleBulletList().run()
+                        }
+                        active={editor?.isActive('bulletList')}
+                        tooltip="Bullet List"
+                      />
+                      <ToolbarButton
+                        icon={IconListNumbers}
+                        onClick={() =>
+                          editor?.chain().focus().toggleOrderedList().run()
+                        }
+                        active={editor?.isActive('orderedList')}
+                        tooltip="Numbered List"
+                      />
+                    </Group>
+                  </Group>
+                </Paper>
+                {/* Editor content */}
+                <Box
+                  style={{
+                    minHeight: rem(240),
+                    padding: rem(12),
+                    backgroundColor: theme.white,
+                    border: `1px solid ${theme.colors.gray[3]}`,
+                    borderTop: 'none',
+                    borderRadius: `0 0 ${theme.radius.sm} ${theme.radius.sm}`,
+                  }}
+                >
+                  <EditorContent editor={editor} />
+                </Box>
+              </Paper>
+            </Stack>
+          </Grid.Col>
+
+          <Grid.Col span={4} sx={{ backgroundColor: theme.colors.gray[0] }}>
+            <Stack spacing="lg" sx={{ padding: rem(20) }}>
               <Select
                 label="Status"
-                placeholder="Select status"
                 data={columnOptions}
-                value={form.values.columnId.toString()}
-                onChange={(value) =>
-                  form.setFieldValue('columnId', parseInt(value || '0'))
-                }
+                {...form.getInputProps('columnId')}
+                rightSection={<IconChevronDown size={16} />}
+                variant="default"
+                radius="md"
                 size="md"
               />
               <Badge
                 color={getColumnColor(form.values.columnId)}
-                size="lg"
-                mt={5}
                 variant="light"
-                fullWidth
               >
-                {columns.find((col) => col.id === form.values.columnId)?.name ||
-                  'Unknown'}
+                {
+                  columns.find((c) => c.id.toString() === form.values.columnId)
+                    ?.name
+                }
               </Badge>
-            </Grid.Col>
-          </Grid>
 
-          <Grid mt="md">
-            <Grid.Col span={6}>
               <Select
                 label="Priority"
-                placeholder="Select priority"
-                data={[
-                  { value: 'lowest', label: 'Lowest' },
-                  { value: 'low', label: 'Low' },
-                  { value: 'medium', label: 'Medium' },
-                  { value: 'high', label: 'High' },
-                  { value: 'highest', label: 'Highest' },
-                ]}
-                value={form.values.priority}
-                onChange={(value) =>
-                  form.setFieldValue('priority', value || 'medium')
-                }
+                data={priorityOptions}
+                {...form.getInputProps('priority')}
+                rightSection={<IconTag size={16} />}
+                variant="default"
+                radius="md"
                 size="md"
               />
               <Badge
-                color={
-                  form.values.priority === 'highest'
-                    ? 'red'
-                    : form.values.priority === 'high'
-                    ? 'orange'
-                    : form.values.priority === 'medium'
-                    ? 'blue'
-                    : form.values.priority === 'low'
-                    ? 'green'
-                    : 'gray'
-                }
-                size="lg"
-                mt={5}
+                color={getPriorityColor(form.values.priority)}
                 variant="light"
-                fullWidth
               >
                 {form.values.priority.charAt(0).toUpperCase() +
                   form.values.priority.slice(1)}
               </Badge>
-            </Grid.Col>
-            <Grid.Col span={6}>
+
               <MultiSelect
                 label="Labels"
-                placeholder="Add labels"
-                data={[
-                  { value: 'bug', label: 'Bug' },
-                  { value: 'feature', label: 'Feature' },
-                  { value: 'task', label: 'Task' },
-                  { value: 'improvement', label: 'Improvement' },
-                  { value: 'documentation', label: 'Documentation' },
-                ]}
-                clearable
-                searchable
+                data={form.values.labels.map((lbl) => ({
+                  value: lbl,
+                  label: lbl,
+                }))}
                 creatable
-                getCreateLabel={(query) => `+ Create ${query}`}
-                onCreate={(query) => {
-                  const item = { value: query.toLowerCase(), label: query };
-                  return item;
-                }}
-                value={form.values.labels}
-                onChange={(value) => form.setFieldValue('labels', value)}
+                getCreateLabel={(q) => `+ Create ${q}`}
+                onCreate={(q) => ({ value: q.toLowerCase(), label: q })}
+                {...form.getInputProps('labels')}
+                rightSection={<IconTag size={16} />}
+                variant="default"
+                radius="md"
                 size="md"
               />
-            </Grid.Col>
-          </Grid>
 
-          <Text weight={500} size="sm" mb={5} mt={10}>
-            Description
-          </Text>
-          <Paper withBorder p="xs" style={{ borderRadius: '4px' }}>
-            <Group spacing={5} mb={10}>
-              <MenuButton
-                icon={IconBold}
-                onClick={() => editor?.chain().focus().toggleBold().run()}
-                isActive={editor?.isActive('bold')}
-              />
-              <MenuButton
-                icon={IconItalic}
-                onClick={() => editor?.chain().focus().toggleItalic().run()}
-                isActive={editor?.isActive('italic')}
-              />
-              <Divider orientation="vertical" mx={5} />
-              <MenuButton
-                icon={IconH1}
-                onClick={() =>
-                  editor?.chain().focus().toggleHeading({ level: 1 }).run()
-                }
-                isActive={editor?.isActive('heading', { level: 1 })}
-              />
-              <MenuButton
-                icon={IconH2}
-                onClick={() =>
-                  editor?.chain().focus().toggleHeading({ level: 2 }).run()
-                }
-                isActive={editor?.isActive('heading', { level: 2 })}
-              />
-              <Divider orientation="vertical" mx={5} />
-              <MenuButton
-                icon={IconList}
-                onClick={() => editor?.chain().focus().toggleBulletList().run()}
-                isActive={editor?.isActive('bulletList')}
-              />
-              <MenuButton
-                icon={IconListNumbers}
-                onClick={() =>
-                  editor?.chain().focus().toggleOrderedList().run()
-                }
-                isActive={editor?.isActive('orderedList')}
-              />
-            </Group>
-            <Box
-              sx={{
-                minHeight: '200px',
-                '.ProseMirror': {
-                  outline: 'none',
-                  minHeight: '180px',
-                },
-              }}
-            >
-              <EditorContent editor={editor} />
-            </Box>
-          </Paper>
+              <Stack spacing="sm">
+                <Group spacing="xs" align="center">
+                  <IconCalendar size={18} />
+                  <Text weight={500}>Due Date</Text>
+                </Group>
+                <ReactDatePicker
+                  selected={form.values.dueDate}
+                  onChange={(d) => form.setFieldValue('dueDate', d)}
+                  dateFormat="MMMM d, yyyy"
+                  isClearable
+                  className="custom-datepicker"
+                  wrapperClassName="custom-datepicker-wrapper"
+                />
+              </Stack>
 
-          <Text weight={500} size="sm" mb={5}>
-            Due Date
-          </Text>
-          <Box mb={10}>
-            <ReactDatePicker
-              selected={form.values.dueDate}
-              onChange={(date) => form.setFieldValue('dueDate', date)}
-              dateFormat="MMMM d, yyyy"
-              placeholderText="Select a due date (optional)"
-              isClearable
-              className="custom-datepicker"
-              wrapperClassName="custom-datepicker-wrapper"
-              showMonthDropdown
-              showYearDropdown
-              dropdownMode="select"
-            />
-          </Box>
+              <Stack spacing="sm">
+                <Group spacing="xs" align="center">
+                  <IconUser size={18} />
+                  <Text weight={500}>Assignees</Text>
+                </Group>
+                <MultiSelect
+                  data={memberOptions}
+                  searchable
+                  clearable
+                  {...form.getInputProps('assignees')}
+                  variant="default"
+                  radius="md"
+                  size="md"
+                />
+                {loading && <Text size="sm">Loading members...</Text>}
+              </Stack>
+            </Stack>
+          </Grid.Col>
+        </Grid>
 
-          <style jsx global>{`
-            .custom-datepicker-wrapper {
-              width: 100%;
-            }
-            .custom-datepicker {
-              width: 100%;
-              padding: 10px 14px;
-              border: 1px solid #ced4da;
-              border-radius: 4px;
-              font-size: 14px;
-              transition: border-color 0.15s ease-in-out;
-            }
-            .custom-datepicker:focus {
-              border-color: #339af0;
-              outline: none;
-            }
-          `}</style>
-
-          <Text weight={500} size="sm">
-            Assignees
-          </Text>
-          <Box mb={5}>
-            <MultiSelect
-              placeholder="Select team members to assign"
-              data={memberOptions}
-              searchable
-              clearable
-              value={form.values.assignees}
-              onChange={(value) => form.setFieldValue('assignees', value)}
-              withinPortal
-              styles={{
-                input: { padding: '10px 14px' },
-              }}
-            />
-            {isLoadingMembers && (
-              <Text color="dimmed" size="sm" mt={5}>
-                Loading members...
-              </Text>
-            )}
-          </Box>
-
-          <Divider my="md" />
-
-          <Group position="right" spacing="md" mt="lg">
-            <Button variant="subtle" onClick={onClose} size="md">
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              size="md"
-              loading={updateTask.isPending || updateTaskAssignments.isPending}
-            >
-              Save Changes
-            </Button>
-          </Group>
-        </Stack>
+        <Divider />
+        <Group position="right" spacing="md" sx={{ padding: rem(16) }}>
+          <Button variant="outline" color="red" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            color="blue"
+            loading={updateTask.isLoading || updateTaskAssignments.isLoading}
+          >
+            Save Changes
+          </Button>
+        </Group>
       </form>
+
+      {/* Additional datepicker CSS */}
+      <style>
+        {`
+          .custom-datepicker-wrapper { width: 100%; }
+          .custom-datepicker {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid ${theme.colors.gray[4]};
+            border-radius: ${rem(6)};
+            font-size: ${rem(14)};
+            background: ${theme.white};
+          }
+          .custom-datepicker:focus {
+            border-color: ${theme.colors.blue[6]};
+            outline: none;
+          }
+        `}
+      </style>
     </Modal>
   );
 };

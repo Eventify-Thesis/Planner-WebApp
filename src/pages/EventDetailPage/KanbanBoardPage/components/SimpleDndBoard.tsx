@@ -80,6 +80,7 @@ export const SimpleDndBoard: React.FC<SimpleDndBoardProps> = () => {
     createColumn: onColumnCreate,
     deleteColumn: onColumnDelete,
     moveColumn: onColumnMove,
+    updateColumn: onColumnUpdate,
   } = useKanban();
 
   // Local UI state only
@@ -583,6 +584,7 @@ export const SimpleDndBoard: React.FC<SimpleDndBoardProps> = () => {
                   onDeleteTask={handleDeleteTask}
                   onChangeTaskStatus={handleChangeTaskStatus}
                   availableColumns={availableColumns}
+                  onUpdateColumn={(columnId, name) => onColumnUpdate(columnId, { name })}
                 />
               );
             })}

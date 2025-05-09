@@ -78,7 +78,7 @@ export const SortableTask: React.FC<SortableTaskProps> = ({
 
   // Format due date
   const formattedDueDate = task.dueDate
-    ? formatDate(task.dueDate.toString(), 'dd/MM/yyyy', 'Asia/Bangkok')
+    ? formatDate(task.dueDate, 'YYYY MMM DD', 'Asia/Bangkok')
     : null;
 
   // Calculate if task is due soon or overdue
@@ -380,7 +380,7 @@ export const SortableTask: React.FC<SortableTaskProps> = ({
             <div>
               {formattedDueDate && (
                 <Badge
-                  size="xs"
+                  size="md"
                   color={isOverdue() ? 'red' : isDueSoon() ? 'orange' : 'gray'}
                   variant="dot"
                   leftSection={<IconCalendarEvent size={10} />}
@@ -401,7 +401,8 @@ export const SortableTask: React.FC<SortableTaskProps> = ({
                     color="blue"
                   >
                     {/* Display first character of assignment ID as fallback */}
-                    {assignment.memberId.charAt(0).toUpperCase()}
+                    {assignment.member.firstName.charAt(0).toUpperCase() +
+                      assignment.member.lastName.charAt(0).toUpperCase()}
                   </Avatar>
                 ))}
                 {assignments.length > 3 && (

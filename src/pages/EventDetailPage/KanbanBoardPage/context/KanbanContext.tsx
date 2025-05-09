@@ -63,6 +63,7 @@ interface KanbanContextType {
   createColumn: (data: { name: string; position: number }) => void;
   deleteColumn: (columnId: number) => void;
   moveColumn: (columnId: number, newPosition: number) => void;
+  updateColumn: (columnId: number, data: { name?: string }) => void;
   createBoard: () => void;
 }
 
@@ -83,6 +84,7 @@ export const KanbanContext = createContext<KanbanContextType>({
   createColumn: () => {},
   deleteColumn: () => {},
   moveColumn: () => {},
+  updateColumn: () => {},
   createBoard: () => {},
 });
 
@@ -323,6 +325,38 @@ export const KanbanProvider: React.FC<KanbanProviderProps> = ({
       },
     );
   };
+  
+  const handleUpdateColumn = (columnId: number, data: { name?: string }) => {
+    // Get the current column
+    const columnToUpdate = columns.find((col) => col.id === columnId);
+    if (!columnToUpdate) return;
+    
+    // Create updated column
+    const updatedColumn = { ...columnToUpdate, ...data };
+    
+    // Optimistic update
+    queryClient.setQueryData(
+      [GET_KANBAN_COLUMNS_QUERY_KEY, eventId],
+      (oldColumns: KanbanColumn[] | undefined) => {
+        if (!oldColumns) return [];
+        return oldColumns.map((col) => 
+          col.id === columnId ? updatedColumn : col
+        );
+      },
+    );
+    
+    // Server update
+    moveColumnMutation.mutate(
+      { columnId, data },
+      {
+        onError: () => {
+          queryClient.invalidateQueries({
+            queryKey: [GET_KANBAN_COLUMNS_QUERY_KEY, eventId],
+          });
+        },
+      },
+    );
+  };
 
   const handleDeleteTask = async (taskId: number): Promise<void> => {
     try {
@@ -368,6 +402,7 @@ export const KanbanProvider: React.FC<KanbanProviderProps> = ({
     createColumn: handleCreateColumn,
     deleteColumn: handleDeleteColumn,
     moveColumn: handleMoveColumn,
+    updateColumn: handleUpdateColumn,
     createBoard: handleCreateBoard,
   };
 

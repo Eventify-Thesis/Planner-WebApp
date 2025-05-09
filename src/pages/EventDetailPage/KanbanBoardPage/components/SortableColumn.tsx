@@ -14,6 +14,7 @@ import {
   Menu,
   ColorPicker,
   Group,
+  Box,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useDisclosure } from '@mantine/hooks';
@@ -24,6 +25,8 @@ import {
   IconColorSwatch,
   IconChevronLeft,
   IconChevronRight,
+  IconCheck,
+  IconX,
 } from '@tabler/icons-react';
 
 import {
@@ -50,6 +53,7 @@ interface SortableColumnProps {
   onDeleteTask?: (taskId: number) => void;
   onChangeTaskStatus?: (taskId: number, columnId: number) => void;
   availableColumns?: { value: string; label: string }[];
+  onUpdateColumn?: (columnId: number, name: string) => void;
 }
 
 export const SortableColumn: React.FC<SortableColumnProps> = ({
@@ -69,6 +73,7 @@ export const SortableColumn: React.FC<SortableColumnProps> = ({
   onDeleteTask,
   onChangeTaskStatus,
   availableColumns,
+  onUpdateColumn,
 }) => {
   const theme = useMantineTheme();
   const [isAddingTask, { open: openAddTask, close: closeAddTask }] =
@@ -77,6 +82,10 @@ export const SortableColumn: React.FC<SortableColumnProps> = ({
     colorPickerOpened,
     { toggle: toggleColorPicker, close: closeColorPicker },
   ] = useDisclosure(false);
+
+  // Column name editing state
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [tempColumnName, setTempColumnName] = useState('');
 
   // Set up sortable
   const {
@@ -120,6 +129,25 @@ export const SortableColumn: React.FC<SortableColumnProps> = ({
       onChangeColor(column.id, color);
       closeColorPicker();
     }
+  };
+
+  // Column name editing handlers
+  const handleColumnNameDoubleClick = (e: React.MouseEvent) => {
+    // Prevent event propagation to avoid triggering drag
+    e.stopPropagation();
+    setTempColumnName(column.name);
+    setIsEditingName(true);
+  };
+
+  const handleSaveColumnName = () => {
+    if (tempColumnName.trim() && onUpdateColumn) {
+      onUpdateColumn(column.id, tempColumnName);
+    }
+    setIsEditingName(false);
+  };
+
+  const handleCancelEditColumnName = () => {
+    setIsEditingName(false);
   };
 
   // Get default color based on column name
@@ -200,13 +228,82 @@ export const SortableColumn: React.FC<SortableColumnProps> = ({
           }}
           {...listeners}
         >
-          <Group gap="sm">
-            <Text fw={600} fz="sm">
-              {column.name}
-            </Text>
-            <Text size="xs" c="gray.2" fw={400}>
-              {tasks.length}
-            </Text>
+          <Group gap="sm" style={{ flexGrow: 1 }}>
+            {isEditingName ? (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  maxWidth: '180px',
+                }}
+              >
+                <TextInput
+                  value={tempColumnName}
+                  onChange={(e) => setTempColumnName(e.target.value)}
+                  size="xs"
+                  variant="filled"
+                  style={{ flexGrow: 1 }}
+                  autoFocus
+                  rightSection={
+                    <Box style={{ display: 'flex', gap: 0 }}>
+                      <Button
+                        variant="transparent"
+                        color="green"
+                        size="xs"
+                        onClick={handleSaveColumnName}
+                        style={{ height: 22, width: 22, padding: 0 }}
+                        title="Save"
+                      >
+                        <IconCheck size={14} />
+                      </Button>
+                      <Button
+                        variant="transparent"
+                        color="red"
+                        size="xs"
+                        onClick={handleCancelEditColumnName}
+                        style={{ height: 22, width: 22, padding: 0 }}
+                        title="Cancel"
+                      >
+                        <IconX size={14} />
+                      </Button>
+                    </Box>
+                  }
+                  styles={{
+                    input: {
+                      color: headerTextColor,
+                      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                      '&:focus': {
+                        borderColor: 'rgba(255, 255, 255, 0.3)',
+                      },
+                    },
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleSaveColumnName();
+                    }
+                    if (e.key === 'Escape') {
+                      e.preventDefault();
+                      handleCancelEditColumnName();
+                    }
+                  }}
+                />
+              </div>
+            ) : (
+              <Text
+                fw={600}
+                fz="sm"
+                style={{ cursor: 'pointer' }}
+                onDoubleClick={handleColumnNameDoubleClick}
+              >
+                {column.name}
+              </Text>
+            )}
+            {!isEditingName && (
+              <Text size="xs" c="gray.2" fw={400}>
+                {tasks.length}
+              </Text>
+            )}
           </Group>
 
           <Menu shadow="md" width={200} position="bottom-end">

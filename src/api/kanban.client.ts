@@ -1,5 +1,6 @@
 import { IdParam } from '@/types/types';
 import { httpApi } from './http.api';
+import { MemberModel } from '@/domain/MemberModel';
 
 export interface KanbanColumn {
   id: number;
@@ -26,6 +27,7 @@ export interface TaskAssignment {
   id: number;
   taskId: number;
   memberId: string;
+  member: MemberModel;
 }
 
 export interface Member {

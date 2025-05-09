@@ -48,7 +48,7 @@ const chartColors = {
 };
 
 export const darkColorsTheme: ITheme = {
-  primary: '#118A00',
+  primary: '#12b886',
   primary1: '#7568f6',
   primaryGradient: 'linear-gradient(211.49deg, #dc88f5 15.89%, #339CFD 48.97%)',
   light: '#696969',
