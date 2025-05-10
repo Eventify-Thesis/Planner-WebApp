@@ -1,17 +1,8 @@
 import React from 'react';
-import { Layout, Menu, Button } from 'antd';
+import { Layout, Menu } from 'antd';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import {
-  BarChartOutlined,
-  OrderedListOutlined,
-  UserOutlined,
-  SettingOutlined,
-  QuestionCircleOutlined,
-  GiftOutlined,
-  ArrowLeftOutlined,
-  ScanOutlined,
-  BorderOutlined,
-} from '@ant-design/icons';
+import { Button } from '@mantine/core';
+import { IconArrowLeft } from '@tabler/icons-react';
 import { styled } from 'styled-components';
 import { BASE_COLORS, FONT_SIZE, LAYOUT } from '@/styles/themes/constants';
 import { media } from '@/styles/themes/constants';
@@ -54,23 +45,18 @@ const StyledSider = styled(Sider)`
   }
 `;
 
-const BackButton = styled(Button)`
+const BackButton = styled.div`
   margin: 16px;
+  background: rgba(0, 0, 0, 0.7);
   width: calc(100% - 32px);
-  background-color: var(--primary-color);
-  color: ${BASE_COLORS.black};
-  font-weight: 500;
-  font-size: ${FONT_SIZE.xs};
 `;
 
 const MenuSection = styled.div`
   margin-bottom: 16px;
 
-  background: linear-gradient(
-    to bottom,
-    #ffd194,
-    #70e1f5
-  ); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+  .ant-menu {
+    background: rgba(0, 0, 0, 0.7);
+  }
 
   .ant-menu-item-group-title {
     color: ${BASE_COLORS.red};
@@ -82,6 +68,14 @@ const MenuSection = styled.div`
     color: ${BASE_COLORS.white};
     padding: 8px 16px;
     font-size: ${FONT_SIZE.md};
+  }
+
+  .ant-menu-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .ant-menu-item-selected {
+    background-color: rgba(255, 255, 255, 0.2) !important;
   }
 `;
 
@@ -122,15 +116,27 @@ export const EventDetailSider: React.FC<EventDetailSiderProps> = ({
       >
         <SiderLogo isSiderCollapsed={isCollapsed} toggleSider={setCollapsed} />
 
-        <BackButton icon={<ArrowLeftOutlined />} onClick={handleBackClick}>
-          {!isCollapsed && 'Back to Events'}
+        <BackButton>
+          <Button
+            leftSection={<IconArrowLeft size={16} />}
+            onClick={handleBackClick}
+            variant="filled"
+            fullWidth
+            styles={{
+              root: {
+                backgroundColor: 'var(--primary-color)',
+                color: BASE_COLORS.black,
+                fontWeight: 500,
+                fontSize: FONT_SIZE.xs,
+              },
+            }}
+          >
+            {!isCollapsed && 'Back to Events'}
+          </Button>
         </BackButton>
 
         <MenuSection>
           <Menu
-            style={{
-              background: 'rgba(0, 0, 0, 0.7)',
-            }}
             mode="inline"
             selectedKeys={getSelectedKeys()}
             onClick={handleMenuClick}

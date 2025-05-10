@@ -72,19 +72,25 @@ const kanbanBoardMenuItem: MenuItem = {
   label: 'Kanban Board',
 };
 
-const reportMenuGroup: MenuGroup = {
-  key: 'report',
+const dashboardMenuGroup: MenuGroup = {
+  key: 'dashboard-group',
   type: 'group',
-  label: 'Report',
-  children: [
-    dashboardMenuItem,
-    ordersMenuItem,
-    attendeesMenuItem,
-    checkinMenuItem,
-    marketingMenuItem,
-    showScheduleMenuItem,
-    kanbanBoardMenuItem,
-  ],
+  label: 'Dashboard',
+  children: [dashboardMenuItem],
+};
+
+const attendeeMenuGroup: MenuGroup = {
+  key: 'attendee-group',
+  type: 'group',
+  label: 'Attendees',
+  children: [attendeesMenuItem, checkinMenuItem, ordersMenuItem],
+};
+
+const managementMenuGroup: MenuGroup = {
+  key: 'management-group',
+  type: 'group',
+  label: 'Management',
+  children: [showScheduleMenuItem, kanbanBoardMenuItem],
 };
 
 const membersMenuItem: MenuItem = {
@@ -151,12 +157,14 @@ const marketingMenuGroup: MenuGroup = {
   key: 'marketing',
   type: 'group',
   label: 'Marketing',
-  children: [vouchersMenuItem],
+  children: [marketingMenuItem, vouchersMenuItem],
 };
 
 export const menuItems = [
-  reportMenuGroup,
-  seatingMenuGroup,
+  dashboardMenuGroup,
   eventSettingsMenuGroup,
+  managementMenuGroup,
+  attendeeMenuGroup,
+  seatingMenuGroup,
   marketingMenuGroup,
 ];
