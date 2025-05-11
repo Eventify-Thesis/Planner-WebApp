@@ -13,6 +13,7 @@ import {
   IconBrandFacebook,
   IconCalendarEvent,
   IconLayoutKanban,
+  IconDeviceGamepad2,
 } from '@tabler/icons-react';
 
 import React from 'react';
@@ -72,6 +73,12 @@ const kanbanBoardMenuItem: MenuItem = {
   label: 'Kanban Board',
 };
 
+const gameManagementMenuItem: MenuItem = {
+  key: 'game-management',
+  icon: <IconDeviceGamepad2 size={16} />,
+  label: 'Game Management',
+};
+
 const dashboardMenuGroup: MenuGroup = {
   key: 'dashboard-group',
   type: 'group',
@@ -90,7 +97,7 @@ const managementMenuGroup: MenuGroup = {
   key: 'management-group',
   type: 'group',
   label: 'Management',
-  children: [showScheduleMenuItem, kanbanBoardMenuItem],
+  children: [showScheduleMenuItem, kanbanBoardMenuItem, gameManagementMenuItem],
 };
 
 const membersMenuItem: MenuItem = {
