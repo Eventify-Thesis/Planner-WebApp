@@ -52,6 +52,18 @@ const KanbanBoardPage = React.lazy(
   () => import('@/pages/EventDetailPage/KanbanBoardPage/KanbanBoardPage'),
 );
 
+const GameManagementPage = React.lazy(
+  () => import('@/pages/EventDetailPage/GameManagementPage/GameManagementPage'),
+);
+
+const QuizDetailPage = React.lazy(
+  () => import('@/pages/EventDetailPage/GameManagementPage/QuizDetailPage'),
+);
+
+const QuizPlayPage = React.lazy(
+  () => import('@/pages/EventDetailPage/GameManagementPage/QuizPlayPage'),
+);
+
 const LoadingFallback = () => <div>Loading...</div>;
 
 export const eventDetailRoutes: RouteObject[] = [
@@ -176,6 +188,30 @@ export const eventDetailRoutes: RouteObject[] = [
         element: (
           <React.Suspense fallback={<LoadingFallback />}>
             <KanbanBoardPage />
+          </React.Suspense>
+        ),
+      },
+      {
+        path: 'game-management',
+        element: (
+          <React.Suspense fallback={<LoadingFallback />}>
+            <GameManagementPage />
+          </React.Suspense>
+        ),
+      },
+      {
+        path: 'shows/:showId/game-management/:quizId',
+        element: (
+          <React.Suspense fallback={<LoadingFallback />}>
+            <QuizDetailPage />
+          </React.Suspense>
+        ),
+      },
+      {
+        path: 'shows/:showId/game-management/:quizId/play',
+        element: (
+          <React.Suspense fallback={<LoadingFallback />}>
+            <QuizPlayPage />
           </React.Suspense>
         ),
       },
