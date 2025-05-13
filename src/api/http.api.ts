@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { AxiosError } from 'axios';
 import { ApiError } from '@/api/ApiError';
-import { readToken } from '@/services/localStorage.service';
+import { getToken } from '@/services/tokenManager';
 
 export const httpApi = axios.create({
   baseURL: `${import.meta.env.VITE_API_BASE_URL}/event`,
@@ -9,18 +9,23 @@ export const httpApi = axios.create({
 });
 
 httpApi.interceptors.request.use((config) => {
-  config.headers = {
-    ...config.headers,
-    Authorization: `Bearer ${readToken()}`,
-  };
+  const token = getToken();
+
+  if (token) {
+    // Set Authorization header properly for Axios v1+
+    config.headers.set('Authorization', `Bearer ${token}`);
+  }
 
   return config;
 });
 
 httpApi.interceptors.response.use(undefined, (error: AxiosError) => {
+  // Type guard for error.response?.data
+  const errorData = error.response?.data as { message?: string } | undefined;
+
   throw new ApiError<ApiErrorData>(
-    error.response?.data.message || error.message,
-    error.response?.data,
+    errorData?.message || error.message,
+    error.response?.data as ApiErrorData | undefined,
   );
 });
 
