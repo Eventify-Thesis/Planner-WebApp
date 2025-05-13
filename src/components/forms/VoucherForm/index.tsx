@@ -103,7 +103,7 @@ export const VoucherForm = ({ form }: VoucherFormProps) => {
         .filter((id: string) => id && typeof id === 'string')
         .map((id: string) => id.toString()),
     }));
-    form.setFieldValue('showings', showings);
+    form.setFieldValue('showingConfigs', showings);
   };
 
   const DiscountIcon = () => {

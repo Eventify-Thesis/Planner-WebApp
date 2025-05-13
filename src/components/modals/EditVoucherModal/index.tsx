@@ -1,4 +1,4 @@
-import { GenericModalProps } from '@/types/types.ts';
+import { GenericModalProps, VoucherDiscountType } from '@/types/types.ts';
 import { hasLength, useForm } from '@mantine/form';
 import { useParams } from 'react-router-dom';
 import { useFormErrorResponseHandler } from '@/hooks/useFormErrorResponseHandler.tsx';
@@ -11,7 +11,7 @@ import { useGetVoucher } from '@/queries/useGetVoucher';
 import { useGetEvent } from '@/queries/useGetEvent';
 import { useTranslation } from 'react-i18next';
 import { useUpdateVoucher } from '@/mutations/useUpdateVoucher';
-import { VoucherModel } from '@/domain/VoucherModel';
+import { VoucherCodeType, VoucherModel } from '@/domain/VoucherModel';
 import { VoucherForm } from '@/components/forms/VoucherForm';
 
 interface EditVoucherModalProps {
@@ -31,8 +31,8 @@ export const EditVoucherModal = ({
   const form = useForm<VoucherModel>({
     initialValues: {
       name: '',
-      codeType: 1,
-      discountType: 1,
+      codeType: VoucherCodeType.SINGLE,
+      discountType: VoucherDiscountType.PERCENT,
       discountValue: 0,
       quantity: 0,
       isUnlimited: false,

@@ -221,7 +221,7 @@ export const VoucherTable = ({
                       </Badge>
                     ) : (
                       <Badge variant={'light'} color={'pink'}>
-                        {voucher.showings.length} {t('voucher.shows')}
+                        {voucher.showingConfigs.length} {t('voucher.shows')}
                       </Badge>
                     )}
                   </div>
