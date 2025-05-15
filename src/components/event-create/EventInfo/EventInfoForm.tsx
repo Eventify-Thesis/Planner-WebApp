@@ -1,20 +1,33 @@
 import React, { useState } from 'react';
-import { Form, message, Modal, Spin } from 'antd';
 import { FormStepProps } from '../types';
 import type { RcFile, UploadProps } from 'antd/es/upload';
 import type { UploadFile } from 'antd/es/upload/interface';
+// Mantine imports
+import {
+  Box,
+  LoadingOverlay,
+  Modal,
+  Paper,
+  Text,
+  Title,
+  Divider,
+  Flex,
+} from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { City, District, Ward } from '@/api/locations.api';
 import { useTranslation } from 'react-i18next';
 import { Category } from '@/api/categories.api';
 import { EventType } from '@/constants/enums/event';
 import { useParams } from 'react-router-dom';
-import { notificationController } from '@/controllers/notificationController';
+// We'll use Mantine notifications instead of the controller
+// import { notificationController } from '@/controllers/notificationController';
 import { EventIdentitySection } from './sections/EventIdentitySection';
 import { EventLocationSection } from './sections/EventLocationSection';
 import { EventCategorySection } from './sections/EventCategorySection';
 import { EventDescriptionSection } from './sections/EventDescriptionSection';
 import { OrganizerInformationSection } from './sections/OrganizerInformationSection';
 import { transformFile } from '@/utils/utils';
+import { safeSetFormValue, safeSetFormValues } from '@/utils/formUtils';
 import {
   useGetCities,
   useGetDistricts,
@@ -22,6 +35,7 @@ import {
 } from '@/queries/useLocationQueries';
 import { useGetCategories } from '@/queries/useCategoryQueries';
 import { useGetEventDetail } from '@/queries/useGetEventDetail';
+import { useForm } from '@mantine/form';
 
 const getBase64 = (file: RcFile): Promise<string> =>
   new Promise((resolve, reject) => {
@@ -34,6 +48,30 @@ const getBase64 = (file: RcFile): Promise<string> =>
 const EventInfoForm: React.FC<FormStepProps> = ({ formRef }) => {
   const { t } = useTranslation();
   const { eventId } = useParams<{ eventId?: string }>();
+  const form = useForm({
+    initialValues: {
+      eventLogoUrl: undefined,
+      category: undefined,
+      eventType: undefined,
+      eventBannerUrl: undefined,
+      eventDescription: undefined,
+      address: undefined,
+      cityId: undefined,
+      districtId: undefined,
+      wardId: undefined,
+      eventCategory: undefined,
+      eventOrganizerName: undefined,
+      orgName: undefined,
+      orgDescription: undefined,
+      orgLogoUrl: undefined,
+    },
+  });
+
+  React.useEffect(() => {
+    if (formRef) {
+      formRef.current = form;
+    }
+  }, [formRef, form]);
 
   const [eventType, setEventType] = useState(EventType.OFFLINE);
   const [selectedCity, setSelectedCity] = useState<number | null>(null);
@@ -72,13 +110,15 @@ const EventInfoForm: React.FC<FormStepProps> = ({ formRef }) => {
       const category =
         eventDetail.categoriesIds[0] + '_' + eventDetail.categories[0];
       setSelectedCategory(category);
+      safeSetFormValue(formRef, 'category', category);
       setEventType(eventDetail.eventType);
 
-      formRef.current.setFieldsValue({
+      safeSetFormValue(formRef, 'category', category);
+      setEditorHtml(eventDetail.eventDescription);
+      safeSetFormValues(formRef, {
         ...eventDetail,
         category,
       });
-      setEditorHtml(eventDetail.eventDescription);
 
       setFileList({
         logo: transformFile(eventDetail.eventLogoUrl, 'logo'),
@@ -105,7 +145,12 @@ const EventInfoForm: React.FC<FormStepProps> = ({ formRef }) => {
   const uploadProps = () => ({
     beforeUpload: (file: File) => {
       const isImage = file.type.startsWith('image/');
-      if (!isImage) message.error(t('event_create.image_only'));
+      if (!isImage)
+        notifications.show({
+          title: 'Error',
+          message: t('event_create.image_only'),
+          color: 'red',
+        });
       return isImage;
     },
     listType: 'picture-card',
@@ -116,30 +161,55 @@ const EventInfoForm: React.FC<FormStepProps> = ({ formRef }) => {
 
   const previewModal = (
     <Modal
-      open={previewOpen}
+      opened={previewOpen}
+      onClose={handleCancel}
       title={previewTitle}
-      footer={null}
-      onCancel={handleCancel}
+      centered
+      size="lg"
     >
-      <img alt="example" style={{ width: '100%' }} src={previewImage} />
+      <img
+        alt="preview"
+        style={{ width: '100%', borderRadius: '8px' }}
+        src={previewImage}
+      />
     </Modal>
   );
 
   if (isEventLoading || isCitiesLoading || isCategoriesLoading) {
     return (
-      <div
-        style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}
+      <Box
+        py={60}
+        pos="relative"
+        h={500}
+        w="100%"
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
       >
-        <Spin size="large" />
-      </div>
+        <LoadingOverlay
+          visible={true}
+          loaderProps={{ size: 'xl', color: 'blue', variant: 'dots' }}
+          overlayProps={{ blur: 4, opacity: 0.3, color: '#f8faff' }}
+        />
+        <Text size="lg" fw={500} color="dimmed">
+          Loading Event Information...
+        </Text>
+      </Box>
     );
   }
 
   return (
-    <Form
-      layout="vertical"
+    <Box
       ref={formRef}
-      style={{ width: '100%', padding: '1.5rem' }}
+      w="100%"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '2rem',
+        maxWidth: '100%',
+      }}
     >
       <EventIdentitySection
         formRef={formRef}
@@ -150,6 +220,7 @@ const EventInfoForm: React.FC<FormStepProps> = ({ formRef }) => {
       />
 
       <EventLocationSection
+        formRef={formRef}
         eventType={eventType}
         setEventType={setEventType}
         selectedCity={selectedCity}
@@ -166,11 +237,14 @@ const EventInfoForm: React.FC<FormStepProps> = ({ formRef }) => {
       />
 
       <EventCategorySection
+        formRef={formRef}
         categories={categories}
         selectedCategory={selectedCategory}
+        setSelectedCategory={setSelectedCategory}
       />
 
       <EventDescriptionSection
+        formRef={formRef}
         editorHtml={editorHtml}
         setEditorHtml={setEditorHtml}
       />
@@ -182,7 +256,11 @@ const EventInfoForm: React.FC<FormStepProps> = ({ formRef }) => {
         previewModal={previewModal}
         uploadProps={uploadProps}
       />
-    </Form>
+
+      <Flex justify="flex-end" mt="xl">
+        <Box style={{ height: 20 }} /> {/* Spacer for bottom margin */}
+      </Flex>
+    </Box>
   );
 };
 

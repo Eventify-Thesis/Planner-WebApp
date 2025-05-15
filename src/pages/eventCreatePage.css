@@ -1,0 +1,70 @@
+/* Custom styles for EventCreatePage */
+
+/* Button hover effects */
+.hover-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(34, 139, 230, 0.4);
+  transition: all 0.2s ease;
+}
+
+/* Animation for containers */
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(10px);
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0);
+  }
+}
+
+.form-container-active {
+  animation: fadeIn 0.3s ease;
+}
+
+/* Enhanced input styling */
+input:focus, select:focus, textarea:focus {
+  border-color: rgba(34, 139, 230, 0.6) !important;
+  box-shadow: 0 0 0 1px rgba(34, 139, 230, 0.3) !important;
+}
+
+/* Modern select elements */
+.mantine-Select-input:not(:disabled):hover,
+.mantine-TextInput-input:not(:disabled):hover {
+  border-color: rgba(34, 139, 230, 0.5);
+}
+
+.stepper-root {
+  margin: 0rem;
+  box-shadow: none;
+}
+
+/* Stepper progress indicator */
+.mantine-Stepper-stepCompletedIcon {
+  background-color: #3d8bfd !important;
+  color: white !important;
+  transform: scale(1.1);
+  transition: all 0.2s ease;
+}
+
+/* Add subtle transitions to form sections */
+.mantine-Paper-root {
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.mantine-Paper-root:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* Improved segmented control styling */
+.mantine-SegmentedControl-root {
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e9ecef;
+}
+
+.mantine-SegmentedControl-indicator {
+  box-shadow: 0 2px 5px rgba(34, 139, 230, 0.2);
+}
+

@@ -1,15 +1,16 @@
 import React from 'react';
 import { DatePicker, Form } from 'antd';
+import { Box, Text } from '@mantine/core';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
-import { ShowingModel } from '@/domain/ShowModel';
-import { TimePickerContainer } from '../ShowAndTicketForm.styles';
+import { ShowModel } from '@/domain/ShowModel';
+import classes from './TimePickerSection.module.css';
 
 interface TimePickerSectionProps {
-  show: ShowingModel;
+  show: ShowModel;
   showIndex: number;
   formRef: any;
-  onTimeUpdate: (updatedShow: ShowingModel) => void;
+  onTimeUpdate: (updatedShow: ShowModel) => void;
 }
 
 function isDayjs(date: any): date is dayjs.Dayjs {
@@ -25,82 +26,90 @@ export const TimePickerSection: React.FC<TimePickerSectionProps> = ({
   const { t } = useTranslation();
 
   return (
-    <TimePickerContainer>
-      <Form.Item
-        name={['shows', showIndex, 'startTime']}
-        label={t('show_and_ticket.start_time')}
-        rules={[
-          {
-            required: true,
-            message: t('show_and_ticket.validation.start_time_required'),
-          },
-          ({ getFieldValue }) => ({
-            validator(_, value) {
-              const endTime = getFieldValue(['shows', showIndex, 'endTime']);
-              if (
-                isDayjs(value) &&
-                isDayjs(endTime) &&
-                !value.isBefore(endTime)
-              ) {
-                return Promise.reject(
-                  new Error(
-                    t('show_and_ticket.validation.start_time_before_end'),
-                  ),
-                );
-              }
-              return Promise.resolve();
+    <Box className={classes.timePickerContainer}>
+      <Box className={classes.formField}>
+        <Text className={classes.label}>{t('show_and_ticket.start_time')}</Text>
+        <Form.Item
+          name={['shows', showIndex, 'startTime']}
+          noStyle
+          rules={[
+            {
+              required: true,
+              message: t('show_and_ticket.validation.start_time_required'),
             },
-          }),
-        ]}
-      >
-        <DatePicker
-          showTime
-          onChange={(date) => {
-            const updatedShow = { ...show, startTime: date };
-            onTimeUpdate(updatedShow);
-          }}
-        />
-      </Form.Item>
+            ({ getFieldValue }) => ({
+              validator(_, value) {
+                const endTime = getFieldValue(['shows', showIndex, 'endTime']);
+                if (
+                  isDayjs(value) &&
+                  isDayjs(endTime) &&
+                  !value.isBefore(endTime)
+                ) {
+                  return Promise.reject(
+                    new Error(
+                      t('show_and_ticket.validation.start_time_before_end'),
+                    ),
+                  );
+                }
+                return Promise.resolve();
+              },
+            }),
+          ]}
+        >
+          <DatePicker
+            className={classes.datePicker}
+            showTime
+            onChange={(date) => {
+              const updatedShow = { ...show, startTime: date };
+              onTimeUpdate(updatedShow);
+            }}
+          />
+        </Form.Item>
+      </Box>
 
-      <Form.Item
-        name={['shows', showIndex, 'endTime']}
-        label={t('show_and_ticket.end_time')}
-        rules={[
-          {
-            required: true,
-            message: t('show_and_ticket.validation.end_time_required'),
-          },
-          ({ getFieldValue }) => ({
-            validator(_, value) {
-              const startTime = getFieldValue([
-                'shows',
-                showIndex,
-                'startTime',
-              ]);
-              if (
-                isDayjs(value) &&
-                isDayjs(startTime) &&
-                !value.isAfter(startTime)
-              ) {
-                return Promise.reject(
-                  new Error(
-                    t('show_and_ticket.validation.end_time_after_start'),
-                  ),
-                );
-              }
-              return Promise.resolve();
+      <Box className={classes.formField}>
+        <Text className={classes.label}>{t('show_and_ticket.end_time')}</Text>
+        <Form.Item
+          name={['shows', showIndex, 'endTime']}
+          noStyle
+          rules={[
+            {
+              required: true,
+              message: t('show_and_ticket.validation.end_time_required'),
             },
-          }),
-        ]}
-      >
-        <DatePicker
-          showTime
-          onChange={(date) => {
-            const updatedShow = { ...show, endTime: date };
-            onTimeUpdate(updatedShow);
-          }}
-        />
-      </Form.Item>
-    </TimePickerContainer>
+            ({ getFieldValue }) => ({
+              validator(_, value) {
+                const startTime = getFieldValue([
+                  'shows',
+                  showIndex,
+                  'startTime',
+                ]);
+                if (
+                  isDayjs(value) &&
+                  isDayjs(startTime) &&
+                  !value.isAfter(startTime)
+                ) {
+                  return Promise.reject(
+                    new Error(
+                      t('show_and_ticket.validation.end_time_after_start'),
+                    ),
+                  );
+                }
+                return Promise.resolve();
+              },
+            }),
+          ]}
+        >
+          <DatePicker
+            className={classes.datePicker}
+            showTime
+            onChange={(date) => {
+              const updatedShow = { ...show, endTime: date };
+              onTimeUpdate(updatedShow);
+            }}
+          />
+        </Form.Item>
+      </Box>
+    </Box>
   );
 };

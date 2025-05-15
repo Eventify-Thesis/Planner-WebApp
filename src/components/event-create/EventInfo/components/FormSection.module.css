@@ -1,0 +1,150 @@
+.formSection {
+  margin-bottom: 2rem;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  position: relative;
+  border: 1px solid #eaeaea;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.07);
+}
+
+.formSection:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+}
+
+.sectionTitle {
+  padding: 1.2rem 1.5rem;
+  font-weight: 700;
+  font-size: 1.2rem;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #4f46e5 0%, #2563eb 50%, #3b82f6 100%);
+  color: white;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.sectionTitle::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  top: 0;
+  left: -100%;
+  transform: skewX(-30deg);
+  transition: all 0.5s ease;
+}
+
+.formSection:hover .sectionTitle::before {
+  left: 150%;
+}
+
+.titleIcon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.sectionContent {
+  padding: 1.5rem;
+  background-color: white;
+  position: relative;
+}
+
+.sectionContent::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(to bottom, #4f46e5, #3b82f6, #60a5fa);
+}
+
+.colorAccent1 .sectionTitle {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
+}
+
+.colorAccent1 .sectionContent::before {
+  background: linear-gradient(to bottom, #3b82f6, #2563eb, #1d4ed8);
+}
+
+.colorAccent2 .sectionTitle {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6d28d9 100%);
+}
+
+.colorAccent2 .sectionContent::before {
+  background: linear-gradient(to bottom, #8b5cf6, #7c3aed, #6d28d9);
+}
+
+.colorAccent3 .sectionTitle {
+  background: linear-gradient(135deg, #ec4899 0%, #db2777 50%, #be185d 100%);
+}
+
+.colorAccent3 .sectionContent::before {
+  background: linear-gradient(to bottom, #ec4899, #db2777, #be185d);
+}
+
+.colorAccent4 .sectionTitle {
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 50%, #0e7490 100%);
+}
+
+.colorAccent4 .sectionContent::before {
+  background: linear-gradient(to bottom, #06b6d4, #0891b2, #0e7490);
+}
+
+.colorAccent5 .sectionTitle {
+  background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
+}
+
+.colorAccent5 .sectionContent::before {
+  background: linear-gradient(to bottom, #10b981, #059669, #047857);
+}
+
+.badge {
+  font-size: 0.7rem;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 0.2rem 0.6rem;
+  border-radius: 100px;
+  margin-left: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.decorativeElement {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  right: -10px;
+  top: -10px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+  z-index: 1;
+}
+
+.decorativeElement2 {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  left: 20px;
+  bottom: -5px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 70%);
+  z-index: 1;
+}
+
+@media (max-width: 768px) {
+  .sectionTitle {
+    padding: 1rem 1.2rem;
+    font-size: 1.1rem;
+  }
+  
+  .sectionContent {
+    padding: 1.2rem;
+  }
+}

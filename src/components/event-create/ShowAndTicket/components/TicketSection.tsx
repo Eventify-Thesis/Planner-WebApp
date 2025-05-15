@@ -1,21 +1,17 @@
 import React from 'react';
-import { Button, Space, Form } from 'antd';
-import {
-  DeleteOutlined,
-  PlusCircleFilled,
-  SettingOutlined,
-} from '@ant-design/icons';
+import { Form } from 'antd';
+import { Box, Button, Group, Text, Card, ActionIcon } from '@mantine/core';
+import { IconTrash, IconSettings, IconPlus } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
-import { ShowingModel } from '@/domain/ShowModel';
-import { StyledTicketContainer, TicketCard } from '../ShowAndTicketForm.styles';
-import { FONT_SIZE } from '@/styles/themes/constants';
+import { ShowModel } from '@/domain/ShowModel';
+import classes from './TicketSection.module.css';
 
 interface TicketSectionProps {
-  show: ShowingModel;
+  show: ShowModel;
   showIndex: number;
   onAddTicket: () => void;
   onEditTicket: (ticketTypeId: string) => void;
-  onShowUpdate: (updatedShow: ShowingModel) => void;
+  onShowUpdate: (updatedShow: ShowModel) => void;
 }
 
 export const TicketSection: React.FC<TicketSectionProps> = ({
@@ -40,49 +36,51 @@ export const TicketSection: React.FC<TicketSectionProps> = ({
       trigger="onChange"
       validateTrigger={['onChange']}
     >
-      <StyledTicketContainer>
+      <Box className={classes.ticketContainer}>
         {show.ticketTypes.map((ticketType, ticketIndex) => (
-          <TicketCard
-            key={ticketType.id || ticketIndex}
-            size="small"
-            title={ticketType.name}
-            extra={
-              <Space>
-                <Button
-                  type="text"
-                  icon={<SettingOutlined />}
-                  onClick={() => onEditTicket(ticketType.id)}
-                />
-                <Button
-                  type="text"
-                  danger
-                  icon={<DeleteOutlined />}
-                  onClick={() => handleDeleteTicket(ticketIndex)}
-                />
-              </Space>
-            }
+          <Card
+            key={ticketType.id || ticketIndex.toString()}
+            className={classes.ticketCard}
+            shadow="sm"
+            padding={0}
           >
-            <p>{ticketType.isFree ? 'Free' : `$${ticketType.price}`}</p>
-          </TicketCard>
+            <Box className={classes.ticketHeader}>
+              <Text className={classes.ticketTitle}>{ticketType.name}</Text>
+              <Group gap="xs">
+                <ActionIcon
+                  variant="transparent"
+                  color="white"
+                  onClick={() => onEditTicket(ticketType.id?.toString() || '')}
+                >
+                  <IconSettings size={16} />
+                </ActionIcon>
+                <ActionIcon
+                  variant="transparent"
+                  color="red"
+                  onClick={() => handleDeleteTicket(ticketIndex)}
+                >
+                  <IconTrash size={16} />
+                </ActionIcon>
+              </Group>
+            </Box>
+            <Box className={classes.ticketContent}>
+              <Text className={`${classes.ticketPrice} ${ticketType.isFree ? classes.ticketFree : ''}`}>
+                {ticketType.isFree ? 'Free' : `$${ticketType.price}`}
+              </Text>
+            </Box>
+          </Card>
         ))}
-        <div
-          style={{ display: 'flex', justifyContent: 'center', width: '100%' }}
-        >
+        <Box className={classes.buttonContainer}>
           <Button
-            type="text"
+            variant="subtle"
             onClick={onAddTicket}
-            style={{
-              color: 'var(--primary-color)',
-              paddingLeft: 0,
-              fontWeight: 'bold',
-              fontSize: FONT_SIZE.md,
-            }}
-            icon={<PlusCircleFilled />}
+            className={classes.actionButton}
+            leftSection={<IconPlus size={18} />}
           >
             {t('show_and_ticket.add_ticket')}
           </Button>
-        </div>
-      </StyledTicketContainer>
+        </Box>
+      </Box>
     </Form.Item>
   );
 };

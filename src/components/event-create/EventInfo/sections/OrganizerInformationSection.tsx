@@ -1,13 +1,24 @@
 import React from 'react';
-import { Form, Input, Upload } from 'antd';
-import { BaseRow } from '@/components/common/BaseRow/BaseRow';
-import { BaseCol } from '@/components/common/BaseCol/BaseCol';
 import { useTranslation } from 'react-i18next';
-import type { UploadFile } from 'antd/es/upload/interface';
-import * as S from '../EventInfoForm.styles';
-import { UploadIcon } from '../components/UploadIcon';
+import {
+  Grid,
+  TextInput,
+  Text,
+  Box,
+  Paper,
+  Image,
+  ActionIcon,
+} from '@mantine/core';
+import { IconUsers, IconBuildingSkyscraper } from '@tabler/icons-react';
+import { Dropzone, FileWithPath } from '@mantine/dropzone';
+import { IconUpload, IconX } from '@tabler/icons-react';
+import type { UploadFile } from 'antd/es/upload/interface'; // Needed for compatibility
+import type { RcFile } from 'antd/es/upload'; // Needed for the uploadFile service
 import { uploadFile } from '@/services/fileUpload.service';
-import type { RcFile } from 'antd/es/upload';
+import { transformFile } from '@/utils/utils';
+import { FormSection } from '../components/FormSection';
+import classes from './OrganizerInformationSection.module.css';
+import { getFormValue, safeSetFormValue } from '@/utils/formUtils';
 
 interface OrganizerInformationSectionProps {
   formRef: React.RefObject<any>;
@@ -34,20 +45,54 @@ interface OrganizerInformationSectionProps {
 }
 
 const handleOrganizerLogoUpload = async (
-  fileList: UploadFile[],
+  files: FileWithPath[],
   setFileList: OrganizerInformationSectionProps['setFileList'],
   formRef: React.RefObject<any>,
 ) => {
-  setFileList((prevFileList) => ({
-    ...prevFileList,
-    organizerLogo: fileList,
-  }));
+  // Skip if no files
+  if (!files || files.length === 0) return;
 
-  if (fileList[0]?.originFileObj) {
-    const url = await uploadFile(fileList[0].originFileObj as RcFile);
-    formRef.current?.setFieldsValue({
-      orgLogoUrl: url,
-    });
+  // Get the uploaded file from the array
+  const file = files[0];
+  if (!file) return;
+
+  try {
+    // Upload file and get back the URL
+    const url = await uploadFile(file as any);
+
+    if (url) {
+      // Update form value appropriately based on available methods
+      if (formRef.current) {
+        safeSetFormValue(formRef, 'orgLogoUrl', url);
+      }
+
+      // Update the file list with the new URL
+      setFileList((prevFileList) => ({
+        ...prevFileList,
+        organizerLogo: transformFile(url, 'organizerLogo'),
+      }));
+    }
+  } catch (error) {
+    console.error(`Error uploading organizer logo:`, error);
+  }
+};
+
+// Helper function to remove an image
+const removeOrganizerLogo = (
+  setFileList: OrganizerInformationSectionProps['setFileList'],
+  formRef: React.RefObject<any>,
+) => {
+  setFileList((prevState) => ({ ...prevState, organizerLogo: [] }));
+
+  // Update form value
+  if (formRef.current) {
+    if (typeof formRef.current.setValues === 'function') {
+      formRef.current.setValues({ organizerLogo: '' });
+    } else if (typeof formRef.current.setValue === 'function') {
+      formRef.current.setValue('organizerLogo', '');
+    } else {
+      formRef.current.organizerLogo = '';
+    }
   }
 };
 
@@ -57,82 +102,122 @@ export const OrganizerInformationSection: React.FC<
   const { t } = useTranslation();
 
   return (
-    <S.FormSection title={t('event_create.organizer_information.title')}>
-      <BaseRow
-        gutter={[16, 16]}
-        style={{
-          width: '100%',
-        }}
-      >
-        <Form.Item
-          style={{
-            width: '20%',
-          }}
-          label={t('event_create.organizer_information.logo')}
-          name="orgLogoUrl"
-          rules={[
-            {
-              required: true,
-              message: t('event_create.organizer_information.logo_required'),
-            },
-          ]}
-        >
-          <Upload
-            {...uploadProps()}
-            fileList={fileList.organizerLogo}
-            onChange={({ fileList }) =>
-              handleOrganizerLogoUpload(fileList, setFileList, formRef)
-            }
-            beforeUpload={() => false}
-          >
-            {fileList.organizerLogo.length < 1 && (
-              <div className="h-[200px] flex flex-col justify-center items-center">
-                <UploadIcon />
-                <div style={{ marginTop: 8 }}>
-                  {t('event_create.organizer_information.logo_required')}
-                </div>
-              </div>
+    <FormSection
+      title={t('event_create.organizer_information.title')}
+      icon={<IconBuildingSkyscraper size={22} />}
+      colorAccent="accent4"
+      subtitle={
+        'Provide information about the organization or individual hosting this event.'
+      }
+      badge="Organizer"
+    >
+      <Grid gutter="md">
+        <Grid.Col span={{ base: 12, md: 8 }}>
+          <Paper withBorder p="md" radius="md" mb="lg">
+            <Grid gutter="md">
+              <Grid.Col span={12}>
+                <TextInput
+                  label={
+                    <>
+                      {t('event_create.organizer_information.name')}
+                      <Text span c="red" ml={4}>
+                        *
+                      </Text>
+                    </>
+                  }
+                  name="orgName"
+                  placeholder={t(
+                    'event_create.organizer_information.name_placeholder',
+                  )}
+                  onChange={(e) => {
+                    const { value } = e.currentTarget;
+                    safeSetFormValue(formRef, 'orgName', value);
+                  }}
+                  required
+                  classNames={{ input: classes.inputField }}
+                  value={getFormValue(formRef, 'orgName')}
+                />
+              </Grid.Col>
+
+              <Grid.Col span={12}>
+                <Box mb="md">
+                  <Text fw={500} mb="xs">
+                    {t('event_create.organizer_information.information')}
+                    <Text span c="red" ml={4}>
+                      *
+                    </Text>
+                  </Text>
+                  <textarea
+                    name="orgDescription"
+                    className={classes.textArea}
+                    rows={4}
+                    placeholder={t(
+                      'event_create.organizer_information.information',
+                    )}
+                    onChange={(e) => {
+                      const { value } = e.currentTarget;
+                      safeSetFormValue(formRef, 'orgDescription', value);
+                    }}
+                    value={getFormValue(formRef, 'orgDescription')}
+                  />
+                </Box>
+              </Grid.Col>
+            </Grid>
+          </Paper>
+        </Grid.Col>
+
+        <Grid.Col span={{ base: 12, md: 4 }}>
+          <Paper withBorder p="md" radius="md" mb="lg">
+            <Text fw={500} mb="md">
+              {t('event_create.organizer_information.logo')}
+              <Text span c="red" ml={4}>
+                *
+              </Text>
+            </Text>
+            {fileList['organizerLogo']?.length > 0 ? (
+              <Box className={classes.previewContainer}>
+                <Image
+                  src={fileList['organizerLogo'][0]?.url}
+                  alt="Organizer Logo"
+                  className={classes.previewImage}
+                />
+                <Box className={classes.previewOverlay}>
+                  <ActionIcon
+                    variant="filled"
+                    color="red"
+                    onClick={() => removeOrganizerLogo(setFileList, formRef)}
+                  >
+                    <IconX size={16} />
+                  </ActionIcon>
+                </Box>
+              </Box>
+            ) : (
+              <Dropzone
+                onDrop={(files) =>
+                  handleOrganizerLogoUpload(files, setFileList, formRef)
+                }
+                maxSize={2 * 1024 * 1024} // 2MB
+                accept={{ 'image/*': [] }}
+                className={classes.uploadContainer}
+              >
+                <Box className={classes.uploadContent}>
+                  <Box className={classes.uploadIcon}>
+                    <IconUpload size={30} stroke={1.5} />
+                  </Box>
+                  <Text fw={600} size="sm" c="blue.7" mb={8}>
+                    {t('event_create.organizer_information.upload_logo')}
+                  </Text>
+                  <Text size="xs" c="dimmed" ta="center">
+                    {t('event_create.organizer_information.logo_description') ||
+                      'Upload organization logo'}
+                  </Text>
+                </Box>
+              </Dropzone>
             )}
-          </Upload>
-          {previewModal}
-        </Form.Item>
-
-        <BaseCol
-          style={{
-            height: '200px',
-            width: '80%',
-          }}
-        >
-          <Form.Item
-            label={t('event_create.organizer_information.name')}
-            name="orgName"
-            rules={[
-              {
-                required: true,
-                message: t('event_create.organizer_information.name_required'),
-              },
-            ]}
-          >
-            <Input placeholder={t('event_create.organizer_information.name')} />
-          </Form.Item>
-
-          <Form.Item
-            label={t('event_create.organizer_information.information')}
-            name="orgDescription"
-            rules={[
-              {
-                required: true,
-                message: t('event_create.organizer_information.info_required'),
-              },
-            ]}
-          >
-            <Input.TextArea
-              rows={4}
-              placeholder={t('event_create.organizer_information.information')}
-            />
-          </Form.Item>
-        </BaseCol>
-      </BaseRow>
-    </S.FormSection>
+          </Paper>
+        </Grid.Col>
+      </Grid>
+      {previewModal}
+    </FormSection>
   );
 };

@@ -206,17 +206,17 @@
     "at_least_one_ticket_type": "Please create at least one ticket",
     "event_identity": {
       "title": "Event Identity",
-      "logo": "Event Logo",
-      "logo_required": "Please upload event logo",
-      "banner": "Event Banner",
-      "banner_required": "Please upload event banner",
+      "description": "Basic information about your event",
       "name": "Event Name",
-      "name_required": "Please enter event name"
-    },
-    "upload": {
-      "logo": "Upload Logo",
-      "banner": "Upload Banner",
-      "organizer_logo": "Upload Organizer Logo"
+      "name_placeholder": "Enter event name",
+      "abbrName": "Short Name",
+      "abbrName_placeholder": "Enter short name",
+      "logo": "Event Logo",
+      "banner": "Event Banner",
+      "upload_logo": "Upload Logo",
+      "upload_banner": "Upload Banner",
+      "logo_description": "Recommended size: 500×500px (square format)",
+      "banner_description": "Recommended size: 1200×675px (16:9 format)"
     },
     "event_location": {
       "title": "Event Location",
@@ -238,7 +238,12 @@
       "street_address": "Street Address",
       "street_address_placeholder": "Enter street address",
       "street_address_required": "Please enter street address",
-      "street_required": "Please enter street address"
+      "street_required": "Please enter street address",
+      "loading": "Loading...",
+      "address_help": "Enter the full street address including building number, street name, and any additional details.",
+      "online_url": "Online Event URL",
+      "online_url_placeholder": "Enter the URL for your online event",
+      "online_url_help": "This URL will be shared with attendees before the event starts."
     },
     "event_category": {
       "title": "Event Category",
@@ -246,7 +251,10 @@
       "required": "Please select category",
       "placeholder": "Select category",
       "info": "Event category information",
-      "info_required": "Please enter event category information"
+      "info_required": "Please enter event category information",
+      "info_placeholder": "Enter additional information about the event category",
+      "description": "Select the most appropriate category to help attendees find your event.",
+      "nothing_found": "No matching categories found"
     },
     "event_description": {
       "title": "Event Description",
@@ -260,7 +268,18 @@
       "name": "Organizer Name",
       "name_required": "Please enter organizer name",
       "information": "Organizer Information",
-      "info_required": "Please enter organizer information"
+      "info_required": "Please enter organizer information",
+      "upload_logo": "Upload Organizer Logo",
+      "logo_description": "Upload your organization's logo",
+      "name_placeholder": "Enter your organization name",
+      "email": "Email Address",
+      "email_placeholder": "Enter contact email",
+      "email_required": "Please enter contact email",
+      "phone": "Phone Number",
+      "phone_placeholder": "Enter contact phone number",
+      "phone_required": "Please enter phone number",
+      "website": "Website",
+      "website_placeholder": "Enter organization website"  
     }
   },
   "event_settings": {
@@ -405,8 +424,8 @@
     "radio_option_desc": "A Radio option has multiple options but only one can be selected.",
     "dropdown_selection": "Dropdown selection",
     "dropdown_selection_desc": "A Dropdown input allows only one selection",
-    "address": "Address",
-    "address_desc": "Shows common address fields, including country",
+    "address_question_type": "Address",
+    "address_question_type_desc": "Shows common address fields, including country",
     "date": "Date",
     "date_desc": "A date input. Perfect for asking for a date of birth etc.",
     "question_title": "Question Title",

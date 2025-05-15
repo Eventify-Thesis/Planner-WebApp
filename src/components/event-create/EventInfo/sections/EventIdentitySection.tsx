@@ -1,14 +1,26 @@
 import React from 'react';
-import { Form, Input, Upload } from 'antd';
-import { BaseRow } from '@/components/common/BaseRow/BaseRow';
-import { BaseCol } from '@/components/common/BaseCol/BaseCol';
 import { useTranslation } from 'react-i18next';
-import type { UploadFile } from 'antd/es/upload/interface';
-import * as S from '../EventInfoForm.styles';
-import { UploadIcon } from '../components/UploadIcon';
+import {
+  Grid,
+  TextInput,
+  Text,
+  Box,
+  Paper,
+  Group,
+  Image,
+  ActionIcon,
+} from '@mantine/core';
+import { Dropzone, FileWithPath } from '@mantine/dropzone';
+import { IconPhoto, IconFileUpload, IconX, IconId } from '@tabler/icons-react';
+import type { UploadFile } from 'antd/es/upload/interface'; // Needed for compatibility
+// Import only what we need for type definitions
 import { uploadFile } from '@/services/fileUpload.service';
-import type { RcFile } from 'antd/es/upload';
 import { transformFile } from '@/utils/utils';
+import { FormSection } from '../components/FormSection';
+import { getFormValue, safeSetFormValue } from '@/utils/formUtils';
+import classes from './EventIdentitySection.module.css';
+
+// We continue to use UploadFile from antd for compatibility with existing code
 
 interface EventIdentitySectionProps {
   formRef: React.RefObject<any>;
@@ -24,38 +36,60 @@ interface EventIdentitySectionProps {
       organizerLogo: UploadFile[];
     }>
   >;
-  previewModal: JSX.Element;
-  uploadProps: () => {
-    beforeUpload: (file: File) => boolean;
-    listType: string;
-    multiple: boolean;
-    accept: string;
-    onPreview: (file: UploadFile) => Promise<void>;
-  };
+  previewModal: React.ReactNode;
+  uploadProps: () => any; // Using any temporarily to resolve type issues
 }
 
 const handleFileUpload = async (
-  fileList: UploadFile[],
+  files: FileWithPath[],
   setFileList: EventIdentitySectionProps['setFileList'],
   fieldName: string,
   formRef: React.RefObject<any>,
 ) => {
-  setFileList((prevFileList) => ({
-    ...prevFileList,
-    [fieldName]: fileList,
-  }));
+  // Skip if no files
+  if (!files || files.length === 0) return;
 
-  if (fileList[0]?.originFileObj) {
-    const url = await uploadFile(fileList[0].originFileObj as RcFile);
-    formRef.current?.setFieldsValue({
-      [`event${fieldName[0].toUpperCase() + fieldName.slice(1)}Url`]: url,
-    });
+  // Get the uploaded file from the array
+  const file = files[0];
+  if (!file) return;
 
-    setFileList((prevFileList) => ({
-      ...prevFileList,
-      [fieldName]: transformFile(url, fieldName),
-    }));
+  try {
+    // Upload file and get back the URL
+    const url = await uploadFile(file as any);
+
+    if (url) {
+      // Instead of using formRef.setFieldsValue which doesn't exist in this context,
+      // we directly update the formRef value if it's a simple value property
+      // This matches the expected behavior without relying on the Ant form API
+      if (formRef.current) {
+        if (fieldName === 'logo') {
+          safeSetFormValue(formRef, 'eventLogoUrl', url);
+        } else if (fieldName === 'banner') {
+          safeSetFormValue(formRef, 'eventBannerUrl', url);
+        }
+      }
+
+      // Update the file list with the new URL
+      setFileList((prevFileList) => ({
+        ...prevFileList,
+        [fieldName]: transformFile(url, fieldName),
+      }));
+    }
+  } catch (error) {
+    console.error(`Error uploading ${fieldName}:`, error);
   }
+};
+
+// Helper function to remove an image
+const removeImage = (
+  setFileList: EventIdentitySectionProps['setFileList'],
+  fieldName: string,
+  formRef: React.RefObject<any>,
+) => {
+  setFileList((prevState) => ({ ...prevState, [fieldName]: [] }));
+
+  // Use our safe utility function
+  safeSetFormValue(formRef, fieldName, '');
 };
 
 export const EventIdentitySection: React.FC<EventIdentitySectionProps> = ({
@@ -63,94 +97,224 @@ export const EventIdentitySection: React.FC<EventIdentitySectionProps> = ({
   fileList,
   setFileList,
   previewModal,
-  uploadProps,
 }) => {
   const { t } = useTranslation();
 
   return (
-    <S.FormSection title={t('event_create.event_identity.title')}>
-      <BaseRow gutter={[24, 24]} className="w-full mb-6">
-        <BaseCol className="w-full md:w-1/4">
-          <Form.Item
-            label={t('event_create.event_identity.logo')}
-            name="eventLogoUrl"
-            rules={[
-              {
-                required: true,
-                message: t('event_create.event_identity.logo_required'),
-              },
-            ]}
-          >
-            <Upload
-              {...uploadProps()}
-              onChange={({ fileList }) =>
-                handleFileUpload(fileList, setFileList, 'logo', formRef)
+    <FormSection
+      title={t('event_create.event_identity.title')}
+      icon={<IconId size={22} />}
+      colorAccent="accent1"
+      subtitle={
+        "Define your event's visual identity with logos and banners that represent your brand."
+      }
+      badge="Branding"
+    >
+      <Grid gutter="xl" mb="lg">
+        <Grid.Col span={{ base: 12, md: 3 }}>
+          <Group justify="space-between" mb="xs">
+            <Text fw={600} size="sm" c="dark">
+              {t('event_create.event_identity.logo')}
+              <Text span c="red" ml={4}>
+                *
+              </Text>
+            </Text>
+            <Text size="xs" c="dimmed">
+              (Square format)
+            </Text>
+          </Group>
+          {fileList['logo']?.length > 0 ? (
+            <Box className={classes.previewContainer}>
+              <Image
+                src={fileList['logo'][0]?.url}
+                alt="Logo"
+                className={classes.previewImage}
+              />
+              <Box className={classes.previewOverlay}>
+                <ActionIcon
+                  variant="filled"
+                  color="red"
+                  onClick={() => removeImage(setFileList, 'logo', formRef)}
+                >
+                  <IconX size={16} />
+                </ActionIcon>
+              </Box>
+            </Box>
+          ) : (
+            <Dropzone
+              onDrop={(files) =>
+                handleFileUpload(files, setFileList, 'logo', formRef)
               }
-              fileList={fileList['logo']}
-              className="w-full"
-              beforeUpload={() => false}
+              maxSize={2 * 1024 * 1024} // 2MB
+              accept={{ 'image/*': [] }}
+              className={classes.uploadContainer}
             >
-              {fileList['logo'].length < 1 && (
-                <div className="h-[400px] flex flex-col justify-center items-center">
-                  <UploadIcon />
-                  <div className="mt-2">
-                    {t('event_create.event_identity.logo')}
-                  </div>
-                </div>
-              )}
-            </Upload>
-            {previewModal}
-          </Form.Item>
-        </BaseCol>
+              <Box className={classes.uploadContent}>
+                <Box className={classes.uploadIcon}>
+                  <IconPhoto size={42} stroke={1.5} />
+                </Box>
+                <Text fw={600} size="sm" c="blue.7" mb={8}>
+                  {t('event_create.event_identity.upload_logo')}
+                </Text>
+                <Text size="xs" c="dimmed" ta="center" lh={1.5}>
+                  Click or drag an image here
+                  <br />
+                  PNG, JPG up to 2MB
+                  <br />
+                  <Text span c="blue.6" fw={500} size="xs">
+                    Recommended size: 400×400px
+                  </Text>
+                </Text>
+              </Box>
+            </Dropzone>
+          )}
+        </Grid.Col>
 
-        <BaseCol className="w-full md:w-3/4">
-          <Form.Item
-            label={t('event_create.event_identity.banner')}
-            name="eventBannerUrl"
-            rules={[
-              {
-                required: true,
-                message: t('event_create.event_identity.banner_required'),
-              },
-            ]}
-          >
-            <Upload
-              {...uploadProps()}
-              onChange={({ fileList }) =>
-                handleFileUpload(fileList, setFileList, 'banner', formRef)
+        <Grid.Col span={{ base: 12, md: 9 }}>
+          <Group justify="space-between" mb="xs">
+            <Text fw={600} size="sm" c="dark">
+              {t('event_create.event_identity.banner')}
+              <Text span c="red" ml={4}>
+                *
+              </Text>
+            </Text>
+            <Text size="xs" c="dimmed">
+              (16:9 format recommended)
+            </Text>
+          </Group>
+          {fileList['banner']?.length > 0 ? (
+            <Box className={classes.previewContainer}>
+              <Image
+                src={fileList['banner'][0]?.url}
+                alt="Banner"
+                className={classes.previewImage}
+              />
+              <Box className={classes.previewOverlay}>
+                <ActionIcon
+                  variant="filled"
+                  color="red"
+                  onClick={() => removeImage(setFileList, 'banner', formRef)}
+                >
+                  <IconX size={16} />
+                </ActionIcon>
+              </Box>
+            </Box>
+          ) : (
+            <Dropzone
+              onDrop={(files) =>
+                handleFileUpload(files, setFileList, 'banner', formRef)
               }
-              fileList={fileList.banner}
-              className="w-full"
-              beforeUpload={() => false}
+              maxSize={3 * 1024 * 1024} // 3MB
+              accept={{ 'image/*': [] }}
+              className={classes.uploadContainer}
             >
-              {fileList.banner.length < 1 && (
-                <div className="h-[400px] flex flex-col justify-center items-center">
-                  <UploadIcon />
-                  <div className="mt-2">
-                    {t('event_create.event_identity.banner')}
-                  </div>
-                </div>
-              )}
-            </Upload>
-            {previewModal}
-          </Form.Item>
-        </BaseCol>
-      </BaseRow>
-      <Form.Item
-        label={t('event_create.event_identity.name')}
-        name="eventName"
-        rules={[
-          {
-            required: true,
-            message: t('event_create.event_identity.name_required'),
-          },
-        ]}
+              <Box className={classes.uploadContent}>
+                <Box className={classes.uploadIcon}>
+                  <IconFileUpload size={42} stroke={1.5} />
+                </Box>
+                <Text fw={600} size="sm" c="blue.7" mb={8}>
+                  {t('event_create.event_identity.upload_banner')}
+                </Text>
+                <Text size="xs" c="dimmed" ta="center" lh={1.5}>
+                  Add a banner image to attract attendees
+                  <br />
+                  PNG, JPG up to 3MB
+                  <br />
+                  <Text span c="blue.6" fw={500} size="xs">
+                    Recommended size: 1200×675px
+                  </Text>
+                </Text>
+              </Box>
+            </Dropzone>
+          )}
+        </Grid.Col>
+      </Grid>
+
+      <Paper
+        shadow="sm"
+        p="xl"
+        mt="xl"
+        mb="md"
+        radius="md"
+        withBorder
+        style={{
+          borderLeft: '4px solid #3d8bfd',
+          background: 'linear-gradient(145deg, #f0f7ff 0%, #f8faff 100%)',
+          transition: 'all 0.3s ease',
+        }}
       >
-        <Input
-          placeholder={t('event_create.event_identity.name')}
-          size="large"
-        />
-      </Form.Item>
-    </S.FormSection>
+        <Text fw={600} size="sm" mb="xs">
+          Event Details
+        </Text>
+        <Grid gutter="xl">
+          <Grid.Col span={{ base: 12, md: 6 }}>
+            <TextInput
+              label={t('event_create.event_identity.name')}
+              name="eventName"
+              placeholder={
+                t('event_create.event_identity.name_placeholder') ||
+                'Enter your event name'
+              }
+              required
+              classNames={{ input: classes.textInput }}
+              styles={{
+                label: {
+                  fontWeight: 600,
+                  marginBottom: '6px',
+                  fontSize: '14px',
+                },
+                input: {
+                  padding: '12px 16px',
+                  height: 'auto',
+                  '&:focus': {
+                    borderColor: '#4285f4',
+                    boxShadow: '0 0 0 3px rgba(66, 133, 244, 0.15)',
+                  },
+                },
+              }}
+              onChange={(e) => {
+                safeSetFormValue(formRef, 'eventName', e.currentTarget.value);
+              }}
+              value={getFormValue(formRef, 'eventName')}
+            />
+          </Grid.Col>
+          <Grid.Col span={{ base: 12, md: 6 }}>
+            <TextInput
+              label={t('event_create.event_identity.abbrName')}
+              name="eventAbbrName"
+              placeholder={
+                t('event_create.event_identity.abbrName_placeholder') ||
+                'Short name or abbreviation'
+              }
+              classNames={{ input: classes.textInput }}
+              styles={{
+                label: {
+                  fontWeight: 600,
+                  marginBottom: '6px',
+                  fontSize: '14px',
+                },
+                input: {
+                  padding: '12px 16px',
+                  height: 'auto',
+                  '&:focus': {
+                    borderColor: '#4285f4',
+                    boxShadow: '0 0 0 3px rgba(66, 133, 244, 0.15)',
+                  },
+                },
+              }}
+              onChange={(e) => {
+                safeSetFormValue(
+                  formRef,
+                  'eventAbbrName',
+                  e.currentTarget.value,
+                );
+              }}
+              value={getFormValue(formRef, 'eventAbbrName')}
+            />
+          </Grid.Col>
+        </Grid>
+      </Paper>
+      {previewModal}
+    </FormSection>
   );
 };

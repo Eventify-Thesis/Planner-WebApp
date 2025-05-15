@@ -1,0 +1,29 @@
+.timePickerContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-bottom: 24px;
+  padding: 16px;
+  background-color: var(--mantine-color-gray-0);
+  border-radius: var(--mantine-radius-md);
+}
+
+.formField {
+  margin-bottom: 16px;
+}
+
+.label {
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: var(--mantine-color-dark-6);
+}
+
+.errorMessage {
+  color: var(--mantine-color-red-6);
+  font-size: var(--mantine-font-size-xs);
+  margin-top: 4px;
+}
+
+.datePicker {
+  width: 100%;
+}

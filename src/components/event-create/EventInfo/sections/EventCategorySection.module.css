@@ -1,0 +1,18 @@
+.categoryContainer {
+  max-width: 100%;
+}
+
+.categorySelect {
+  max-width: 100%;
+}
+
+.categoryLabel {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.categoryDescription {
+  margin-top: 8px;
+  color: var(--mantine-color-gray-6);
+  font-size: 0.875rem;
+}

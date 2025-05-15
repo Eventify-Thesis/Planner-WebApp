@@ -1,0 +1,112 @@
+.showHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(90deg, var(--mantine-color-blue-6) 0%, var(--mantine-color-violet-6) 100%);
+  padding: 16px 24px;
+  border-radius: var(--mantine-radius-md);
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.formContainer {
+  height: 100vh;
+  padding: 0 24px 24px 24px;
+  background-color: var(--mantine-color-gray-0);
+}
+
+.collapsePanel {
+  margin-bottom: 16px;
+  background-color: transparent;
+  border-radius: var(--mantine-radius-md);
+  transition: all 0.2s ease;
+}
+
+.accordionItem {
+  margin-bottom: 16px;
+  background-color: white;
+  border-radius: var(--mantine-radius-md);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  border: 1px solid var(--mantine-color-gray-3);
+}
+
+.accordionControl {
+  padding: 16px;
+  transition: background-color 0.2s ease;
+}
+
+.accordionControl:hover {
+  background-color: var(--mantine-color-gray-1);
+}
+
+.accordionPanel {
+  padding: 16px;
+  position: relative;
+  background-color: white;
+  border-top: 1px solid var(--mantine-color-gray-3);
+}
+
+.headerClosed {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.headerOpen {
+  color: var(--mantine-color-white);
+  font-size: var(--mantine-font-size-md);
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.showDate {
+  font-size: var(--mantine-font-size-md);
+  font-weight: 600;
+  color: var(--mantine-color-blue-9);
+}
+
+.showDateWarning {
+  color: var(--mantine-color-red-6);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.7; }
+  50% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
+
+.ticketCountText {
+  font-size: var(--mantine-font-size-xs);
+  color: var(--mantine-color-gray-6);
+}
+
+.buttonContainer {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+}
+
+.addShowButton {
+  margin-top: 16px;
+  color: var(--mantine-color-blue-6);
+  font-weight: bold;
+  font-size: var(--mantine-font-size-md);
+  padding: 8px 16px;
+  transition: all 0.2s ease;
+  border-radius: var(--mantine-radius-md);
+}
+
+.addShowButton:hover {
+  background-color: var(--mantine-color-blue-1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.divider {
+  margin: 24px 0;
+  background-color: var(--mantine-color-gray-3);
+  opacity: 0.7;
+}

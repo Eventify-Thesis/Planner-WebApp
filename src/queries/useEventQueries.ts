@@ -37,13 +37,21 @@ export const useEventMutations = (eventId?: IdParam) => {
 
   const infoDraftMutation = useMutation({
     mutationFn: async (data: any) => {
-      const [categoryIds, categories] = data.category.split('_');
-
-      delete data.category;
+      let categoryIds = data?.categoriesIds;
+      let categories = data?.categories;
+      if (data.category) {
+        const [categoryId, category] = data.category.split('_');
+        categoryIds = [categoryId];
+        categories = [category];
+        delete data.category;
+      }
+      delete data.setting;
+      delete data.paymentInfo;
+      delete data.shows;
       return await eventsClient.createDraft({
         ...data,
-        categoriesIds: [categoryIds],
-        categories: [categories],
+        categoriesIds: categoryIds,
+        categories: categories,
         id: eventId,
       });
     },

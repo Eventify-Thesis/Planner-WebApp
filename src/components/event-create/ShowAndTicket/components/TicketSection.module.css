@@ -1,0 +1,75 @@
+.ticketContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 20px;
+  width: 100%;
+}
+
+.ticketCard {
+  width: calc(50% - 8px);
+  border-radius: var(--mantine-radius-md);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+  background: white;
+  border: 1px solid var(--mantine-color-gray-3);
+}
+
+.ticketCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.ticketHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(90deg, var(--mantine-color-blue-5), var(--mantine-color-indigo-5));
+  padding: 12px;
+  color: white;
+}
+
+.ticketTitle {
+  font-weight: 600;
+  font-size: var(--mantine-font-size-sm);
+  margin: 0;
+}
+
+.ticketContent {
+  padding: 12px;
+}
+
+.ticketPrice {
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 500;
+  color: var(--mantine-color-dark-7);
+  margin: 0;
+}
+
+.ticketFree {
+  color: var(--mantine-color-green-7);
+}
+
+.actionButton {
+  margin-top: 16px;
+  color: var(--mantine-color-blue-6);
+  font-weight: bold;
+  font-size: var(--mantine-font-size-md);
+  padding: 8px 16px;
+  transition: all 0.2s ease;
+  border-radius: var(--mantine-radius-md);
+}
+
+.actionButton:hover {
+  background-color: var(--mantine-color-blue-1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.buttonContainer {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 16px;
+}

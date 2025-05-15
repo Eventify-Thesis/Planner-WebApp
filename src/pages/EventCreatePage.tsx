@@ -1,35 +1,43 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Button } from 'antd';
-import { PageTitle } from '@/components/common/PageTitle/PageTitle';
-import styled from 'styled-components';
 import { ShowAndTicketForm } from '@/components/event-create/ShowAndTicket/ShowAndTicketForm';
 import { EventSettingsForm } from '@/components/event-create/EventSettings/EventSettingsForm';
 import { PaymentInfoForm } from '@/components/event-create/PaymentInfo/PaymentInfoForm';
-import {
-  HeaderContent,
-  NavigationControls,
-  StickyHeader,
-} from '@/components/event-create/styles';
 import EventInfoForm from '@/components/event-create/EventInfo/EventInfoForm';
-import { Steps } from '@/components/common/BaseSteps/BaseSteps.styles';
 import { notificationController } from '@/controllers/notificationController';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import dayjs from 'dayjs';
 import { useEventMutations } from '@/queries/useEventQueries';
 
-const { Step } = Steps;
+// Mantine imports
+import {
+  Box,
+  Button,
+  Container,
+  Group,
+  Paper,
+  rem,
+  Stepper,
+  Title,
+  useMantineTheme,
+  BackgroundImage,
+  Center,
+  Flex,
+} from '@mantine/core';
+import './eventCreatePage.css';
+import './mantine.styles.css';
+import { IconCheck } from '@tabler/icons-react';
+import { safeValidateForm } from '@/utils/formUtils';
 
-const StyledFormContainer = styled.div`
-  width: 100%;
-  padding: 1rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-`;
+// FormContainer component that shows or hides based on active state with a nice transition effect
+interface FormContainerProps {
+  active: boolean;
+  children: React.ReactNode;
+}
 
-const FormContainer = styled.div<{ $active: boolean }>`
-  display: ${(props) => (props.$active ? 'block' : 'none')};
-`;
+const FormContainer: React.FC<FormContainerProps> = ({ active, children }) => {
+  return active ? <div style={{ padding: '1rem' }}>{children}</div> : null;
+};
 
 const EventCreatePage: React.FC = () => {
   const navigate = useNavigate();
@@ -122,7 +130,7 @@ const EventCreatePage: React.FC = () => {
     let values;
 
     try {
-      values = await formRefs[current].current.validateFields();
+      values = await safeValidateForm(formRefs[current]);
     } catch (error) {
       notificationController.error({
         message: error.message || t('event_create.previous_step_required'),
@@ -175,7 +183,7 @@ const EventCreatePage: React.FC = () => {
     let values;
 
     try {
-      values = await formRefs[current].current.validateFields();
+      values = await safeValidateForm(formRefs[current]);
     } catch (error) {
       notificationController.error({
         message: error.message || t('event_create.previous_step_required'),
@@ -257,12 +265,11 @@ const EventCreatePage: React.FC = () => {
   const handleStepChange = async (nextStep: number) => {
     try {
       if (nextStep > current) {
-        await formRefs[current].current.validateFields();
+        await safeValidateForm(formRefs[current]);
         return;
       }
 
-      formRefs[current].current.resetFields();
-
+      // Reset not needed as we're navigating back
       if (eventId) {
         navigate(`/create-event/${eventId}?step=${steps[nextStep].key}`, {
           replace: true,
@@ -280,56 +287,157 @@ const EventCreatePage: React.FC = () => {
     }
   };
 
+  const theme = useMantineTheme();
+
   return (
-    <StyledFormContainer>
-      <PageTitle>Eventify Planner</PageTitle>
-      <StickyHeader>
-        <HeaderContent>
-          <Steps
-            current={current}
-            onChange={handleStepChange}
-            style={{
-              flex: 1,
-              maxWidth: '1200px',
-            }}
+    <Container size="100%" style={{ overflow: 'hidden', padding: '0' }}>
+      <Paper
+        shadow="md"
+        radius="lg"
+        withBorder
+        mx="auto"
+        my="md"
+        style={{
+          borderColor: theme.colors.gray[3],
+          background: `linear-gradient(to right bottom, ${theme.white}, ${
+            theme.colors[theme.primaryColor][0]
+          })`,
+        }}
+      >
+        <Box
+          pos="sticky"
+          top={0}
+          py="sm"
+          px="md"
+          style={{
+            zIndex: 10,
+            borderRadius: theme.radius.md,
+            backgroundColor: theme.white,
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)',
+            backdropFilter: 'blur(10px)',
+            border: `1px solid ${theme.colors.gray[2]}`,
+          }}
+        >
+          <Group
+            align="flex-start"
+            justify="space-between"
+            wrap="nowrap"
+            style={{ margin: '0' }}
           >
-            {steps.map((step, index) => (
-              <Step key={index} title={step.title} />
-            ))}
-          </Steps>
-          <NavigationControls>
-            <Button style={{ marginRight: 1 }} onClick={handleSave}>
-              {t('event_create.save')}
-            </Button>
-
-            {current < steps.length - 1 && (
-              <Button
-                style={{
-                  backgroundColor: 'var(--primary-color)',
-                  color: 'var(--text-main-color)',
-                  borderColor: 'var(--primary-color)',
-                }}
-                type="primary"
-                onClick={handleNext}
+            {/* Stepper */}
+            <Box
+              style={{
+                flexGrow: 1,
+                paddingRight: rem(24),
+                paddingBottom: rem(10),
+              }}
+            >
+              <Stepper
+                active={current}
+                onStepClick={handleStepChange}
+                size="md"
+                allowNextStepsSelect={false}
+                styles={(theme) => ({
+                  root: {
+                    padding: 'px 0',
+                    backgroundColor: 'transparent',
+                    width: '100%',
+                  },
+                  stepBody: {
+                    alignItems: 'center',
+                    display: 'flex',
+                    flex: 1,
+                  },
+                  stepLabel: {
+                    fontSize: theme.fontSizes.sm,
+                    fontWeight: 600,
+                    marginTop: 6,
+                    color: theme.colors.gray[7],
+                  },
+                  step: {
+                    flex: 1,
+                  },
+                  stepIcon: {
+                    borderWidth: 2,
+                    width: 32,
+                    height: 32,
+                    fontSize: theme.fontSizes.sm,
+                    // '&[data-completed]': {
+                    //   backgroundColor: theme.colors.blue[6],
+                    //   borderColor: theme.colors.blue[6],
+                    //   color: theme.white,
+                    // },
+                  },
+                  separator: {
+                    flex: 1,
+                    height: 2,
+                    margin: 0,
+                    minWidth: '20px',
+                    maxWidth: 'none',
+                  },
+                })}
+                classNames={{ root: 'stepper-root', stepBody: 'step-body' }}
               >
-                {t('event_create.continue')}
-              </Button>
-            )}
-          </NavigationControls>
-        </HeaderContent>
-      </StickyHeader>
+                {steps.map((step, index) => (
+                  <Stepper.Step
+                    key={index}
+                    label={step.title}
+                    completedIcon={<IconCheck size={18} />}
+                  />
+                ))}
+              </Stepper>
+            </Box>
 
-      <div style={{ paddingTop: 24 }}>
+            {/* Buttons - Fixed width on the right */}
+            <Flex direction="row" gap="xs" wrap="nowrap" align="center">
+              <Button
+                variant="subtle"
+                onClick={handleSave}
+                leftSection={<IconCheck size={16} />}
+                style={{ fontWeight: 500 }}
+              >
+                {t('event_create.save')}
+              </Button>
+
+              {current > 0 && (
+                <Button
+                  variant="outline"
+                  color={theme.primaryColor}
+                  style={{
+                    fontWeight: 500,
+                    transition: 'all 0.2s ease',
+                  }}
+                  onClick={() => handleStepChange(current - 1)}
+                >
+                  {t('event_create.back')}
+                </Button>
+              )}
+              {current < steps.length - 1 && (
+                <Button
+                  color={theme.primaryColor}
+                  onClick={handleNext}
+                  style={{
+                    fontWeight: 500,
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  {t('event_create.continue')}
+                </Button>
+              )}
+            </Flex>
+          </Group>
+        </Box>
+
         {steps.map((step, index) => (
-          <FormContainer key={index} $active={current === index}>
+          <FormContainer key={index} active={current === index}>
             <step.content
               formRef={formRefs[index]}
               onValidate={current === index ? handleNext : undefined}
             />
           </FormContainer>
         ))}
-      </div>
-    </StyledFormContainer>
+      </Paper>
+    </Container>
   );
 };
 

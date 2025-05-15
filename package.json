@@ -34,6 +34,7 @@
     "@mantine/modals": "^7.7.1",
     "@mantine/notifications": "^7.7.1",
     "@mantine/nprogress": "^7.7.1",
+    "@mantine/styles": "^6.0.22",
     "@mantine/tiptap": "^7.17.7",
     "@reduxjs/toolkit": "^2.5.1",
     "@tabler/icons-react": "^3.31.0",
