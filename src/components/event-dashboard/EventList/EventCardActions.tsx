@@ -1,10 +1,65 @@
-import { Icon } from '@iconify/react/dist/iconify.js';
 import { useTranslation } from 'react-i18next';
-import styled from 'styled-components';
-
 import { useResponsive } from '@/hooks/useResponsive';
 import { useNavigate } from 'react-router-dom';
 import { EventStatus } from '@/constants/enums/event';
+import { Group, UnstyledButton, Text, Tooltip, Box } from '@mantine/core';
+import { createStyles } from '@mantine/styles';
+import { IconLayoutDashboard, IconUsers, IconShoppingCart, IconArmchair, IconSettings } from '@tabler/icons-react';
+
+const useStyles = createStyles((theme: any) => ({
+  actionButton: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+    padding: `${theme.spacing.sm} ${theme.spacing.sm}`,
+    borderRadius: theme.radius.sm,
+    transition: 'all 0.2s ease',
+    flex: 1,
+    position: 'relative',
+    
+    '&:hover': {
+      backgroundColor: 'rgba(66, 99, 235, 0.1)',
+      transform: 'translateY(-2px)',
+    },
+    
+    '&:active': {
+      transform: 'translateY(0px)',
+    },
+  },
+  
+  actionIcon: {
+    color: theme.white,
+    opacity: 0.9,
+    filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3))',
+    transition: 'opacity 0.2s ease, transform 0.2s ease',
+    
+    '&:hover': {
+      opacity: 1,
+    },
+  },
+  
+  actionText: {
+    fontSize: theme.fontSizes.sm,
+    color: theme.colors.white,
+    fontWeight: 600,
+    textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
+    letterSpacing: '0.4px',
+  },
+  
+  actionsContainer: {
+    display: 'flex',
+    width: '100%',
+    justifyContent: 'space-around',
+  },
+  
+  divider: {
+    width: '1px',
+    alignSelf: 'stretch',
+    margin: '8px 0',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  }
+}));
 
 export const EventCardActions = ({
   id,
@@ -13,130 +68,72 @@ export const EventCardActions = ({
   id: string;
   eventStatus: EventStatus;
 }) => {
+  const { classes } = useStyles();
   const { t } = useTranslation();
-  const { isMobile, isTablet, isDesktop } = useResponsive();
+  const { isDesktop } = useResponsive();
   const navigate = useNavigate();
+  
+  const iconSize = 18;
+  const iconStroke = 1.5;
+
+  const actions = [
+    {
+      icon: <IconLayoutDashboard size={iconSize} stroke={iconStroke} />,
+      label: t('eventDashboard.overview'),
+      onClick: () => navigate(`/events/${id}/dashboard`)
+    },
+    {
+      icon: <IconUsers size={iconSize} stroke={iconStroke} />,
+      label: t('eventDashboard.members'),
+      onClick: () => navigate(`/events/${id}/members`)
+    },
+    {
+      icon: <IconShoppingCart size={iconSize} stroke={iconStroke} />,
+      label: t('eventDashboard.orders'),
+      onClick: () => navigate(`/events/${id}/orders`)
+    },
+    {
+      icon: <IconArmchair size={iconSize} stroke={iconStroke} />,
+      label: t('eventDashboard.seating'),
+      onClick: () => navigate(`/events/${id}/seatmap/new`)
+    },
+    {
+      icon: <IconSettings size={iconSize} stroke={iconStroke} />,
+      label: t('eventDashboard.edit'),
+      onClick: () => {
+        if (eventStatus === EventStatus.DRAFT) {
+          navigate(`/create-event/${id}?step=info`);
+        } else {
+          navigate(`/events/${id}/edit-event`);
+        }
+      }
+    }
+  ];
 
   return (
-    <ActionsContainer>
-      <ActionItem>
-        <ActionLink
-          onClick={() => navigate(`/events/${id}/dashboard`)}
-          isMobile={isMobile}
-        >
-          <Icon icon="mdi:home" width="24" height="24" />
-          {isDesktop && <ActionText>{t('eventDashboard.overview')}</ActionText>}
-        </ActionLink>
-      </ActionItem>
-      <ActionItem>
-        <ActionLink
-          isMobile={isMobile}
-          onClick={() => navigate(`/events/${id}/members`)}
-        >
-          <Icon icon="material-symbols:person" width="24" height="24" />
-          {isDesktop && <ActionText>{t('eventDashboard.members')}</ActionText>}
-        </ActionLink>
-      </ActionItem>
-      <ActionItem>
-        <ActionLink
-          isMobile={isMobile}
-          onClick={() => navigate(`/events/${id}/orders`)}
-        >
-          <Icon icon="mdi:cart" width="24" height="24" />
-          {isDesktop && <ActionText>{t('eventDashboard.orders')}</ActionText>}
-        </ActionLink>
-      </ActionItem>
-      <ActionItem>
-        <ActionLink
-          isMobile={isMobile}
-          onClick={() => navigate(`/events/${id}/seatmap/new`)}
-        >
-          <Icon icon="mdi:chair" width="24" height="24" />
-          {isDesktop && <ActionText>{t('eventDashboard.seating')}</ActionText>}
-        </ActionLink>
-      </ActionItem>
-      <ActionItem>
-        <ActionLink
-          isMobile={isMobile}
-          onClick={() => {
-            console.log(eventStatus);
-            if (eventStatus === EventStatus.DRAFT) {
-              navigate(`/create-event/${id}?step=info`);
-            } else {
-              navigate(`/events/${id}/edit-event`);
-            }
-          }}
-        >
-          <Icon icon="mdi:cog" width="24" height="24" />
-          {isDesktop && <ActionText>{t('eventDashboard.edit')}</ActionText>}
-        </ActionLink>
-      </ActionItem>
-    </ActionsContainer>
+    <Group className={classes.actionsContainer} gap={0} wrap="nowrap">
+      {actions.map((action, index) => (
+        <Box key={index} style={{ display: 'flex', flex: 1, position: 'relative' }}>
+          <Tooltip label={action.label} disabled={isDesktop}>
+            <UnstyledButton
+              className={classes.actionButton}
+              onClick={action.onClick}
+            >
+              <Box className={classes.actionIcon}>{action.icon}</Box>
+              {isDesktop && (
+                <Text className={classes.actionText} style={
+                  {
+                    color: 'white',
+                  }
+                }>{action.label}</Text>
+              )}
+            </UnstyledButton>
+          </Tooltip>
+          {index < actions.length - 1 && <Box className={classes.divider} />}
+        </Box>
+      ))}
+    </Group>
   );
 };
 
-// Update ActionLink styling
-interface ActionLinkProps {
-  isMobile: boolean;
-}
-const ActionLink = styled.a<ActionLinkProps>`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-decoration: none;
-  width: 100%;
-  gap: ${({ isMobile }) => (isMobile ? '0' : '8px')};
-`;
 
-const ActionsContainer = styled.nav`
-  justify-content: center;
-  align-items: center;
-  border-top: 0.667px solid rgba(255, 255, 255, 0.15);
-  background-color: #414652;
-  display: flex;
-  width: 100%;
-  padding: 5px 301px 4px;
-  flex-wrap: wrap;
-  @media (max-width: 991px) {
-    max-width: 100%;
-    padding-left: 20px;
-    padding-right: 20px;
-  }
-
-  && {
-    svg {
-      color: white;
-    }
-  }
-`;
-
-const ActionItem = styled.div`
-  align-self: stretch;
-  position: relative;
-  display: flex;
-  margin: auto 0;
-  padding: 0 16px;
-  flex-direction: column;
-  justify-content: start;
-  flex: 1;
-
-  &:not(:last-child)::after {
-    content: '';
-    background-color: rgba(5, 5, 5, 0.06);
-    position: absolute;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 1px;
-    height: 14px;
-  }
-`;
-
-const ActionText = styled.span`
-  font-family: Roboto, -apple-system, Roboto, Helvetica, sans-serif;
-  font-size: 14px;
-  color: #c4c4cf;
-  font-weight: 400;
-  text-align: center;
-  line-height: 2;
-`;

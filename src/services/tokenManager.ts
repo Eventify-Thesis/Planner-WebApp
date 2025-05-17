@@ -12,3 +12,11 @@ export const setToken = (token: string | null): void => {
 export const getToken = (): string | null => {
   return currentToken;
 };
+
+export const isTokenExpired = (token: string): boolean => {
+  // Decode the token
+  return false;
+  const decodedToken = JWT.decode(token);
+  const expirationTime = decodedToken.exp * 1000;
+  return Date.now() > expirationTime;
+};

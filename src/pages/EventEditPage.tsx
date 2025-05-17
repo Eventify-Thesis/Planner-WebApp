@@ -17,18 +17,30 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import dayjs from 'dayjs';
 import { useEventMutations } from '@/queries/useEventQueries';
+import { showError, showSuccess } from '@/utils/notifications';
+import { safeValidateForm } from '@/utils/formUtils';
+import {
+  Box,
+  Container,
+  Flex,
+  Group,
+  Paper,
+  rem,
+  Stepper,
+  useMantineTheme,
+} from '@mantine/core';
+import { IconCheck } from '@tabler/icons-react';
 const { Step } = Steps;
 
-const StyledFormContainer = styled.div`
-  width: 100%;
-  padding: 1rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-`;
+// FormContainer component that shows or hides based on active state with a nice transition effect
+interface FormContainerProps {
+  active: boolean;
+  children: React.ReactNode;
+}
 
-const FormContainer = styled.div<{ $active: boolean }>`
-  display: ${(props) => (props.$active ? 'block' : 'none')};
-`;
+const FormContainer: React.FC<FormContainerProps> = ({ active, children }) => {
+  return active ? <div style={{ padding: '1rem' }}>{children}</div> : null;
+};
 
 const EventEditPage: React.FC = () => {
   const navigate = useNavigate();
@@ -37,7 +49,7 @@ const EventEditPage: React.FC = () => {
   const { eventId } = params;
   const { t } = useTranslation();
   const [current, setCurrent] = useState(0);
-  const formRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
+  const formRefs = [useRef(), useRef(), useRef(), useRef()];
 
   const { infoDraftMutation, showMutation, settingMutation, paymentMutation } =
     useEventMutations(eventId);
@@ -68,11 +80,9 @@ const EventEditPage: React.FC = () => {
     let values;
 
     try {
-      values = await formRefs[current].current.validateFields();
+      values = await safeValidateForm(formRefs[current]);
     } catch (error) {
-      notificationController.error({
-        message: error.message || t('event_create.previous_step_required'),
-      });
+      showError(error.message || t('event_create.previous_step_required'));
       throw error;
     }
 
@@ -117,11 +127,9 @@ const EventEditPage: React.FC = () => {
     let values;
 
     try {
-      values = await formRefs[current].current.validateFields();
+      values = await safeValidateForm(formRefs[current]);
     } catch (error) {
-      notificationController.error({
-        message: error.message || t('event_create.previous_step_required'),
-      });
+      showError(error.message || t('event_create.previous_step_required'));
       throw error;
     }
 
@@ -142,13 +150,9 @@ const EventEditPage: React.FC = () => {
         await handlePaymentUpdate(values);
       }
 
-      notificationController.success({
-        message: t('event_create.event_info_saved_successfully'),
-      });
+      showSuccess(t('event_create.event_info_saved_successfully'));
     } catch (error) {
-      notificationController.error({
-        message: error.message || t('event_create.failed_to_save'),
-      });
+      showError(error.message || t('event_create.failed_to_save'));
       throw error;
     }
   };
@@ -159,6 +163,8 @@ const EventEditPage: React.FC = () => {
         ...values,
         id: eventId,
       });
+
+      showSuccess(t('event_create.event_info_saved_successfully'));
 
       if (event) {
         navigate(`?step=${steps[current].key}`, {
@@ -229,7 +235,7 @@ const EventEditPage: React.FC = () => {
       validateShows(updatedShow);
       await showMutation.mutateAsync({
         eventId,
-        showData: { shows: updatedShow },
+        shows: updatedShow,
       });
     } catch (error) {
       throw error;
@@ -238,10 +244,7 @@ const EventEditPage: React.FC = () => {
 
   const handleSettingUpdate = async (updatedSetting: any) => {
     try {
-      await settingMutation.mutateAsync({
-        eventId,
-        settingData: updatedSetting,
-      });
+      await settingMutation.mutateAsync(updatedSetting);
     } catch (error) {
       throw error;
     }
@@ -249,10 +252,7 @@ const EventEditPage: React.FC = () => {
 
   const handlePaymentUpdate = async (updatedPayment: any) => {
     try {
-      await paymentMutation.mutateAsync({
-        eventId,
-        paymentData: updatedPayment,
-      });
+      await paymentMutation.mutateAsync(updatedPayment);
     } catch (error) {
       throw error;
     }
@@ -260,7 +260,7 @@ const EventEditPage: React.FC = () => {
 
   const handleStepChange = async (nextStep: number) => {
     try {
-      formRefs[current].current.resetFields();
+      formRefs[current].current?.reset();
 
       if (eventId) {
         navigate(`?step=${steps[nextStep].key}`, {
@@ -270,65 +270,167 @@ const EventEditPage: React.FC = () => {
 
       setCurrent(nextStep);
     } catch (error) {
-      notificationController.error({
-        message:
-          nextStep > current
+      console.log(error);
+      showError(
+        error.message ||
+          (nextStep > current
             ? t('event_create.previous_step_required')
-            : t('event_create.next_step_required'),
-      });
+            : t('event_create.next_step_required')),
+      );
     }
   };
 
+  const theme = useMantineTheme();
+
   return (
-    <StyledFormContainer>
-      <PageTitle>Eventify Planner</PageTitle>
-      <StickyHeader>
-        <HeaderContent>
-          <Steps
-            current={current}
-            onChange={handleStepChange}
-            style={{
-              flex: 1,
-              maxWidth: '1200px',
-            }}
+    <Container size="100%" style={{ overflow: 'hidden', padding: '0' }}>
+      <Paper
+        shadow="md"
+        radius="lg"
+        withBorder
+        mx="auto"
+        my="md"
+        style={{
+          borderColor: theme.colors.gray[3],
+          background: `linear-gradient(to right bottom, ${theme.white}, ${
+            theme.colors[theme.primaryColor][0]
+          })`,
+        }}
+      >
+        <Box
+          pos="sticky"
+          top={0}
+          py="sm"
+          px="md"
+          style={{
+            zIndex: 10,
+            borderRadius: theme.radius.md,
+            backgroundColor: theme.white,
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)',
+            backdropFilter: 'blur(10px)',
+            border: `1px solid ${theme.colors.gray[2]}`,
+          }}
+        >
+          <Group
+            align="flex-start"
+            justify="space-between"
+            wrap="nowrap"
+            style={{ margin: '0' }}
           >
-            {steps.map((step, index) => (
-              <Step key={index} title={step.title} />
-            ))}
-          </Steps>
-          <NavigationControls>
-            <Button style={{ marginRight: 1 }} onClick={handleSave}>
-              {t('event_create.save')}
-            </Button>
-
-            {current < steps.length - 1 && (
-              <Button
-                style={{
-                  backgroundColor: 'var(--primary-color)',
-                  color: 'var(--text-main-color)',
-                  borderColor: 'var(--primary-color)',
-                }}
-                type="primary"
-                onClick={handleNext}
+            {/* Stepper */}
+            <Box
+              style={{
+                flexGrow: 1,
+                paddingRight: rem(24),
+                paddingBottom: rem(10),
+              }}
+            >
+              <Stepper
+                active={current}
+                onStepClick={handleStepChange}
+                size="md"
+                allowNextStepsSelect={false}
+                styles={(theme) => ({
+                  root: {
+                    padding: 'px 0',
+                    backgroundColor: 'transparent',
+                    width: '100%',
+                  },
+                  stepBody: {
+                    alignItems: 'center',
+                    display: 'flex',
+                    flex: 1,
+                  },
+                  stepLabel: {
+                    fontSize: theme.fontSizes.sm,
+                    fontWeight: 600,
+                    marginTop: 6,
+                    color: theme.colors.gray[7],
+                  },
+                  step: {
+                    flex: 1,
+                  },
+                  stepIcon: {
+                    borderWidth: 2,
+                    width: 32,
+                    height: 32,
+                    fontSize: theme.fontSizes.sm,
+                    // '&[data-completed]': {
+                    //   backgroundColor: theme.colors.blue[6],
+                    //   borderColor: theme.colors.blue[6],
+                    //   color: theme.white,
+                    // },
+                  },
+                  separator: {
+                    flex: 1,
+                    height: 2,
+                    margin: 0,
+                    minWidth: '20px',
+                    maxWidth: 'none',
+                  },
+                })}
+                classNames={{ root: 'stepper-root', stepBody: 'step-body' }}
               >
-                {t('event_create.continue')}
-              </Button>
-            )}
-          </NavigationControls>
-        </HeaderContent>
-      </StickyHeader>
+                {steps.map((step, index) => (
+                  <Stepper.Step
+                    key={index}
+                    label={step.title}
+                    completedIcon={<IconCheck size={18} />}
+                  />
+                ))}
+              </Stepper>
+            </Box>
 
-      <div style={{ paddingTop: 24 }}>
+            {/* Buttons - Fixed width on the right */}
+            <Flex direction="row" gap="xs" wrap="nowrap" align="center">
+              <Button
+                variant="subtle"
+                onClick={handleSave}
+                leftSection={<IconCheck size={16} />}
+                style={{ fontWeight: 500 }}
+              >
+                {t('event_create.save')}
+              </Button>
+
+              {current > 0 && (
+                <Button
+                  variant="outline"
+                  color={theme.primaryColor}
+                  style={{
+                    fontWeight: 500,
+                    transition: 'all 0.2s ease',
+                  }}
+                  onClick={() => handleStepChange(current - 1)}
+                >
+                  {t('event_create.back')}
+                </Button>
+              )}
+              {current < steps.length - 1 && (
+                <Button
+                  color={theme.primaryColor}
+                  onClick={handleNext}
+                  style={{
+                    fontWeight: 500,
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  {t('event_create.continue')}
+                </Button>
+              )}
+            </Flex>
+          </Group>
+        </Box>
+
         {steps.map((step, index) => (
-          <FormContainer key={index} $active={current === index}>
+          <FormContainer key={index} active={current === index}>
             <step.content
               formRef={formRefs[index]}
               onValidate={current === index ? handleNext : undefined}
             />
           </FormContainer>
         ))}
-      </div>
-    </StyledFormContainer>
+      </Paper>
+    </Container>
   );
 };
 

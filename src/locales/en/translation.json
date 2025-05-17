@@ -186,11 +186,13 @@
     "members": "Members",
     "orders": "Orders",
     "seating": "Seating",
-    "edit": "Edit"
+    "edit": "Edit",
+    "noEvents": "No events found"
   },
   "event_create": {
     "save": "Save",
     "continue": "Continue",
+    "back": "Back",
     "previous_step_required": "Please complete the current step before moving on",
     "next_step_required": "Please complete the previous step before moving on",
     "failed_to_save": "Failed to save event",

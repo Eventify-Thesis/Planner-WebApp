@@ -1,8 +1,16 @@
-import React from 'react';
-import styled from 'styled-components';
+
 import { EventCardActions } from './EventCardActions';
 import { EventStatus } from '@/constants/enums/event';
-import { Icon } from '@iconify/react/dist/iconify.js';
+import { 
+  Card, 
+  Image, 
+  Text, 
+  Flex, 
+  Box, 
+  Anchor
+} from '@mantine/core';
+import { createStyles } from '@mantine/styles';
+import { IconCalendar, IconMapPin } from '@tabler/icons-react';
 import dayjs from 'dayjs';
 import 'dayjs/locale/vi';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -14,11 +22,185 @@ interface EventCardProps {
   eventName: string;
   url: string;
   startTime: Date;
-  endTime: string;
   status: EventStatus;
   venueName: string;
-  role: string;
+  // Keep as props in interface but don't use them to maintain compatibility
+  endTime?: string;
+  role?: string;
 }
+
+const useStyles = createStyles((theme: any) => ({
+  card: {
+    backgroundColor: theme.colors.dark[7],
+    borderRadius: theme.radius.md,
+    overflow: 'hidden',
+    width: '100%',
+    marginBottom: theme.spacing.xs,
+    border: `1px solid ${theme.colors.dark[5]}`,
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+    boxShadow: '0 2px 5px rgba(0, 0, 0, 0.1)',
+    position: 'relative',
+    
+    '&:hover': {
+      transform: 'translateY(-3px)',
+      boxShadow: '0 5px 15px rgba(0, 0, 0, 0.2)',
+    },
+    
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: '5px',
+      height: '100%',
+      // background: 'linear-gradient(to bottom, #4263EB, #0ACF83)',
+      borderTopLeftRadius: theme.radius.md,
+      borderBottomLeftRadius: theme.radius.md,
+    },
+  },
+  cardContent: {
+    display: 'flex',
+    padding: theme.spacing.md,
+    gap: theme.spacing.md,
+    backgroundColor: theme.colors.dark[8],
+    width: '100%',
+    flexWrap: 'wrap',
+    borderBottom: `1px solid ${theme.colors.dark[6]}`,
+    position: 'relative',
+    zIndex: 1,
+    
+    '&::after': {
+      content: '""',
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+      // background: 'linear-gradient(135deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0) 100%)',
+      pointerEvents: 'none',
+      zIndex: -1,
+    },
+
+    [`@media (max-width: ${theme.breakpoints.sm}px)`]: {
+      flexDirection: 'column',
+    },
+  },
+  image: {
+    width: 160,
+    height: 120,
+    borderRadius: theme.radius.md,
+    objectFit: 'cover',
+    border: `2px solid ${theme.colors.dark[5]}`,
+    boxShadow: '0 3px 8px rgba(0, 0, 0, 0.15)',
+    transition: 'transform 0.3s ease-in-out',
+    
+    '&:hover': {
+      transform: 'scale(1.02)',
+    },
+
+    [`@media (max-width: ${theme.breakpoints.sm}px)`]: {
+      width: '100%',
+      height: 120,
+    },
+  },
+  details: {
+    flex: 1,
+    minWidth: 240,
+    display: 'flex',
+    flexDirection: 'column',
+    color: 'white',
+  },
+  title: {
+    fontSize: '20px !important',
+    fontWeight: 700,
+    color: 'white !important',
+    WebkitTextFillColor: 'white !important',
+    marginBottom: '16px !important',
+    textDecoration: 'none',
+    position: 'relative',
+    display: 'inline-block',
+    
+    '&::after': {
+      content: '""',
+      position: 'absolute',
+      bottom: -2,
+      left: 0,
+      width: 0,
+      height: '2px',
+      background: 'linear-gradient(to right, #4263EB, #0ACF83)',
+      transition: 'width 0.3s ease',
+    },
+    
+    '&:hover': {
+      textDecoration: 'none',
+      
+      '&::after': {
+        width: '100%',
+      },
+    }
+  },
+  infoItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+  },
+  dateText: {
+    fontSize: theme.fontSizes.sm,
+    color: 'red !important',
+    WebkitBackgroundClip: 'unset',
+    WebkitTextFillColor: 'var(--primary-color) !important',
+    fontWeight: 600,
+    letterSpacing: '0.3px',
+  },
+  venueName: {
+    fontSize: theme.fontSizes.xs,
+    color: 'white',
+    WebkitBackgroundClip: 'unset',
+    WebkitTextFillColor: 'var(--primary-color) !important',
+    fontWeight: 600,
+    lineHeight: 1.3,
+    letterSpacing: '0.3px',
+  },
+  locationText: {
+    fontSize: theme.fontSizes.xs,
+    color: 'white',
+    lineHeight: 1.3,
+  },
+  actionsBar: {
+    backgroundColor: theme.colors.dark[7],
+    padding: `${theme.spacing.xs} ${theme.spacing.md}`,
+    borderTop: `1px solid ${theme.colors.dark[6]}`,
+    position: 'relative',
+    overflow: 'hidden',
+    
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+      // background: 'linear-gradient(to right, rgba(66, 99, 235, 0.05), rgba(10, 207, 131, 0.05))',
+      pointerEvents: 'none',
+    },
+  },
+  
+  statusBadge: {
+    position: 'absolute',
+    top: theme.spacing.xs,
+    right: theme.spacing.xs,
+    borderRadius: theme.radius.sm,
+    padding: '20px',
+    fontSize: theme.fontSizes.xs,
+    fontWeight: 600,
+    textTransform: 'uppercase',
+    backgroundColor: 'rgba(10, 207, 131, 0.2)',
+    color: '#0ACF83',
+    border: '1px solid rgba(10, 207, 131, 0.3)',
+    backdropFilter: 'blur(4px)',
+    zIndex: 2,
+  }
+}));
 
 export const EventCard = ({
   id,
@@ -27,154 +209,148 @@ export const EventCard = ({
   eventName,
   url,
   startTime,
-  endTime,
   status,
   venueName,
-  role,
+  // We don't use these parameters but keep them in the props for compatibility
+  // endTime,
+  // role,
 }: EventCardProps) => {
+  const { classes } = useStyles();
   const { language } = useLanguage();
   const locale = language === 'en' ? 'en' : 'vi';
+  const eventUrl = `${import.meta.env.VITE_USER_BASE_URL}/${url}-${id}`;
+
+  // Function to determine badge styling based on event status
+  const getStatusBadgeStyle = () => {
+    switch(status) {
+      case EventStatus.UPCOMING:
+        return {
+          backgroundColor: 'rgba(10, 207, 131, 0.2)',
+          color: '#0ACF83',
+          border: '1px solid rgba(10, 207, 131, 0.3)',
+        };
+      case EventStatus.PUBLISHED:
+        return {
+          backgroundColor: 'rgba(102, 102, 155, 0.2)',
+          color: '#8888DD',
+          border: '1px solid rgba(102, 102, 155, 0.3)',
+        };
+      case EventStatus.PENDING_APPROVAL:
+        return {
+          backgroundColor: 'rgba(255, 171, 0, 0.2)',
+          color: '#FFAB00',
+          border: '1px solid rgba(255, 171, 0, 0.3)',
+        };
+      case EventStatus.DRAFT:
+        return {
+          backgroundColor: 'rgba(235, 87, 87, 0.2)',
+          color: '#EB5757',
+          border: '1px solid rgba(235, 87, 87, 0.3)',
+        };
+      default:
+        return {
+          backgroundColor: 'rgba(66, 99, 235, 0.2)',
+          color: '#4263EB',
+          border: '1px solid rgba(66, 99, 235, 0.3)',
+        };
+    }
+  };
+
+  // Get status text based on status enum
+  const getStatusText = () => {
+    switch(status) {
+      case EventStatus.UPCOMING:
+        return 'Upcoming';
+      case EventStatus.PUBLISHED:
+        return 'Published';
+      case EventStatus.PENDING_APPROVAL:
+        return 'Pending';
+      case EventStatus.DRAFT:
+        return 'Draft';
+      default:
+        return 'Unknown';
+    }
+  };
+
+  const badgeStyle = getStatusBadgeStyle();
 
   return (
-    <CardContainer>
-      <CardContent>
-        <EventImage src={eventBannerUrl} alt={eventName} />
-        <EventDetails>
-          <EventTitle
-            href={`${import.meta.env.VITE_USER_BASE_URL}/${url}-${id}`}
+    <Card className={classes.card} radius="md" withBorder p={0}>
+      <Text 
+
+        className={classes.statusBadge} 
+        style={{
+          ...badgeStyle,
+          padding: '8px',
+        }}
+      >
+        {getStatusText()}
+      </Text>
+      <Box className={classes.cardContent}>
+        <Image 
+          src={eventBannerUrl} 
+          alt={eventName}
+          className={classes.image}
+          fallbackSrc="https://placehold.co/600x400?text=Event+Image"
+          style={{
+            width: '260px',
+            height: '160px',
+            borderRadius: '8px',
+            objectFit: 'cover',
+            border: '2px solid #0ACF83',
+            transition: 'transform 0.3s ease-in-out',
+            
+            '&:hover': {
+              transform: 'scale(1.02)',
+            },
+          }}
+        />
+        <Box className={classes.details}>
+          <Anchor 
+            href={eventUrl}
+            onClick={(e) => {
+              e.preventDefault();
+              window.location.href = eventUrl;
+            }}
+            target="_blank"
+            className={classes.title}
+            underline="never"
+            color="white"
+            style={{ fontSize: '20px', fontWeight: 'bold' }}
           >
             {eventName}
-          </EventTitle>
-          <EventInfo>
-            <DateInfo>
-              <Icon icon="mdi:calendar" width="24" height="24" color="white" />
-              <DateTime>
+          </Anchor>
+          
+          <Flex direction="column" gap="xs">
+            <Flex align="center" gap="xs" className={classes.infoItem}>
+              <IconCalendar size={20} stroke={1.5} color="white" />
+              <Text className={classes.dateText} color="white">
                 {startTime
                   ? dayjs(startTime).locale(locale).format('LLLL')
-                  : 'Null'}
-              </DateTime>
-            </DateInfo>
-            {location && (
-              <LocationInfo>
-                <Icon
-                  icon="mdi:location"
-                  width="24"
-                  height="24"
-                  color="white"
-                />
-                <LocationDetails>
-                  <VenueName>{venueName}</VenueName>
-                  <LocationText>{addressFull}</LocationText>
-                </LocationDetails>
-              </LocationInfo>
+                  : 'TBD'}
+              </Text>
+            </Flex>
+            
+            {venueName && (
+              <Flex align="start" gap="xs" className={classes.infoItem}>
+                <IconMapPin size={20} stroke={1.5} color="white" />
+                <Box>
+                  {addressFull && (
+                    <Text className={classes.locationText} color="white">{addressFull}</Text>
+                  )}
+                  <Text className={classes.venueName} color="white">{venueName}</Text>
+                </Box>
+              </Flex>
             )}
-          </EventInfo>
-        </EventDetails>
-      </CardContent>
-      <EventCardActions id={id} eventStatus={status} />
-    </CardContainer>
+          </Flex>
+        </Box>
+      </Box>
+      
+      <Box className={classes.actionsBar}>
+        <EventCardActions id={id} eventStatus={status} />
+      </Box>
+    </Card>
   );
 };
 
-const CardContainer = styled.article`
-  border-radius: 12px;
-  border: 1px solid #515158;
-  background-color: #515158;
-  width: 100%;
-  padding: 1px;
-  overflow: hidden;
-  margin-bottom: 16px;
-  @media (max-width: 991px) {
-    max-width: 100%;
-  }
-`;
 
-const CardContent = styled.div`
-  align-items: start;
-  background-color: #31353e;
-  display: flex;
-  width: 100%;
-  padding: 16px;
-  gap: 8px;
-  justify-content: start;
-  flex-wrap: wrap;
-  @media (max-width: 991px) {
-    max-width: 100%;
-  }
-`;
-
-const EventImage = styled.img`
-  aspect-ratio: 1.85;
-  object-fit: contain;
-  object-position: center;
-  width: 200px;
-  border-radius: 8px;
-  max-width: 100%;
-  margin-right: 16px;
-`;
-
-const EventDetails = styled.div`
-  min-width: 240px;
-  padding-bottom: 12px;
-  flex: 1;
-  flex-shrink: 1;
-  flex-basis: 16px;
-  @media (max-width: 991px) {
-    max-width: 100%;
-  }
-`;
-
-const EventTitle = styled.a`
-  display: block;
-  font-family: Roboto, -apple-system, Roboto, Helvetica, sans-serif;
-  font-size: 14px;
-  color: #fff;
-  font-weight: 600;
-  text-decoration: none;
-  line-height: 2;
-  margin-bottom: 16px;
-`;
-
-const EventInfo = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-`;
-
-const DateInfo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const DateTime = styled.span`
-  font-family: Roboto, -apple-system, Roboto, Helvetica, sans-serif;
-  font-size: 12px;
-  color: var(--primary-color);
-  font-weight: 600;
-  line-height: 1.6;
-`;
-
-const LocationInfo = styled.div`
-  display: flex;
-  align-items: start;
-  gap: 8px;
-`;
-
-const LocationDetails = styled.div`
-  font-family: Roboto, -apple-system, Roboto, Helvetica, sans-serif;
-`;
-
-const VenueName = styled.div`
-  color: var(--primary-color);
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 19px;
-`;
-
-const LocationText = styled.div`
-  font-size: 12px;
-  color: #c4c4cf;
-  font-weight: 400;
-  line-height: 18px;
-`;

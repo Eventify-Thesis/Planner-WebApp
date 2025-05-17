@@ -87,7 +87,6 @@ export const AttendeeTable = ({
     return (
       <NoResultsSplash
         heading={t`No Attendees to show`}
-        imageHref={'/blank-slate/attendees.svg'}
         subHeading={
           <>
             <p>

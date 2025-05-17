@@ -52,3 +52,7 @@
   background-color: #f0f7ff;
   transform: translateY(-2px);
 }
+
+.mantine-Stepper-stepCompletedIcon {
+  border-radius: 50%;
+}

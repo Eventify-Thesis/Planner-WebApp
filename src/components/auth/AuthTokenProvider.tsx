@@ -19,7 +19,6 @@ export const AuthTokenProvider: React.FC<{ children: React.ReactNode }> = ({
         // Get the default session token
         const token = await getToken();
         setToken(token);
-        console.log('Token updated successfully');
       } catch (error) {
         console.error('Error getting auth token from Clerk:', error);
         setToken(null);
@@ -36,7 +35,7 @@ export const AuthTokenProvider: React.FC<{ children: React.ReactNode }> = ({
 
     // Refresh token every 5 seconds to ensure it doesn't expire
     // This is a fallback in case the focus event listeners don't trigger
-    const intervalId = setInterval(updateToken, 5 * 1000);
+    const intervalId = setInterval(updateToken, 3 * 100);
 
     // Add event listener to refresh token when window gets focus
     // This helps ensure the token is fresh when the user returns to the app

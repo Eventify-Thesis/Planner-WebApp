@@ -5,26 +5,23 @@ import { Select, Box, Text, Textarea } from '@mantine/core';
 import { Category } from '@/api/categories.api';
 import { FormSection } from '../components/FormSection';
 import styles from './EventCategorySection.module.css';
-import { getFormValue, safeSetFormValue } from '@/utils/formUtils';
 
 interface EventCategorySectionProps {
-  formRef: React.RefObject<any>;
+  form: any;
   categories: Category[];
-  selectedCategory: string | null;
-  setSelectedCategory: (category: string | null) => void;
 }
 
 export const EventCategorySection: React.FC<EventCategorySectionProps> = ({
-  formRef,
+  form,
   categories,
-  selectedCategory,
-  setSelectedCategory,
 }) => {
   const { t } = useTranslation();
   const { language } = useLanguage();
 
   return (
-    <FormSection title={t('event_create.event_category.title')}>
+    <FormSection 
+    colorAccent="accent1"
+    title={t('event_create.event_category.title')}>
       <Box className={styles.categoryContainer}>
         <Text className={styles.categoryLabel}>
           {t('event_create.event_category.label')}
@@ -37,11 +34,12 @@ export const EventCategorySection: React.FC<EventCategorySectionProps> = ({
             label: language === 'en' ? category.nameEn : category.nameVi,
             value: `${category.id}_${category.code}`,
           }))}
+          {...form.getInputProps('category')}
           onChange={(value) => {
-            setSelectedCategory(value);
-            safeSetFormValue(formRef, 'category', value);
+            if (value) {
+              form.values.category = value
+            }
           }}
-          value={getFormValue(formRef, 'category') || selectedCategory}
           clearable
           searchable
           nothingFoundMessage={t('event_create.event_category.nothing_found')}

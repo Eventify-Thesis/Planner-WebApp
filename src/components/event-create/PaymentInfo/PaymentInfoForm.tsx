@@ -1,16 +1,75 @@
-import React from 'react';
-import { Form, Input, Select, Typography, Spin } from 'antd';
+import React, { useEffect } from 'react';
+import {
+  TextInput,
+  NumberInput,
+  Select,
+  Text,
+  Box,
+  Paper,
+  Stack,
+  Flex,
+  Anchor,
+  Loader
+} from '@mantine/core';
+import { useForm } from '@mantine/form';
 import { useTranslation } from 'react-i18next';
-import * as S from './PaymentInfoForm.styles';
-import { FormStepProps } from '../types';
-import { BASE_COLORS } from '@/styles/themes/constants';
+import { 
+  IconBuildingBank, 
+  IconBuildingStore
+} from '@tabler/icons-react';
 import { useParams } from 'react-router-dom';
 import { BusinessType } from '@/constants/enums/event';
 import { useGetEventPayment } from '@/queries/useGetEventPayment';
+import { safeSetFormValues } from '@/utils/formUtils';
 
-const { Text } = Typography;
+// Styles
+const styles = {
+  section: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: '8px',
+    padding: '20px',
+    marginBottom: '16px',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+  },
+  sectionTitle: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    marginBottom: '16px',
+    fontWeight: 600,
+    fontSize: '18px',
+  },
+  sectionIcon: {
+    color: 'white',
+    backgroundColor: '#228be6',
+    width: 30,
+    height: 30,
+    borderRadius: '4px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  helpText: {
+    color: '#868e96',
+  },
+};
 
-interface PaymentInfoFormProps extends FormStepProps {}
+const SectionTitle: React.FC<{ icon: React.ReactNode; title: string }> = ({
+  icon,
+  title,
+}) => {
+  return (
+    <Flex align="center" style={styles.sectionTitle}>
+      <Box style={styles.sectionIcon}>{icon}</Box>
+      <Text>{title}</Text>
+    </Flex>
+  );
+};
+
+// Modify the interface to properly handle the form ref type
+interface PaymentInfoFormProps {
+  formRef?: React.MutableRefObject<any>;
+}
 
 export const PaymentInfoForm: React.FC<PaymentInfoFormProps> = ({
   formRef,
@@ -19,10 +78,50 @@ export const PaymentInfoForm: React.FC<PaymentInfoFormProps> = ({
   const { eventId } = useParams<{ eventId?: string }>();
   const { data: paymentData, isLoading } = useGetEventPayment(eventId);
 
-  // Set form data when payment data is loaded
-  React.useEffect(() => {
-    if (paymentData && formRef.current) {
-      formRef.current.setFieldsValue({
+  const form = useForm({
+    initialValues: {
+      bankAccount: '',
+      bankAccountName: '',
+      bankAccountNumber: '',
+      bankOffice: '',
+      businessType: '',
+      name: '',
+      address: '',
+      taxNumber: '',
+    },
+    validate: {
+      bankAccount: (value) => 
+        !value ? t('payment_info.bank_account_required') : 
+        value.length > 100 ? t('payment_info.bank_account_max_length') : null,
+      bankAccountName: (value) => 
+        !value ? t('payment_info.bank_account_name_required') : 
+        value.length > 100 ? t('payment_info.bank_account_name_max_length') : null,
+      bankAccountNumber: (value) => 
+        !value ? t('payment_info.bank_account_number_required') : 
+        !/^\d+$/.test(value) ? t('payment_info.bank_account_number_invalid') : null,
+      bankOffice: (value) => 
+        !value ? t('payment_info.bank_office_required') : 
+        value.length > 100 ? t('payment_info.bank_office_max_length') : null,
+      businessType: (value) => 
+        !value ? t('payment_info.business_type_required') : null,
+      name: (value) => 
+        value && value.length > 100 ? t('payment_info.company_name_max_length') : null,
+      address: (value) => 
+        value && value.length > 200 ? t('payment_info.company_address_max_length') : null,
+      taxNumber: (value) => 
+        value && !/^\d+$/.test(value) ? t('payment_info.tax_number_invalid') : null,
+    },
+  });
+
+  useEffect(() => {
+    if (formRef) {
+      formRef.current = form;
+    }
+  }, [formRef, form]);
+
+  useEffect(() => {
+    if (paymentData && formRef && formRef.current) {
+      safeSetFormValues(formRef, {
         ...paymentData,
       });
     }
@@ -30,180 +129,118 @@ export const PaymentInfoForm: React.FC<PaymentInfoFormProps> = ({
 
   if (isLoading) {
     return (
-      <div
-        style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}
-      >
-        <Spin size="large" />
-      </div>
+      <Flex justify="center" align="center" h={200}>
+        <Loader size="lg" />
+      </Flex>
     );
   }
 
   return (
-    <Form
-      layout="vertical"
-      ref={formRef}
-      style={{ width: '100%', padding: '0 24px 24px 24px' }}
-    >
+    <Box w="100%" p="24px">
       {/* Payment Information Notice */}
-      <S.FormSection>
-        <Text
-          style={{
-            color: BASE_COLORS.white,
-            display: 'block',
-            marginBottom: '16px',
-          }}
-        >
+      <Paper p="lg" mb="md" bg="blue.9" c="white">
+        <Text mb="sm">
           {t('payment_info.notice')}
         </Text>
-        <Text style={{ color: BASE_COLORS.white }}>
+        <Text>
           {t('payment_info.contact_info')}{' '}
-          <a href={`tel:${t('payment_info.phone')}`}>
+          <Anchor href={`tel:${t('payment_info.phone')}`} c="white" underline="always">
             {t('payment_info.phone')}
-          </a>{' '}
+          </Anchor>{' '}
           or{' '}
-          <a href={`mailto:${t('payment_info.email')}`}>
+          <Anchor href={`mailto:${t('payment_info.email')}`} c="white" underline="always">
             {t('payment_info.email')}
-          </a>
+          </Anchor>
         </Text>
-      </S.FormSection>
+      </Paper>
 
       {/* Account Information */}
-      <S.FormSection title={t('payment_info.account_information')}>
-        <Form.Item
-          label={t('payment_info.bank_account')}
-          name="bankAccount"
-          rules={[
-            {
-              required: true,
-              message: t('payment_info.bank_account_required'),
-            },
-            {
-              max: 100,
-              message: t('payment_info.bank_account_max_length'),
-            },
-          ]}
-        >
-          <Input placeholder={t('payment_info.bank_account_placeholder')} />
-        </Form.Item>
+      <Paper style={styles.section}>
+        <SectionTitle
+          icon={<IconBuildingBank size={18} />}
+          title={t('payment_info.account_information')}
+        />
 
-        <Form.Item
-          label={t('payment_info.bank_account_name')}
-          name="bankAccountName"
-          rules={[
-            {
-              required: true,
-              message: t('payment_info.bank_account_name_required'),
-            },
-            {
-              max: 100,
-              message: t('payment_info.bank_account_name_max_length'),
-            },
-          ]}
-        >
-          <Input
+        <Stack gap="md">
+          <TextInput
+            required
+            label={t('payment_info.bank_account')}
+            placeholder={t('payment_info.bank_account_placeholder')}
+            {...form.getInputProps('bankAccount')}
+            withAsterisk
+          />
+
+          <TextInput
+            required
+            label={t('payment_info.bank_account_name')}
             placeholder={t('payment_info.bank_account_name_placeholder')}
+            {...form.getInputProps('bankAccountName')}
+            withAsterisk
           />
-        </Form.Item>
 
-        <Form.Item
-          label={t('payment_info.bank_account_number')}
-          name="bankAccountNumber"
-          rules={[
-            {
-              required: true,
-              message: t('payment_info.bank_account_number_required'),
-            },
-            {
-              pattern: /^\d+$/,
-              message: t('payment_info.bank_account_number_invalid'),
-            },
-          ]}
-        >
-          <Input
+          <TextInput
+            required
+            label={t('payment_info.bank_account_number')}
             placeholder={t('payment_info.bank_account_number_placeholder')}
-            type="number"
+            {...form.getInputProps('bankAccountNumber')}
+            withAsterisk
           />
-        </Form.Item>
 
-        <Form.Item
-          label={t('payment_info.bank_office')}
-          name="bankOffice"
-          rules={[
-            {
-              required: true,
-              message: t('payment_info.bank_office_required'),
-            },
-            {
-              max: 100,
-              message: t('payment_info.bank_office_max_length'),
-            },
-          ]}
-        >
-          <Input placeholder={t('payment_info.bank_office_placeholder')} />
-        </Form.Item>
-      </S.FormSection>
+          <TextInput
+            required
+            label={t('payment_info.bank_office')}
+            placeholder={t('payment_info.bank_office_placeholder')}
+            {...form.getInputProps('bankOffice')}
+            withAsterisk
+          />
+        </Stack>
+      </Paper>
 
       {/* Business Information */}
-      <S.FormSection title={t('payment_info.business_information')}>
-        <Form.Item
-          label={t('payment_info.business_type')}
-          name="businessType"
-          rules={[
-            {
-              required: true,
-              message: t('payment_info.business_type_required'),
-            },
-          ]}
-        >
-          <Select placeholder={t('payment_info.business_type_placeholder')}>
-            <Select.Option value={BusinessType.INDIVIDUAL}>
-              {t('payment_info.business_type_individual')}
-            </Select.Option>
-            <Select.Option value={BusinessType.COMPANY}>
-              {t('payment_info.business_type_company')}
-            </Select.Option>
-          </Select>
-        </Form.Item>
+      <Paper style={styles.section}>
+        <SectionTitle
+          icon={<IconBuildingStore size={18} />}
+          title={t('payment_info.business_information')}
+        />
 
-        <Form.Item
-          label={t('payment_info.company_name')}
-          name="name"
-          rules={[
-            {
-              max: 100,
-              message: t('payment_info.company_name_max_length'),
-            },
-          ]}
-        >
-          <Input placeholder={t('payment_info.company_name_placeholder')} />
-        </Form.Item>
+        <Stack gap="md">
+          <Select
+            required
+            label={t('payment_info.business_type')}
+            placeholder={t('payment_info.business_type_placeholder')}
+            data={[
+              { 
+                value: BusinessType.PERSONAL, 
+                label: t('payment_info.business_type_individual')
+              },
+              { 
+                value: BusinessType.COMPANY, 
+                label: t('payment_info.business_type_company')
+              },
+            ]}
+            {...form.getInputProps('businessType')}
+            withAsterisk
+          />
 
-        <Form.Item
-          label={t('payment_info.company_address')}
-          name="address"
-          rules={[
-            {
-              max: 200,
-              message: t('payment_info.company_address_max_length'),
-            },
-          ]}
-        >
-          <Input placeholder={t('payment_info.company_address_placeholder')} />
-        </Form.Item>
+          <TextInput
+            label={t('payment_info.company_name')}
+            placeholder={t('payment_info.company_name_placeholder')}
+            {...form.getInputProps('name')}
+          />
 
-        <Form.Item
-          label={t('payment_info.tax_number')}
-          name="taxNumber"
-          rules={[
-            {
-              pattern: /^\d+$/,
-              message: t('payment_info.tax_number_invalid'),
-            },
-          ]}
-        >
-          <Input placeholder={t('payment_info.tax_number_placeholder')} />
-        </Form.Item>
-      </S.FormSection>
-    </Form>
+          <TextInput
+            label={t('payment_info.company_address')}
+            placeholder={t('payment_info.company_address_placeholder')}
+            {...form.getInputProps('address')}
+          />
+
+          <TextInput
+            label={t('payment_info.tax_number')}
+            placeholder={t('payment_info.tax_number_placeholder')}
+            {...form.getInputProps('taxNumber')}
+          />
+        </Stack>
+      </Paper>
+    </Box>
   );
 };

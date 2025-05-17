@@ -21,7 +21,7 @@ import classes from './OrganizerInformationSection.module.css';
 import { getFormValue, safeSetFormValue } from '@/utils/formUtils';
 
 interface OrganizerInformationSectionProps {
-  formRef: React.RefObject<any>;
+  form: any;
   fileList: {
     logo: UploadFile[];
     banner: UploadFile[];
@@ -47,7 +47,7 @@ interface OrganizerInformationSectionProps {
 const handleOrganizerLogoUpload = async (
   files: FileWithPath[],
   setFileList: OrganizerInformationSectionProps['setFileList'],
-  formRef: React.RefObject<any>,
+  form: any,
 ) => {
   // Skip if no files
   if (!files || files.length === 0) return;
@@ -62,9 +62,7 @@ const handleOrganizerLogoUpload = async (
 
     if (url) {
       // Update form value appropriately based on available methods
-      if (formRef.current) {
-        safeSetFormValue(formRef, 'orgLogoUrl', url);
-      }
+      form.values.orgLogoUrl = url;
 
       // Update the file list with the new URL
       setFileList((prevFileList) => ({
@@ -80,32 +78,27 @@ const handleOrganizerLogoUpload = async (
 // Helper function to remove an image
 const removeOrganizerLogo = (
   setFileList: OrganizerInformationSectionProps['setFileList'],
-  formRef: React.RefObject<any>,
+  form: any,
 ) => {
   setFileList((prevState) => ({ ...prevState, organizerLogo: [] }));
 
   // Update form value
-  if (formRef.current) {
-    if (typeof formRef.current.setValues === 'function') {
-      formRef.current.setValues({ organizerLogo: '' });
-    } else if (typeof formRef.current.setValue === 'function') {
-      formRef.current.setValue('organizerLogo', '');
-    } else {
-      formRef.current.organizerLogo = '';
-    }
+  if (form) {
+    form.values.orgLogoUrl = '';
   }
 };
 
 export const OrganizerInformationSection: React.FC<
   OrganizerInformationSectionProps
-> = ({ formRef, fileList, setFileList, previewModal, uploadProps }) => {
+> = ({ form, fileList, setFileList, previewModal, uploadProps }) => {
   const { t } = useTranslation();
+
 
   return (
     <FormSection
       title={t('event_create.organizer_information.title')}
       icon={<IconBuildingSkyscraper size={22} />}
-      colorAccent="accent4"
+      colorAccent="accent1"
       subtitle={
         'Provide information about the organization or individual hosting this event.'
       }
@@ -129,13 +122,9 @@ export const OrganizerInformationSection: React.FC<
                   placeholder={t(
                     'event_create.organizer_information.name_placeholder',
                   )}
-                  onChange={(e) => {
-                    const { value } = e.currentTarget;
-                    safeSetFormValue(formRef, 'orgName', value);
-                  }}
                   required
                   classNames={{ input: classes.inputField }}
-                  value={getFormValue(formRef, 'orgName')}
+                  {...form.getInputProps('orgName')}
                 />
               </Grid.Col>
 
@@ -154,11 +143,7 @@ export const OrganizerInformationSection: React.FC<
                     placeholder={t(
                       'event_create.organizer_information.information',
                     )}
-                    onChange={(e) => {
-                      const { value } = e.currentTarget;
-                      safeSetFormValue(formRef, 'orgDescription', value);
-                    }}
-                    value={getFormValue(formRef, 'orgDescription')}
+                    {...form.getInputProps('orgDescription')}
                   />
                 </Box>
               </Grid.Col>
@@ -185,7 +170,7 @@ export const OrganizerInformationSection: React.FC<
                   <ActionIcon
                     variant="filled"
                     color="red"
-                    onClick={() => removeOrganizerLogo(setFileList, formRef)}
+                    onClick={() => removeOrganizerLogo(setFileList, form)}
                   >
                     <IconX size={16} />
                   </ActionIcon>
@@ -194,7 +179,7 @@ export const OrganizerInformationSection: React.FC<
             ) : (
               <Dropzone
                 onDrop={(files) =>
-                  handleOrganizerLogoUpload(files, setFileList, formRef)
+                  handleOrganizerLogoUpload(files, setFileList, form)
                 }
                 maxSize={2 * 1024 * 1024} // 2MB
                 accept={{ 'image/*': [] }}

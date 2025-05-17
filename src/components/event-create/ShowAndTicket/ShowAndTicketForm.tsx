@@ -26,6 +26,11 @@ import { TicketSection } from './components/TicketSection';
 import { useParams } from 'react-router-dom';
 import { useListShows, useShowMutations } from '@/queries/useShowQueries';
 import { TicketTypeModel } from '@/domain/TicketTypeModel';
+import { useForm } from '@mantine/form';
+import { safeSetFormValues } from '@/utils/formUtils';
+import { showError } from '@/utils/notifications';
+import { Loading } from '@/components/common/Loading/Loading';
+import './ShowAndTicketForm.css';
 
 export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
   const { t } = useTranslation();
@@ -46,7 +51,7 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
   const [currentTicketType, setCurrentTicketType] = useState<TicketTypeModel>();
   const [activeKey, setActiveKey] = useState<string[]>(['0']);
 
-  const { data: showsData, refetch: refetchShows } = useListShows(eventId!);
+  const { data: showsData, refetch: refetchShows, isLoading } = useListShows(eventId!);
 
   const months = Array.from({ length: 12 }, (_, i) => {
     const date = dayjs().month(i);
@@ -54,6 +59,12 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
       value: date.format('YYYY-MM'),
       label: date.format('MMMM YYYY'),
     };
+  });
+
+  const form = useForm({
+    initialValues: {
+      shows: [],
+    },
   });
 
   const handleAddShow = () => {
@@ -69,9 +80,14 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
     ]);
   };
 
+  React.useEffect(() => {
+    if (formRef) {
+      formRef.current = form;
+    }
+  }, [formRef, form]);
+
   useEffect(() => {
     if (showsData) {
-      console.log(showsData);
       // Convert API date strings to Dayjs objects
 
       const formattedShows = showsData.map((show) => ({
@@ -94,7 +110,7 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
         ]);
 
       if (formRef.current) {
-        formRef.current.setFieldsValue({
+        safeSetFormValues(formRef, {
           shows: formattedShows,
         });
       }
@@ -103,7 +119,7 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
 
   // Initialize form with existing data if available
   useEffect(() => {
-    const existingValues = formRef.current?.getFieldsValue();
+    const existingValues = formRef.current?.values;
     if (existingValues?.shows) {
       setShows(
         existingValues.shows.map((show: ShowModel) => ({
@@ -120,7 +136,7 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
 
   // Keep form values synced with state
   useEffect(() => {
-    const currentValues = formRef.current?.getFieldsValue();
+    const currentValues = formRef.current?.values;
     const updatedValues = {
       ...currentValues,
       shows: shows.map((show) => ({
@@ -132,31 +148,28 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
           : [],
       })),
     };
-    formRef.current?.setFieldsValue(updatedValues);
+    safeSetFormValues(formRef, updatedValues);
   }, [shows]);
 
   const handleDeleteShow = (index: number) => {
     const newShows = [...shows];
     newShows.splice(index, 1);
     setShows(newShows);
-    formRef.current?.setFieldsValue({ shows: newShows });
+    safeSetFormValues(formRef, { shows: newShows });
   };
 
   const handleOpenTicketModal = (showIndex: number) => {
     // Validate that both start time and end time are set
     if (
-      !shows[showIndex].startTime || 
-      !shows[showIndex].endTime || 
-      shows[showIndex].startTime === '' || 
+      !shows[showIndex].startTime ||
+      !shows[showIndex].endTime ||
+      shows[showIndex].startTime === '' ||
       shows[showIndex].endTime === ''
     ) {
-      notificationController.error({
-        message: t('show_and_ticket.please_fill_in_the_time_range'),
-        description: t('show_and_ticket.please_set_time_before_tickets'),
-      });
+      showError(t('show_and_ticket.please_fill_in_the_time_range'));
       return; // Don't proceed with opening the modal
     }
-    
+
     // Time range is valid, proceed with opening the modal
     setCurrentShow(showIndex);
     setCurrentTicketType(undefined);
@@ -186,16 +199,18 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
   const handleSaveTicket = (ticketType: TicketTypeModel) => {
     if (currentShow !== undefined) {
       const newShows = [...shows];
-      const ticketIndex = currentTicketType ? newShows[currentShow].ticketTypes.findIndex(
-        (t) => t.id && t.id.toString() === currentTicketType.id?.toString(),
-      ) : -1;
+      const ticketIndex = currentTicketType
+        ? newShows[currentShow].ticketTypes.findIndex(
+            (t) => t.id && t.id.toString() === currentTicketType.id?.toString(),
+          )
+        : -1;
       if (ticketIndex !== -1) {
         newShows[currentShow].ticketTypes[ticketIndex] = ticketType;
       } else {
         newShows[currentShow].ticketTypes.push({
           ...ticketType,
           id: Date.now().toString(), // Ensure each ticketType has a unique ID
-          position: newShows[currentShow].ticketTypes.length as number || 0,
+          position: (newShows[currentShow].ticketTypes.length as number) || 0,
         });
       }
 
@@ -214,20 +229,28 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
     setShows(newShows);
   };
 
-
+  if (isLoading) {
+    return <Loading />;
+  }
 
   const renderHeader = (show: ShowModel, index: number) => (
-    <Box className={activeKey.includes(index.toString()) ? classes.headerOpen : classes.headerClosed}>
+    <Box
+      className={
+        activeKey.includes(index.toString())
+          ? classes.headerOpen
+          : classes.headerClosed
+      }
+    >
       {activeKey.includes(index.toString()) ? (
-        <Text
-          className={classes.headerOpen}
-        >
+        <Text className={classes.headerOpen}>
           {t('show_and_ticket.show_date')}
         </Text>
       ) : show.startTime ? (
         <>
           <Text
-            className={`${classes.showDate} ${show.ticketTypes.length === 0 ? classes.showDateWarning : ''}`}
+            className={`${classes.showDate} ${
+              show.ticketTypes.length === 0 ? classes.showDateWarning : ''
+            }`}
           >
             {dayjs(show.startTime).format('MMMM D, YYYY h:mm A')}
           </Text>
@@ -245,10 +268,10 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
     </Box>
   );
 
+
+
   return (
-    <Box
-      className={classes.formContainer}
-    >
+    <Box ref={formRef} className={classes.formContainer}>
       <Box className={classes.showHeader}>
         <Title order={4} style={{ color: 'white', margin: 0 }}>
           {t('show_and_ticket.time')}
@@ -262,23 +285,30 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
         />
       </Box>
 
-      <Accordion 
+      <Accordion
         multiple
-        value={activeKey} 
+        value={activeKey}
         onChange={(value) => setActiveKey(value as string[])}
+        style={{
+          color: 'black !important',
+        }}
         classNames={{
           item: classes.accordionItem,
           control: classes.accordionControl,
-          panel: classes.accordionPanel
+          panel: classes.accordionPanel,
         }}
       >
         {shows.map((show, index) => (
-          <Accordion.Item
-            key={index.toString()}
-            value={index.toString()}
-          >
+          <Accordion.Item key={index.toString()} value={index.toString()}>
             <Accordion.Control>
-              <Box style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+              <Box
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  width: '100%',
+                }}
+              >
                 {renderHeader(show, index)}
                 <Group gap="xs">
                   <ActionIcon
@@ -293,25 +323,25 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
               </Box>
             </Accordion.Control>
             <Accordion.Panel>
-            <TimePickerSection
-              show={show}
-              showIndex={index}
-              formRef={formRef}
-              onTimeUpdate={(updatedShow) =>
-                handleTimeUpdate(updatedShow, index)
-              }
-            />
-            <TicketSection
-              show={show}
-              showIndex={index}
-              onAddTicket={() => handleAddTicket(index)}
-              onEditTicket={(ticketTypeId) =>
-                handleEditTicket(index, ticketTypeId)
-              }
-              onShowUpdate={(updatedShow) =>
-                handleShowUpdate(index, updatedShow)
-              }
-            />
+              <TimePickerSection
+                show={show}
+                showIndex={index}
+                formRef={formRef}
+                onTimeUpdate={(updatedShow) =>
+                  handleTimeUpdate(updatedShow, index)
+                }
+              />
+              <TicketSection
+                show={show}
+                showIndex={index}
+                onAddTicket={() => handleAddTicket(index)}
+                onEditTicket={(ticketTypeId) =>
+                  handleEditTicket(index, ticketTypeId)
+                }
+                onShowUpdate={(updatedShow) =>
+                  handleShowUpdate(index, updatedShow)
+                }
+              />
             </Accordion.Panel>
           </Accordion.Item>
         ))}

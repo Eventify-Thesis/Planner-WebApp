@@ -1,29 +1,61 @@
 import { EventListAllResponse } from '@/dto/event-doc.dto';
 import { EventCard } from './EventCard';
-import { Empty } from 'antd';
-import styled from 'styled-components';
+import { Box, Center, Text, Stack } from '@mantine/core';
+import { createStyles } from '@mantine/styles';
+import { IconInbox } from '@tabler/icons-react';
+import { useTranslation } from 'react-i18next';
 
 interface EventListProps {
   events: EventListAllResponse[];
 }
-const Container = styled.div`
-  display: flex;
-  justify-content: center;
-  flex-direction: column;
-  align-items: center;
-  min-height: 300px; // Adjust as needed
-  width: 100%;
-`;
+
+const useStyles = createStyles((theme: any) => ({
+  container: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    width: '100%',
+    minHeight: 300,
+  },
+  emptyContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: theme.spacing.xl,
+    minHeight: 300,
+    width: '100%',
+    color: theme.colors.gray[6],
+  },
+  emptyIcon: {
+    marginBottom: theme.spacing.md,
+  },
+  emptyText: {
+    fontSize: theme.fontSizes.md,
+  }
+}));
 
 const EventList: React.FC<EventListProps> = ({ events }) => {
+  const { classes } = useStyles();
+  const { t } = useTranslation();
+
   return (
-    <Container>
+    <Box className={classes.container}>
       {!events || events.length === 0 ? (
-        <Empty />
+        <Center className={classes.emptyContainer}>
+          <IconInbox size={48} className={classes.emptyIcon} stroke={1.5} />
+          <Text className={classes.emptyText}>
+            {t('eventDashboard.noEvents')}
+          </Text>
+        </Center>
       ) : (
-        events.map((event, index) => <EventCard key={index} {...event} />)
+        <Stack gap="md" w="100%">
+          {events.map((event, index) => (
+            <EventCard key={index} {...event} />
+          ))}
+        </Stack>
       )}
-    </Container>
+    </Box>
   );
 };
 export default EventList;

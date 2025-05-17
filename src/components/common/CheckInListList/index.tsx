@@ -63,7 +63,6 @@ export const CheckInListList = ({
     return (
       <NoResultsSplash
         heading={t`No Check-In Lists`}
-        imageHref={'/blank-slate/check-in-lists.svg'}
         subHeading={
           <>
             <p>

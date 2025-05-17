@@ -10,19 +10,19 @@ import { safeSetFormValue } from '@/utils/formUtils';
 interface EventDescriptionSectionProps {
   editorHtml: string;
   setEditorHtml: (html: string) => void;
-  formRef: React.RefObject<any>;
+  form: any;
 }
 
 export const EventDescriptionSection: React.FC<
   EventDescriptionSectionProps
-> = ({ editorHtml, setEditorHtml, formRef }) => {
+> = ({ editorHtml, setEditorHtml, form }) => {
   const { t } = useTranslation();
 
   return (
     <FormSection
       title={t('event_create.event_description.title')}
       icon={<IconArticle size={22} />}
-      colorAccent="accent3"
+      colorAccent="accent1"
       subtitle={
         'Craft a compelling description of your event that will attract and inform potential attendees.'
       }
@@ -48,7 +48,7 @@ export const EventDescriptionSection: React.FC<
             editorHtml={editorHtml}
             onChange={(html) => {
               setEditorHtml(html);
-              safeSetFormValue(formRef, 'eventDescription', html);
+              form.values.eventDescription = html;
             }}
           />
         </Box>

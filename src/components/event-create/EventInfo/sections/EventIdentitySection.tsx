@@ -20,10 +20,8 @@ import { FormSection } from '../components/FormSection';
 import { getFormValue, safeSetFormValue } from '@/utils/formUtils';
 import classes from './EventIdentitySection.module.css';
 
-// We continue to use UploadFile from antd for compatibility with existing code
-
 interface EventIdentitySectionProps {
-  formRef: React.RefObject<any>;
+  form: any;
   fileList: {
     logo: UploadFile[];
     banner: UploadFile[];
@@ -44,7 +42,7 @@ const handleFileUpload = async (
   files: FileWithPath[],
   setFileList: EventIdentitySectionProps['setFileList'],
   fieldName: string,
-  formRef: React.RefObject<any>,
+  form: any,
 ) => {
   // Skip if no files
   if (!files || files.length === 0) return;
@@ -61,11 +59,11 @@ const handleFileUpload = async (
       // Instead of using formRef.setFieldsValue which doesn't exist in this context,
       // we directly update the formRef value if it's a simple value property
       // This matches the expected behavior without relying on the Ant form API
-      if (formRef.current) {
+      if (form) {
         if (fieldName === 'logo') {
-          safeSetFormValue(formRef, 'eventLogoUrl', url);
+          form.values.eventLogoUrl = url;
         } else if (fieldName === 'banner') {
-          safeSetFormValue(formRef, 'eventBannerUrl', url);
+          form.values.eventBannerUrl = url;
         }
       }
 
@@ -84,16 +82,16 @@ const handleFileUpload = async (
 const removeImage = (
   setFileList: EventIdentitySectionProps['setFileList'],
   fieldName: string,
-  formRef: React.RefObject<any>,
+  form: any,
 ) => {
   setFileList((prevState) => ({ ...prevState, [fieldName]: [] }));
 
   // Use our safe utility function
-  safeSetFormValue(formRef, fieldName, '');
+  safeSetFormValue(form, fieldName, '');
 };
 
 export const EventIdentitySection: React.FC<EventIdentitySectionProps> = ({
-  formRef,
+  form,
   fileList,
   setFileList,
   previewModal,
@@ -134,7 +132,7 @@ export const EventIdentitySection: React.FC<EventIdentitySectionProps> = ({
                 <ActionIcon
                   variant="filled"
                   color="red"
-                  onClick={() => removeImage(setFileList, 'logo', formRef)}
+                  onClick={() => removeImage(setFileList, 'logo', form)}
                 >
                   <IconX size={16} />
                 </ActionIcon>
@@ -143,7 +141,7 @@ export const EventIdentitySection: React.FC<EventIdentitySectionProps> = ({
           ) : (
             <Dropzone
               onDrop={(files) =>
-                handleFileUpload(files, setFileList, 'logo', formRef)
+                handleFileUpload(files, setFileList, 'logo', form)
               }
               maxSize={2 * 1024 * 1024} // 2MB
               accept={{ 'image/*': [] }}
@@ -193,7 +191,7 @@ export const EventIdentitySection: React.FC<EventIdentitySectionProps> = ({
                 <ActionIcon
                   variant="filled"
                   color="red"
-                  onClick={() => removeImage(setFileList, 'banner', formRef)}
+                  onClick={() => removeImage(setFileList, 'banner', form)}
                 >
                   <IconX size={16} />
                 </ActionIcon>
@@ -202,7 +200,7 @@ export const EventIdentitySection: React.FC<EventIdentitySectionProps> = ({
           ) : (
             <Dropzone
               onDrop={(files) =>
-                handleFileUpload(files, setFileList, 'banner', formRef)
+                handleFileUpload(files, setFileList, 'banner', form)
               }
               maxSize={3 * 1024 * 1024} // 3MB
               accept={{ 'image/*': [] }}
@@ -272,10 +270,7 @@ export const EventIdentitySection: React.FC<EventIdentitySectionProps> = ({
                   },
                 },
               }}
-              onChange={(e) => {
-                safeSetFormValue(formRef, 'eventName', e.currentTarget.value);
-              }}
-              value={getFormValue(formRef, 'eventName')}
+              {...form.getInputProps('eventName')}
             />
           </Grid.Col>
           <Grid.Col span={{ base: 12, md: 6 }}>
@@ -302,14 +297,7 @@ export const EventIdentitySection: React.FC<EventIdentitySectionProps> = ({
                   },
                 },
               }}
-              onChange={(e) => {
-                safeSetFormValue(
-                  formRef,
-                  'eventAbbrName',
-                  e.currentTarget.value,
-                );
-              }}
-              value={getFormValue(formRef, 'eventAbbrName')}
+              s{...form.getInputProps('eventAbbrName')}
             />
           </Grid.Col>
         </Grid>

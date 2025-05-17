@@ -120,6 +120,10 @@ const EventInfoForm: React.FC<FormStepProps> = ({ formRef }) => {
         category,
       });
 
+      safeSetFormValue(formRef, 'orgName', eventDetail.orgName);
+      safeSetFormValue(formRef, 'orgDescription', eventDetail.orgDescription);
+      safeSetFormValue(formRef, 'orgLogoUrl', eventDetail.orgLogoUrl);
+
       setFileList({
         logo: transformFile(eventDetail.eventLogoUrl, 'logo'),
         banner: transformFile(eventDetail.eventBannerUrl, 'banner'),
@@ -212,7 +216,7 @@ const EventInfoForm: React.FC<FormStepProps> = ({ formRef }) => {
       }}
     >
       <EventIdentitySection
-        formRef={formRef}
+        form={form}
         fileList={fileList}
         setFileList={setFileList}
         previewModal={previewModal}
@@ -220,7 +224,7 @@ const EventInfoForm: React.FC<FormStepProps> = ({ formRef }) => {
       />
 
       <EventLocationSection
-        formRef={formRef}
+        form={form}
         eventType={eventType}
         setEventType={setEventType}
         selectedCity={selectedCity}
@@ -237,20 +241,18 @@ const EventInfoForm: React.FC<FormStepProps> = ({ formRef }) => {
       />
 
       <EventCategorySection
-        formRef={formRef}
+        form={form}
         categories={categories}
-        selectedCategory={selectedCategory}
-        setSelectedCategory={setSelectedCategory}
       />
 
       <EventDescriptionSection
-        formRef={formRef}
+        form={form}
         editorHtml={editorHtml}
         setEditorHtml={setEditorHtml}
       />
 
       <OrganizerInformationSection
-        formRef={formRef}
+        form={form}
         fileList={fileList}
         setFileList={setFileList}
         previewModal={previewModal}

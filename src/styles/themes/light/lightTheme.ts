@@ -48,7 +48,7 @@ const chartColors = {
 };
 
 export const lightColorsTheme: ITheme = {
-  primary: '#12b886',
+  primary: '#FFD63A',
   primary1: '#f5f5f5',
   primaryGradient: 'linear-gradient(211.49deg, #00607A 15.89%, #005066 48.97%)',
   light: '#C5D3E0',

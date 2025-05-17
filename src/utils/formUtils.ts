@@ -15,12 +15,6 @@ export const safeSetFormValue = (
 ): void => {
   if (!formRef || !formRef.current) return;
 
-  // Handle Ant Design form
-  if (typeof formRef.current.setFieldsValue === 'function') {
-    formRef.current.setFieldsValue({ [fieldName]: value });
-    return;
-  }
-
   // Handle React Hook Form
   if (typeof formRef.current.setValue === 'function') {
     formRef.current.setValue(fieldName, value);
@@ -68,11 +62,9 @@ export const safeSetFormValues = (
     formRef.current.setFieldsValue(values);
   } else {
     Object.entries(values).forEach(([key, value]) => {
-      console.log(key, value);
       safeSetFormValue(formRef, key, value);
     });
   }
-  console.log(formRef.current);
 };
 
 /**

@@ -1,24 +1,34 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   Table,
-  Card,
+  Paper,
   Button,
-  Space,
-  Input,
+  TextInput,
   Modal,
   Select,
-  Form,
-  Typography,
-  notification,
   Divider,
-} from 'antd';
+  Text,
+  Stack,
+  Group,
+  Box,
+  ActionIcon,
+  Badge,
+  Center,
+  Flex,
+  ScrollArea,
+  LoadingOverlay,
+  Pagination,
+  rem,
+} from '@mantine/core';
+import { notifications } from '@mantine/notifications';
+import { useForm } from '@mantine/form';
+import { useDisclosure } from '@mantine/hooks';
 import {
-  UserAddOutlined,
-  SearchOutlined,
-  CheckOutlined,
-  DeleteOutlined,
-  EditOutlined,
-} from '@ant-design/icons';
+  IconUserPlus,
+  IconCheck,
+  IconTrash,
+  IconEdit,
+} from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import {
@@ -30,7 +40,6 @@ import {
 import { useEvent } from '../../../contexts/EventContext';
 import { MemberModel } from '@/domain/MemberModel';
 import { EventRole } from '@/constants/enums/event';
-import { BASE_COLORS, FONT_WEIGHT } from '@/styles/themes/constants';
 import { useListMembers, useMemberMutations } from '@/queries/useMemberQueries';
 import { ToolBar } from '@/components/common/ToolBar';
 import { SearchBarWrapper } from '@/components/common/SearchBar';
@@ -39,24 +48,30 @@ import { QueryFilters } from '@tanstack/react-query';
 import { PageBody } from '@/components/common/PageBody';
 import { PageTitle } from '@/components/common/MantinePageTitle';
 
-const { Text } = Typography;
-
-const EventMembers: React.FC = () => {
+const EventMembers = () => {
   const { t } = useTranslation();
-  const { eventId } = useParams<{ eventId: number }>();
+  const { eventId } = useParams<{ eventId: string }>();
   const { eventBrief } = useEvent();
-  const [searchText, setSearchText] = useState('');
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [editingMember, setEditingMember] = useState<MemberModel | null>(null);
-  const [pagination, setPagination] = useState({
-    current: 1,
-    limit: 10,
+  const [searchParams, setSearchParams] = useFilterQueryParamSync();
+  const [modalOpened, { open: openModal, close: closeModal }] = useDisclosure(false);
+  
+  // Initialize form with Mantine useForm
+  const form = useForm({
+    initialValues: {
+      email: '',
+      role: '',
+    },
+    validate: {
+      email: (value) => (!value ? t('members.form.emailRequired') : 
+        !/^\S+@\S+$/.test(value) ? t('members.form.emailInvalid') : null),
+      role: (value) => (!value ? t('members.form.roleRequired') : null),
+    },
   });
 
-  const [searchParams, setSearchParams] = useFilterQueryParamSync();
-
-  const [form] = Form.useForm();
-
+  // Data fetching with react-query
   const { data, isLoading } = useListMembers(
     eventId!,
     searchParams as QueryFilters,
@@ -68,47 +83,51 @@ const EventMembers: React.FC = () => {
   const members = data?.docs || [];
   const totalDocs = data?.totalDocs || 0;
 
-  const handleSearch = (value: string) => {
-    setSearchText(value);
-    setPagination((prev) => ({ ...prev, current: 1 }));
-  };
-
+  // Event handlers
   const showAddModal = () => {
-    form.resetFields();
+    form.reset();
     setEditingMember(null);
-    setIsModalVisible(true);
+    openModal();
   };
 
   const showEditModal = (member: MemberModel) => {
     setEditingMember(member);
-    form.setFieldsValue({ role: member.role });
-    setIsModalVisible(true);
+    form.setValues({ role: member.role });
+    openModal();
   };
 
-  const handleModalOk = async () => {
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    setSearchParams({ ...searchParams, page: newPage.toString() });
+  };
+
+  const handleModalSubmit = async (values: typeof form.values) => {
     if (!eventBrief) return;
 
     try {
-      const values = await form.validateFields();
       if (editingMember) {
         await updateMemberRoleMutation.mutateAsync({
           userId: editingMember.userId,
-          data: { role: values.role },
+          data: { role: values.role as EventRole },
         });
-        notification.success({
-          message: t('members.update.success'),
+        notifications.show({
+          title: t('members.update.success'),
+          message: '',
+          color: 'green',
         });
       } else {
         await addMemberMutation.mutateAsync({
           email: values.email,
-          role: values.role,
+          role: values.role as EventRole,
           organizationId: eventBrief.organizationId!,
         });
-        notification.success({
-          message: t('members.add.success'),
+        notifications.show({
+          title: t('members.add.success'),
+          message: '',
+          color: 'green',
         });
       }
-      setIsModalVisible(false);
+      closeModal();
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || error.message;
       let description = t('common.error');
@@ -141,9 +160,10 @@ const EventMembers: React.FC = () => {
             : t('members.add.error');
       }
 
-      notification.error({
-        message: t('common.error'),
-        description,
+      notifications.show({
+        title: t('common.error'),
+        message: description,
+        color: 'red',
       });
     }
   };
@@ -153,8 +173,10 @@ const EventMembers: React.FC = () => {
 
     try {
       await deleteMemberMutation.mutateAsync(userId);
-      notification.success({
-        message: t('members.delete.success'),
+      notifications.show({
+        title: t('members.delete.success'),
+        message: '',
+        color: 'green',
       });
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || error.message;
@@ -186,152 +208,149 @@ const EventMembers: React.FC = () => {
           description = t('members.delete.error');
       }
 
-      notification.error({
-        message: t('common.error'),
-        description,
+      notifications.show({
+        title: t('common.error'),
+        message: description,
+        color: 'red',
       });
     }
   };
 
-  const columns = [
-    {
-      title: t('members.table.member'),
-      key: 'member',
-      render: (record: MemberModel) => (
-        <Space direction="vertical" size={0}>
-          <Text strong>{`${record.firstName} ${record.lastName}`}</Text>
-          <Text type="secondary">{record.email}</Text>
-        </Space>
-      ),
-    },
-    {
-      title: t('members.table.role'),
-      dataIndex: 'role',
-      key: 'role',
-      render: (role: EventRole) => t(`members.role.${role}`),
-    },
-    {
-      title: t('members.table.actions'),
-      key: 'actions',
-      render: (_: any, record: MemberModel) => (
-        <Space
-          size="middle"
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-          }}
-        >
-          <Button size="small" onClick={() => showEditModal(record)}>
-            <EditOutlined />
-          </Button>
-          <Button
-            size="small"
-            danger
-            onClick={() => handleDelete(record.userId)}
-            icon={<DeleteOutlined />}
-          ></Button>
-        </Space>
-      ),
-    },
-  ];
+  // UI Component renderers
+  const renderMemberInfo = (member: MemberModel) => (
+    <Stack gap={0}>
+      <Text fw={500}>{`${member.firstName} ${member.lastName}`}</Text>
+      <Text size="sm" c="dimmed">{member.email}</Text>
+    </Stack>
+  );
+  
+  const renderRole = (role: EventRole) => (
+    <Badge color="blue" variant="light">
+      {t(`members.role.${role}`)}
+    </Badge>
+  );
+  
+  const renderActions = (member: MemberModel) => (
+    <Group justify="center" gap="xs">
+      <ActionIcon 
+        variant="light" 
+        color="blue" 
+        onClick={() => showEditModal(member)}
+      >
+        <IconEdit style={{ width: rem(16), height: rem(16) }} />
+      </ActionIcon>
+      <ActionIcon 
+        variant="light" 
+        color="red" 
+        onClick={() => handleDelete(member.userId)}
+      >
+        <IconTrash style={{ width: rem(16), height: rem(16) }} />
+      </ActionIcon>
+    </Group>
+  );
 
-  const permissionColumns = Object.keys(EVENT_ROLE_LABELS).map((role) => ({
-    title: t(`members.role.${role}`),
-    key: role,
-    align: 'center' as const,
-    render: (_: any, record: { permission: EventPermission }) =>
-      EVENT_ROLE_PERMISSIONS[role as EventRole].includes(record.permission) ? (
-        <CheckOutlined style={{ color: '#52c41a' }} />
-      ) : null,
-  }));
+  // Helper function to check if a role has a specific permission
+  const hasPermission = (role: string, permission: EventPermission): boolean => {
+    // Safely cast the role string to EventRole enum
+    const roleEnum = role as unknown as EventRole;
+    return EVENT_ROLE_PERMISSIONS[roleEnum].includes(permission);
+  };
 
   return (
-    <div
-      style={{
-        padding: 24,
-      }}
-    >
+    <Box p={24}>
       <PageBody>
         <PageTitle>Members</PageTitle>
+        
         <ToolBar
           searchComponent={() => (
             <SearchBarWrapper
               placeholder={t`Search by name, email...`}
               setSearchParams={setSearchParams}
               searchParams={searchParams}
-              // pagination={pagination}
             />
           )}
         >
           <Button
-            type="primary"
-            icon={<UserAddOutlined />}
+            color="blue"
+            leftSection={<IconUserPlus size={16} />}
             onClick={showAddModal}
-            style={{
-              color: BASE_COLORS.black,
-              fontWeight: FONT_WEIGHT.bold,
-              backgroundColor: 'var(--primary-color)',
-            }}
+            radius="md"
           >
             {t('members.addMember')}
           </Button>
         </ToolBar>
-        <Card>
-          <Table
-            columns={columns}
-            dataSource={members}
-            rowKey="id"
-            loading={isLoading}
-            pagination={{
-              current: pagination.current,
-              pageSize: pagination.limit,
-              total: totalDocs,
-              onChange: (page, pageSize) =>
-                setPagination({ current: page, limit: pageSize }),
-            }}
-          />
-        </Card>
+        
+        <Paper shadow="xs" radius="md" p="md" withBorder>
+          <LoadingOverlay visible={isLoading} overlayProps={{ blur: 2 }} />
+          
+          <Table highlightOnHover withTableBorder>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th>{t('members.table.member')}</Table.Th>
+                <Table.Th>{t('members.table.role')}</Table.Th>
+                <Table.Th style={{ textAlign: 'center' }}>{t('members.table.actions')}</Table.Th>
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              {members.length === 0 ? (
+                <Table.Tr>
+                  <Table.Td colSpan={3}>
+                    <Center p="xl">
+                      <Text c="dimmed" fs="italic">{t('common.noResults')}</Text>
+                    </Center>
+                  </Table.Td>
+                </Table.Tr>
+              ) : (
+                members.map((member) => (
+                  <Table.Tr key={member.id}>
+                    <Table.Td>{renderMemberInfo(member)}</Table.Td>
+                    <Table.Td>{renderRole(member.role)}</Table.Td>
+                    <Table.Td>{renderActions(member)}</Table.Td>
+                  </Table.Tr>
+                ))
+              )}
+            </Table.Tbody>
+          </Table>
+          
+          {totalDocs > pageSize && (
+            <Flex justify="center" mt="md">
+              <Pagination 
+                value={page}
+                onChange={handlePageChange}
+                total={Math.ceil(totalDocs / pageSize)}
+              />
+            </Flex>
+          )}
+        </Paper>
 
         <Modal
+          opened={modalOpened}
+          onClose={closeModal}
           title={
-            editingMember
-              ? t('members.modal.editTitle')
-              : t('members.modal.addTitle')
+            <Text fw={600} size="lg">
+              {editingMember ? t('members.modal.editTitle') : t('members.modal.addTitle')}
+            </Text>
           }
-          open={isModalVisible}
-          onOk={handleModalOk}
-          onCancel={() => setIsModalVisible(false)}
-          confirmLoading={
-            addMemberMutation.isPending || updateMemberRoleMutation.isPending
-          }
-          width={1200}
+          size="xl"
+          centered
         >
-          <Form form={form} layout="vertical">
-            <div style={{ padding: '0 24px' }}>
+          <form onSubmit={form.onSubmit(handleModalSubmit)}>
+            <Stack p="md">
               {!editingMember && (
-                <Form.Item
-                  name="email"
+                <TextInput
+                  required
                   label={t('members.form.email')}
-                  rules={[
-                    {
-                      required: true,
-                      message: t('members.form.emailRequired'),
-                    },
-                    { type: 'email', message: t('members.form.emailInvalid') },
-                  ]}
-                >
-                  <Input />
-                </Form.Item>
+                  placeholder="email@example.com"
+                  {...form.getInputProps('email')}
+                />
               )}
-              <Form.Item
-                name="role"
+              
+              <Select
+                required
                 label={t('members.form.role')}
-                rules={[
-                  { required: true, message: t('members.form.roleRequired') },
-                ]}
-              >
-                <Select>
-                  {Object.entries(EVENT_ROLE_LABELS)
+                placeholder="Select a role"
+                data={
+                  Object.entries(EVENT_ROLE_LABELS)
                     .filter(([value]) => {
                       const roleHierarchy = {
                         [EventRole.OWNER]: 5,
@@ -340,58 +359,78 @@ const EventMembers: React.FC = () => {
                         [EventRole.ENTRY_STAFF]: 2,
                         [EventRole.VENDOR]: 1,
                       };
-
-                      return (
-                        roleHierarchy[value as EventRole] <
-                        roleHierarchy[
-                          EventRole[eventBrief!.role] || EventRole.VENDOR
-                        ]
-                      );
+                      
+                      // Convert string to EventRole enum for comparison
+                      const valueRole = value as unknown as EventRole;
+                      const currentRole = eventBrief?.role as unknown as EventRole || EventRole.VENDOR;
+                      
+                      return roleHierarchy[valueRole] < roleHierarchy[currentRole];
                     })
-                    .map(([value, label]) => (
-                      <Select.Option key={value} value={value}>
-                        {t(`members.role.${value}`)}
-                      </Select.Option>
-                    ))}
-                </Select>
-              </Form.Item>
+                    .map(([value]) => ({
+                      value,
+                      label: t(`members.role.${value}`),
+                    }))
+                }
+                {...form.getInputProps('role')}
+              />
 
-              <Divider>{t('members.permissions.title')}</Divider>
-              <div style={{ marginTop: 24 }}>
-                <Table
-                  columns={[
-                    {
-                      title: t('members.permissions.permission'),
-                      dataIndex: 'permission',
-                      key: 'permission',
-                      width: 200,
-                      fixed: 'left',
-                      render: (permission: EventPermission) => {
-                        const permissionKey = permission.replace(
-                          'org:event:',
-                          '',
-                        );
-                        return t(`event.${permissionKey}`);
-                      },
-                    },
-                    ...permissionColumns,
-                  ]}
-                  dataSource={Object.entries(EVENT_PERMISSION_LABELS).map(
-                    ([permission]) => ({
-                      permission,
-                    }),
-                  )}
-                  rowKey="permission"
-                  pagination={false}
-                  scroll={{ x: 1000 }}
-                  size="small"
-                />
-              </div>
-            </div>
-          </Form>
+              <Divider 
+                label={<Text fw={500}>{t('members.permissions.title')}</Text>} 
+                labelPosition="center"
+                my="md"
+              />
+              
+              <ScrollArea h={300}>
+                <Table withTableBorder>
+                  <Table.Thead>
+                    <Table.Tr>
+                      <Table.Th style={{ whiteSpace: 'nowrap' }}>
+                        {t('members.permissions.permission')}
+                      </Table.Th>
+                      {Object.keys(EVENT_ROLE_LABELS).map((role) => (
+                        <Table.Th key={role} style={{ textAlign: 'center' }}>
+                          {t(`members.role.${role}`)}
+                        </Table.Th>
+                      ))}
+                    </Table.Tr>
+                  </Table.Thead>
+                  <Table.Tbody>
+                    {Object.entries(EVENT_PERMISSION_LABELS).map(([permission]) => (
+                      <Table.Tr key={permission}>
+                        <Table.Td style={{ whiteSpace: 'nowrap' }}>
+                          {t(`event.${permission.replace('org:event:', '')}`)}
+                        </Table.Td>
+                        {Object.keys(EVENT_ROLE_LABELS).map((role) => (
+                          <Table.Td key={role} style={{ textAlign: 'center' }}>
+                            {hasPermission(role, permission as EventPermission) ? (
+                              <Center>
+                                <IconCheck style={{ color: 'var(--mantine-color-green-6)' }} />
+                              </Center>
+                            ) : null}
+                          </Table.Td>
+                        ))}
+                      </Table.Tr>
+                    ))}
+                  </Table.Tbody>
+                </Table>
+              </ScrollArea>
+              
+              <Flex justify="flex-end" gap="md" mt="md">
+                <Button variant="outline" onClick={closeModal}>
+                  {t('common.cancel')}
+                </Button>
+                <Button 
+                  type="submit" 
+                  loading={addMemberMutation.isPending || updateMemberRoleMutation.isPending}
+                >
+                  {t('common.save')}
+                </Button>
+              </Flex>
+            </Stack>
+          </form>
         </Modal>
       </PageBody>
-    </div>
+    </Box>
   );
 };
 

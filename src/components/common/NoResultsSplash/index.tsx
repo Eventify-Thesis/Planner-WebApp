@@ -2,6 +2,7 @@ import React from 'react';
 import classes from './NoResultsSplash.module.scss';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Image, Stack, Center, Text, Paper } from '@mantine/core';
 
 interface NoResultsSplashProps {
   heading?: React.ReactNode;
@@ -21,16 +22,32 @@ export const NoResultsSplash = ({
   const { t } = useTranslation();
 
   return (
-    <div className={classes.container}>
-      <img alt={t`No results`} width={300} src={imageHref} />
+    <Paper p="md" shadow="xs" radius="md" className={classes.container}>
+      <Stack gap="md" align="center">
+        <Center>
+          <Image
+            alt={t`No results`}
+            w={240}
+            h={240}
+            fit="contain"
+            src={imageHref}
+          />
+        </Center>
 
-      {heading && !hasSearchQuery && <h2>{heading}</h2>}
+        {heading && !hasSearchQuery && (
+          <Text size="lg" fw={600}>{heading}</Text>
+        )}
 
-      {hasSearchQuery && <h2>{t`No search results.`}</h2>}
+        {hasSearchQuery && (
+          <Text size="lg" fw={600}>{t`No search results.`}</Text>
+        )}
 
-      {subHeading && !hasSearchQuery && subHeading}
+        {subHeading && !hasSearchQuery && (
+          <Text>{subHeading}</Text>
+        )}
 
-      {children && children}
-    </div>
+        {children && children}
+      </Stack>
+    </Paper>
   );
 };

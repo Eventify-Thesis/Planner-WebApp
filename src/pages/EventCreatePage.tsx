@@ -3,7 +3,6 @@ import { ShowAndTicketForm } from '@/components/event-create/ShowAndTicket/ShowA
 import { EventSettingsForm } from '@/components/event-create/EventSettings/EventSettingsForm';
 import { PaymentInfoForm } from '@/components/event-create/PaymentInfo/PaymentInfoForm';
 import EventInfoForm from '@/components/event-create/EventInfo/EventInfoForm';
-import { notificationController } from '@/controllers/notificationController';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import dayjs from 'dayjs';
@@ -18,16 +17,14 @@ import {
   Paper,
   rem,
   Stepper,
-  Title,
   useMantineTheme,
-  BackgroundImage,
-  Center,
   Flex,
 } from '@mantine/core';
 import './eventCreatePage.css';
 import './mantine.styles.css';
 import { IconCheck } from '@tabler/icons-react';
 import { safeValidateForm } from '@/utils/formUtils';
+import { showError, showSuccess } from '@/utils/notifications';
 
 // FormContainer component that shows or hides based on active state with a nice transition effect
 interface FormContainerProps {
@@ -132,9 +129,7 @@ const EventCreatePage: React.FC = () => {
     try {
       values = await safeValidateForm(formRefs[current]);
     } catch (error) {
-      notificationController.error({
-        message: error.message || t('event_create.previous_step_required'),
-      });
+      showError(error.message || t('event_create.previous_step_required'))
       throw error;
     }
 
@@ -173,9 +168,7 @@ const EventCreatePage: React.FC = () => {
 
       setCurrent(current + 1);
     } catch (error) {
-      notificationController.error({
-        message: error.message || t('event_create.failed_to_save'),
-      });
+      showError(error.message || t('event_create.failed_to_save'));
     }
   };
 
@@ -185,9 +178,7 @@ const EventCreatePage: React.FC = () => {
     try {
       values = await safeValidateForm(formRefs[current]);
     } catch (error) {
-      notificationController.error({
-        message: error.message || t('event_create.previous_step_required'),
-      });
+      showError(error.message || t('event_create.previous_step_required'));
       throw error;
     }
 
@@ -208,13 +199,9 @@ const EventCreatePage: React.FC = () => {
         await handlePaymentUpdate(values);
       }
 
-      notificationController.success({
-        message: t('event_create.event_info_saved_successfully'),
-      });
+      showSuccess(t('event_create.event_info_saved_successfully'));
     } catch (error) {
-      notificationController.error({
-        message: error.message || t('event_create.failed_to_save'),
-      });
+      showError(error.message || t('event_create.failed_to_save'));
       throw error;
     }
   };
@@ -257,6 +244,10 @@ const EventCreatePage: React.FC = () => {
   const handlePaymentUpdate = async (updatedPayment: any) => {
     try {
       await paymentMutation.mutateAsync(updatedPayment);
+
+      navigate(`/events/${eventId}/dashboard`, {
+        replace: true,
+      });
     } catch (error) {
       throw error;
     }
@@ -278,12 +269,12 @@ const EventCreatePage: React.FC = () => {
 
       setCurrent(nextStep);
     } catch (error) {
-      notificationController.error({
-        message:
-          nextStep > current
+      showError(
+        error.message ||
+          (nextStep > current
             ? t('event_create.previous_step_required')
-            : t('event_create.next_step_required'),
-      });
+            : t('event_create.next_step_required')),
+      );
     }
   };
 

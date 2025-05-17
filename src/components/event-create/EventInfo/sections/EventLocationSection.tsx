@@ -43,36 +43,34 @@ import { safeSetFormValue, getFormValue } from '@/utils/formUtils';
 
 interface EventLocationSectionProps {
   eventType: string;
-  setEventType: (type: string) => void;
   selectedCity: number | null;
-  setSelectedCity: (cityId: number) => void;
   selectedDistrict: number | null;
-  setSelectedDistrict: (districtId: number) => void;
   selectedWard: number | null;
+  setSelectedCity: (cityId: number) => void;
+  setSelectedDistrict: (districtId: number) => void;
   setSelectedWard: (wardId: number) => void;
   cities: City[];
   districts: District[];
   wards: Ward[];
   isDistrictsLoading?: boolean;
   isWardsLoading?: boolean;
-  formRef?: React.RefObject<any>;
+  form?: any;
 }
 
 export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
   eventType,
-  setEventType,
-  selectedCity,
   setSelectedCity,
+  selectedCity,
   selectedDistrict,
-  setSelectedDistrict,
   selectedWard,
+  setSelectedDistrict,
   setSelectedWard,
   cities,
   districts,
   wards,
   isDistrictsLoading,
   isWardsLoading,
-  formRef,
+  form,
 }) => {
   const { t } = useTranslation();
   const { language } = useLanguage();
@@ -81,7 +79,7 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
     <FormSection
       title={t('event_create.event_location.title')}
       icon={<IconMapPin size={22} />}
-      colorAccent="accent2"
+      colorAccent="accent1"
       subtitle={
         'Set the venue details for your event - either a physical location or an online meeting link.'
       }
@@ -94,11 +92,7 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
             <span className={styles.requiredMark}>*</span>
           </Text>
           <SegmentedControl
-            value={eventType}
-            onChange={(value) => {
-              setEventType(value);
-              safeSetFormValue(formRef, 'eventType', value);
-            }}
+            {...form.getInputProps('eventType')}
             data={[
               {
                 label: t('event_create.event_location.offline'),
@@ -131,7 +125,7 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
           />
         </Box>
 
-        {eventType === EventType.OFFLINE && (
+        {form.values.eventType === EventType.OFFLINE && (
           <Box>
             <Box className={styles.inputContainer}>
               <Text className={styles.fieldLabel}>
@@ -140,11 +134,7 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
               </Text>
               <TextInput
                 placeholder={t('event_create.event_location.venue_name')}
-                onChange={(e) => {
-                  const { value } = e.currentTarget;
-                  safeSetFormValue(formRef, 'venueName', value);
-                }}
-                value={getFormValue(formRef, 'venueName')}
+                {...form.getInputProps('venueName')}
               />
             </Box>
 
@@ -166,21 +156,11 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
                           : `${city.type} ${city.name}`,
                       value: city.originId.toString(),
                     }))}
-                    value={
-                      getFormValue(formRef, 'cityId')
-                        ? getFormValue(formRef, 'cityId').toString()
-                        : selectedCity
-                        ? selectedCity.toString()
-                        : null
-                    }
                     onChange={(value) => {
                       if (value) {
-                        setSelectedCity(parseInt(value, 10));
-                        safeSetFormValue(
-                          formRef,
-                          'cityId',
-                          parseInt(value, 10),
-                        );
+                        const cityId = parseInt(value, 10);
+                        setSelectedCity(cityId);
+                        form.values.cityId = cityId;
                       }
                     }}
                     searchable
@@ -208,21 +188,15 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
                           : `${district.type} ${district.name}`,
                       value: district.originId.toString(),
                     }))}
-                    value={
-                      getFormValue(formRef, 'districtId')
-                        ? getFormValue(formRef, 'districtId').toString()
-                        : selectedDistrict
-                        ? selectedDistrict.toString()
-                        : null
-                    }
+                    {...form.getInputProps('districtId')}
+                    disabled={form.values.cityId === undefined || isDistrictsLoading}
                     onChange={(value) => {
                       if (value) {
                         const districtId = parseInt(value, 10);
                         setSelectedDistrict(districtId);
-                        safeSetFormValue(formRef, 'districtId', districtId);
+                        form.values.districtId = districtId;
                       }
                     }}
-                    disabled={!selectedCity || isDistrictsLoading}
                     searchable
                     clearable
                     rightSection={
@@ -249,7 +223,7 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
                         ? t('event_create.event_location.loading')
                         : t('event_create.event_location.ward_placeholder')
                     }
-                    disabled={!selectedDistrict || isWardsLoading}
+                    disabled={form.values.districtId === undefined || isWardsLoading}
                     rightSection={
                       isWardsLoading ? (
                         <Box style={{ display: 'flex', alignItems: 'center' }}>
@@ -258,13 +232,7 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
                         </Box>
                       ) : null
                     }
-                    onChange={(value) => {
-                      if (value) {
-                        const wardId = parseInt(value, 10);
-                        setSelectedWard(wardId);
-                        safeSetFormValue(formRef, 'wardId', wardId);
-                      }
-                    }}
+                    {...form.getInputProps('wardId')}
                     data={wards.map((ward) => ({
                       label:
                         language === 'en'
@@ -272,13 +240,13 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
                           : `${ward.type} ${ward.name}`,
                       value: ward.originId.toString(),
                     }))}
-                    value={
-                      getFormValue(formRef, 'wardId')
-                        ? getFormValue(formRef, 'wardId').toString()
-                        : selectedWard
-                        ? selectedWard.toString()
-                        : null
-                    }
+                    onChange={(value) => {
+                      if (value) {
+                        const wardId = parseInt(value, 10);
+                        setSelectedWard(wardId);
+                        form.values.wardId = wardId;
+                      }
+                    }}
                     searchable
                     clearable
                   />
@@ -295,11 +263,7 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
                 placeholder={t(
                   'event_create.event_location.street_address_placeholder',
                 )}
-                onChange={(e) => {
-                  const { value } = e.currentTarget;
-                  safeSetFormValue(formRef, 'street', value);
-                }}
-                value={getFormValue(formRef, 'street')}
+                {...form.getInputProps('street')}
               />
               <Text className={styles.helperText}>
                 {t('event_create.event_location.address_help') ||
@@ -309,7 +273,7 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
           </Box>
         )}
 
-        {eventType === EventType.ONLINE && (
+        {form.values.eventType === EventType.ONLINE && (
           <Box className={styles.inputContainer}>
             <Text className={styles.fieldLabel}>
               {t('event_create.event_location.online_url')}
@@ -320,11 +284,7 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
                 t('event_create.event_location.online_url_placeholder') ||
                 'Enter the URL for your online event'
               }
-              onChange={(e) => {
-                const { value } = e.currentTarget;
-                safeSetFormValue(formRef, 'onlineUrl', value);
-              }}
-              value={getFormValue(formRef, 'onlineUrl')}
+              {...form.getInputProps('onlineUrl')}
             />
             <Text className={styles.helperText}>
               {t('event_create.event_location.online_url_help') ||

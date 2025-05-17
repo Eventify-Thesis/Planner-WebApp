@@ -20,17 +20,17 @@ export enum EventRole {
 
 export enum OrganizerType {
   ORGANIZER = 'ORGANIZER',
-  INDIVIDUAL = 'INDIVIDUAL',
+  PERSONAL = 'PERSONAL',
 }
 
 export enum AgeRestriction {
-  ALL_AGE = 'ALL_AGE',
+  ALL_AGES = 'ALL_AGES',
   OVER_18 = 'OVER_18',
   OVER_21 = 'OVER_21',
 }
 
 export enum BusinessType {
   ORGANIZER = 'ORGANIZER',
-  INDIVIDUAL = 'INDIVIDUAL',
+  PERSONAL = 'PERSONAL',
   COMPANY = 'COMPANY',
 }

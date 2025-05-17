@@ -29,8 +29,11 @@ import { formatDate } from '@/utils/dates';
 import { useGetEventShow } from '@/queries/useGetEventShow';
 import { QueryFilters } from '@/types/types';
 import { useFilterQueryParamSync } from '@/hooks/useFilterQueryParamSync';
+import { NoResultsSplash } from '@/components/common/NoResultsSplash';
+import { useTranslation } from 'react-i18next';
 
 export const GameManagementPage: React.FC = () => {
+  const { t } = useTranslation();
   const { eventId } = useParams<{ eventId: string }>();
   const [opened, { open, close }] = useDisclosure(false);
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -177,9 +180,16 @@ export const GameManagementPage: React.FC = () => {
             </Table.Tbody>
           </Table>
         ) : (
-          <Text c="dimmed" ta="center" py="xl">
-            No quizzes found. Create a new quiz to get started.
-          </Text>
+          <NoResultsSplash
+            heading={t`No quizzes found`}
+            subHeading={
+              <>
+                <p>
+                  {t`Create a new quiz to get started.`}
+                </p>
+              </>
+            }
+          />
         )}
 
         {/* Create Quiz Modal */}

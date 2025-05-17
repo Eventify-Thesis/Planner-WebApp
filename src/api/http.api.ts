@@ -2,6 +2,7 @@ import axios from 'axios';
 import { AxiosError } from 'axios';
 import { ApiError } from '@/api/ApiError';
 import { getToken } from '@/services/tokenManager';
+import { isTokenExpired } from '@/services/tokenManager';
 
 export const httpApi = axios.create({
   baseURL: `${import.meta.env.VITE_API_BASE_URL}/event`,
@@ -10,8 +11,8 @@ export const httpApi = axios.create({
 
 httpApi.interceptors.request.use((config) => {
   const token = getToken();
-
-  if (token) {
+  // Check if token is expired
+  if (token && !isTokenExpired(token)) {
     // Set Authorization header properly for Axios v1+
     config.headers.set('Authorization', `Bearer ${token}`);
   }

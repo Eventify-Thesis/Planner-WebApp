@@ -151,12 +151,26 @@ export const TicketModal: React.FC<TicketModalProps> = ({
                   disabled={isFree}
                   min={0}
                   style={{ width: '120px' }}
+                  formatter={value =>
+                    value !== undefined && value !== null
+                      ? `${Number(value).toLocaleString('vi-VN')} ₫`
+                      : ''
+                  }
+                  parser={value =>
+                    value ? value.replace(/\s?₫|,/g, '') : ''
+                  }
                 />
               </Form.Item>
 
               <Checkbox
                 checked={isFree}
-                onChange={(e) => setIsFree(e.currentTarget.checked)}
+                onChange={(e) => {
+                  const checked = e.currentTarget.checked;
+                  setIsFree(checked);
+                  if (checked) {
+                    form.setFieldsValue({ price: 0 });
+                  }
+                }}
                 label={t('show_and_ticket.ticket_modal.free')}
               />
             </Box>
@@ -191,7 +205,8 @@ export const TicketModal: React.FC<TicketModalProps> = ({
             >
               <InputNumber min={1} style={{ width: '100%' }} />
             </Form.Item>
-
+          </Flex>
+          <Flex gap="md" justify="space-between" mb="md">
             <Form.Item
               name="minTicketPurchase"
               label={t('show_and_ticket.ticket_modal.min_purchase')}
@@ -328,13 +343,14 @@ export const TicketModal: React.FC<TicketModalProps> = ({
 
           <Form.Item
             label={t('show_and_ticket.ticket_modal.image')}
-            name="image"
+            name="imageUrl"
             rules={[
               {
                 required: true,
                 message: t('show_and_ticket.validation.required'),
               },
             ]}
+            valuePropName="imageUrl"
           >
             <Box>
               {imageUrl ? (
