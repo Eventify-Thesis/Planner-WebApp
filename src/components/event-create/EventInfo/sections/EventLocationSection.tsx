@@ -125,7 +125,7 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
           />
         </Box>
 
-        {form.values.eventType === EventType.OFFLINE && (
+        {form.values.eventType !== EventType.ONLINE && (
           <Box>
             <Box className={styles.inputContainer}>
               <Text className={styles.fieldLabel}>
@@ -189,7 +189,9 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
                       value: district.originId.toString(),
                     }))}
                     {...form.getInputProps('districtId')}
-                    disabled={form.values.cityId === undefined || isDistrictsLoading}
+                    disabled={
+                      form.values.cityId === undefined || isDistrictsLoading
+                    }
                     onChange={(value) => {
                       if (value) {
                         const districtId = parseInt(value, 10);
@@ -223,7 +225,9 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
                         ? t('event_create.event_location.loading')
                         : t('event_create.event_location.ward_placeholder')
                     }
-                    disabled={form.values.districtId === undefined || isWardsLoading}
+                    disabled={
+                      form.values.districtId === undefined || isWardsLoading
+                    }
                     rightSection={
                       isWardsLoading ? (
                         <Box style={{ display: 'flex', alignItems: 'center' }}>

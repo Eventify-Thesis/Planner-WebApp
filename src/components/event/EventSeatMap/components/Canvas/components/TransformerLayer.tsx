@@ -24,6 +24,9 @@ const TransformerLayer: React.FC<TransformerLayerProps> = ({
     selectedNodes.current = [
       ...selection.selectedItems.rows.map((id) => stage.findOne(`#${id}`)),
       ...selection.selectedItems.areas.map((id) => stage.findOne(`#${id}`)),
+      // ...selection.selectedItems?.sections?.map((id) =>
+      //   stage.findOne(`#${id}`),
+      // ),
     ].filter(Boolean);
 
     // Attach nodes to transformer

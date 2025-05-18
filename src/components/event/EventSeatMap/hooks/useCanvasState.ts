@@ -2,11 +2,8 @@ import { useState, useCallback } from 'react';
 import {
   Point,
   Selection,
-  PreviewShape,
-  DragPreview,
   Clipboard,
   SeatingPlan,
-  EditorTool,
   CirclePreview,
 } from '../types/index';
 
@@ -19,11 +16,11 @@ export const useCanvasState = (
 ) => {
   const [isDrawing, setIsDrawing] = useState(false);
   const [startPoint, setStartPoint] = useState<Point | null>(null);
-  const [previewShape, setPreviewShape] = useState<PreviewShape | null>(null);
+  const [previewShape, setPreviewShape] = useState<any | null>(null);
   const [draggedSeatId, setDraggedSeatId] = useState<string | null>(null);
 
   const [isDragging, setIsDragging] = useState(false);
-  const [dragPreview, setDragPreview] = useState<DragPreview | null>(null);
+  const [dragPreview, setDragPreview] = useState<any | null>(null);
   const [selectionBox, setSelectionBox] = useState<{
     startPoint: Point;
     endPoint: Point;
@@ -52,6 +49,7 @@ export const useCanvasState = (
         seats: [],
         rows: [],
         areas: [],
+        sections: []
       },
     });
     setSelectionBox(null);

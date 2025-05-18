@@ -4,7 +4,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { getMousePosition } from '../components/Canvas/utils/mouseUtils';
 import { updateSelection } from '../components/Canvas/utils/selectionUtils';
 import { createDragPreview } from '../components/Canvas/utils/dragUtils';
-import { text } from 'stream/consumers';
 
 export const useCanvasHandlers = (
   zoom: number,
@@ -15,14 +14,16 @@ export const useCanvasHandlers = (
   canvasState: any,
   canvasSetters: any,
   canvasActions: any,
+  mode: 'seat' | 'section' = 'seat',
 ) => {
   const handleCopy = useCallback(
     (e: KeyboardEvent, isCallOutside: boolean = false) => {
       if (isCallOutside || ((e.ctrlKey || e.metaKey) && e.key === 'c')) {
         const { selection } = canvasState;
-        const { seats, rows, areas } = selection.selectedItems;
+        const { seats, rows, areas, sections } = selection.selectedItems;
 
-        if (!seats.length && !rows.length && !areas.length) return;
+        if (!seats.length && !rows.length && !areas.length && !sections?.length)
+          return;
 
         const copiedItems = {
           seats: seats.length
@@ -38,12 +39,19 @@ export const useCanvasHandlers = (
                 areas.includes(area.uuid),
               )
             : [],
+          sections:
+            sections?.length && seatingPlan.zones[0].sections
+              ? seatingPlan.zones[0].sections.filter((section) =>
+                  sections.includes(section.uuid),
+                )
+              : [],
         };
 
         if (
           copiedItems.seats.length ||
           copiedItems.rows.length ||
-          copiedItems.areas.length
+          copiedItems.areas.length ||
+          copiedItems.sections.length
         ) {
           canvasSetters.setClipboard(copiedItems);
         }
@@ -64,6 +72,7 @@ export const useCanvasHandlers = (
           seats: [] as string[],
           rows: [] as string[],
           areas: [] as string[],
+          sections: [] as string[],
         };
 
         const offset = 30; // Offset for pasted items
@@ -132,10 +141,35 @@ export const useCanvasHandlers = (
           });
         }
 
+        // Paste sections
+        if (canvasState.clipboard.sections?.length) {
+          // Ensure sections array exists
+          if (!currentZone.sections) {
+            currentZone.sections = [];
+          }
+
+          canvasState.clipboard.sections.forEach((section: any) => {
+            const newSection = {
+              ...section,
+              uuid: uuidv4(),
+              position: {
+                x: section.position.x + offset,
+                y: section.position.y + offset,
+              },
+              // Maintain existing properties
+              size: { ...section.size },
+            };
+
+            currentZone.sections.push(newSection);
+            newSelection.sections.push(newSection.uuid);
+          });
+        }
+
         if (
           newSelection.seats.length ||
           newSelection.rows.length ||
-          newSelection.areas.length
+          newSelection.areas.length ||
+          newSelection.sections.length
         ) {
           onPlanChange(updatedPlan);
           canvasSetters.setSelection({ selectedItems: newSelection });
@@ -176,9 +210,20 @@ export const useCanvasHandlers = (
           }
         });
 
+        // Rotate selected sections
+        canvasState.selection.selectedItems.sections.forEach((sectionId) => {
+          const section = updatedPlan.zones[0].sections.find(
+            (s) => s.uuid === sectionId,
+          );
+          if (section) {
+            section.rotation = (section.rotation || 0) + rotationDelta;
+          }
+        });
+
         if (
           canvasState.selection.selectedItems.rows.length > 0 ||
-          canvasState.selection.selectedItems.areas.length > 0
+          canvasState.selection.selectedItems.areas.length > 0 ||
+          canvasState.selection.selectedItems.sections.length > 0
         ) {
           canvasActions.addToHistory(updatedPlan);
           onPlanChange(updatedPlan);
@@ -206,18 +251,25 @@ export const useCanvasHandlers = (
         currentTool === EditorTool.ADD_CIRCLE ||
         currentTool === EditorTool.ADD_ELLIPSE ||
         currentTool === EditorTool.ADD_TEXT ||
-        currentTool === EditorTool.ADD_POLYGON
+        currentTool === EditorTool.ADD_POLYGON ||
+        currentTool === EditorTool.ADD_SECTION_RECT ||
+        currentTool === EditorTool.ADD_SECTION_CIRCLE ||
+        currentTool === EditorTool.ADD_SECTION_POLYGON
       ) {
         canvasSetters.setPreviewShape({
           type:
-            currentTool === EditorTool.ADD_CIRCLE
+            currentTool === EditorTool.ADD_CIRCLE ||
+            currentTool === EditorTool.ADD_SECTION_CIRCLE
               ? 'circle'
               : currentTool === EditorTool.ADD_ELLIPSE
               ? 'ellipse'
               : currentTool === EditorTool.ADD_TEXT
               ? 'text'
-              : currentTool === EditorTool.ADD_POLYGON
+              : currentTool === EditorTool.ADD_POLYGON ||
+                currentTool === EditorTool.ADD_SECTION_POLYGON
               ? 'polygon'
+              : currentTool === EditorTool.ADD_SECTION_RECT
+              ? 'section-rectangle'
               : 'rectangle',
           startPoint: point,
           endPoint: point,
@@ -234,7 +286,8 @@ export const useCanvasHandlers = (
 
       if (
         currentTool === EditorTool.SELECT_ROW ||
-        currentTool === EditorTool.SELECT_SEAT
+        currentTool === EditorTool.SELECT_SEAT ||
+        currentTool === EditorTool.SELECT_SECTION
       ) {
         if (e.target === e.target.getStage()) {
           canvasSetters.setSelectionBox({ startPoint: point, endPoint: point });
@@ -243,6 +296,7 @@ export const useCanvasHandlers = (
               seats: [],
               rows: [],
               areas: [],
+              sections: [],
             },
             ids: [],
           });
@@ -265,6 +319,9 @@ export const useCanvasHandlers = (
           EditorTool.ADD_ELLIPSE,
           EditorTool.ADD_TEXT,
           EditorTool.ADD_POLYGON,
+          EditorTool.ADD_SECTION_RECT,
+          EditorTool.ADD_SECTION_CIRCLE,
+          EditorTool.ADD_SECTION_POLYGON,
         ].includes(currentTool)
       ) {
         // Update shape preview
@@ -273,14 +330,18 @@ export const useCanvasHandlers = (
             ? { ...prev, endPoint: currentPoint }
             : {
                 type:
-                  currentTool === EditorTool.ADD_CIRCLE
+                  currentTool === EditorTool.ADD_CIRCLE ||
+                  currentTool === EditorTool.ADD_SECTION_CIRCLE
                     ? 'circle'
                     : currentTool === EditorTool.ADD_ELLIPSE
                     ? 'ellipse'
                     : currentTool === EditorTool.ADD_TEXT
                     ? 'text'
-                    : currentTool === EditorTool.ADD_POLYGON
+                    : currentTool === EditorTool.ADD_POLYGON ||
+                      currentTool === EditorTool.ADD_SECTION_POLYGON
                     ? 'polygon'
+                    : currentTool === EditorTool.ADD_SECTION_RECT
+                    ? 'section-rectangle'
                     : 'rectangle',
                 startPoint,
                 endPoint: currentPoint,
@@ -354,6 +415,9 @@ export const useCanvasHandlers = (
             EditorTool.ADD_POLYGON,
             EditorTool.ADD_ROW,
             EditorTool.ADD_RECT_ROW,
+            EditorTool.ADD_SECTION_RECT,
+            EditorTool.ADD_SECTION_CIRCLE,
+            EditorTool.ADD_SECTION_POLYGON,
           ].includes(currentTool)
         ) {
           updatePreview(currentPoint, startPoint);
@@ -412,6 +476,163 @@ export const useCanvasHandlers = (
       const centerY = y + (height || 0) / 2;
 
       switch (currentTool) {
+        case EditorTool.ADD_SECTION_RECT: {
+          // Create a new section if we're in section mode
+          if (mode === 'section') {
+            const newSection = {
+              uuid: uuidv4(),
+              name: `Section ${currentZone.sections?.length + 1 || 1}`,
+              type: 'rectangle' as const,
+              position: { x, y },
+              size: { width, height },
+              fill: 'rgba(200, 230, 255, 0.6)',
+              stroke: '#3366CC',
+              strokeWidth: 2,
+              cornerRadius: 5,
+              text: {
+                position: { x: centerX, y: centerY },
+                color: '#000',
+                text: `Section ${
+                  updatedPlan.zones[0].sections?.length + 1 || 1
+                }`,
+                fontSize: 14,
+                fontFamily: 'Arial',
+                align: 'center',
+                verticalAlign: 'middle',
+                rotation: 0,
+              },
+              rotation: 0,
+            };
+
+            // Initialize sections array if it doesn't exist
+            if (!currentZone.sections) {
+              currentZone.sections = [];
+            }
+
+            // Add the new section to the sections array
+            currentZone.sections.push(newSection);
+
+            // Update selection
+
+            canvasSetters.setSelection({
+              selectedItems: {
+                seats: [],
+                rows: [],
+                areas: [],
+                sections: [newSection.uuid],
+              },
+            });
+          }
+          break;
+        }
+
+        case EditorTool.ADD_SECTION_POLYGON: {
+          // Create a new polygon section if we're in section mode
+          if (mode === 'section') {
+            const points = [
+              { x: x, y: y },
+              { x: x + width, y: y },
+              { x: x + width, y: y + height },
+              { x: x, y: y + height },
+            ];
+
+            const newSection = {
+              uuid: uuidv4(),
+              name: `Section ${currentZone.sections?.length + 1 || 1}`,
+              type: 'polygon' as const,
+              position: { x: 0, y: 0 },
+              size: { width, height },
+              points: points,
+              fill: 'rgba(200, 230, 255, 0.6)',
+              stroke: '#3366CC',
+              strokeWidth: 2,
+              text: {
+                position: { x: centerX, y: centerY },
+                color: '#000',
+                text: `Section ${
+                  updatedPlan.zones[0].sections?.length + 1 || 1
+                }`,
+                fontSize: 14,
+                fontFamily: 'Arial',
+                align: 'center',
+                verticalAlign: 'middle',
+                rotation: 0,
+              },
+            };
+
+            // Initialize sections array if it doesn't exist
+            if (!currentZone.sections) {
+              currentZone.sections = [];
+            }
+
+            // Add the new section to the sections array
+            currentZone.sections.push(newSection);
+
+            // Update selection
+            canvasSetters.setSelection({
+              selectedItems: {
+                seats: [],
+                rows: [],
+                areas: [],
+                sections: [newSection.uuid],
+              },
+            });
+          }
+          break;
+        }
+
+        case EditorTool.ADD_SECTION_CIRCLE: {
+          // Create a new circle section if we're in section mode
+          if (mode === 'section') {
+            const radius = Math.sqrt(width * width + height * height) / 2;
+            const centerX = (startPoint.x + endPoint.x) / 2;
+            const centerY = (startPoint.y + endPoint.y) / 2;
+
+            const newSection = {
+              uuid: uuidv4(),
+              name: `Section ${currentZone.sections?.length + 1 || 1}`,
+              type: 'circle' as const,
+              position: { x: centerX, y: centerY },
+              size: { width: radius * 2, height: radius * 2 },
+              radius: radius,
+              fill: 'rgba(200, 230, 255, 0.6)',
+              stroke: '#3366CC',
+              strokeWidth: 2,
+              text: {
+                position: { x: centerX, y: centerY },
+                color: '#000',
+                text: `Section ${
+                  updatedPlan.zones[0].sections?.length + 1 || 1
+                }`,
+                fontSize: 14,
+                fontFamily: 'Arial',
+                align: 'center',
+                verticalAlign: 'middle',
+                rotation: 0,
+              },
+            };
+
+            // Initialize sections array if it doesn't exist
+            if (!currentZone.sections) {
+              currentZone.sections = [];
+            }
+
+            // Add the new section to the sections array
+            currentZone.sections.push(newSection);
+
+            // Update selection
+            canvasSetters.setSelection({
+              selectedItems: {
+                seats: [],
+                rows: [],
+                areas: [],
+                sections: [newSection.uuid],
+              },
+            });
+          }
+          break;
+        }
+
         case EditorTool.ADD_SHAPE: {
           const shape = {
             uuid: uuidv4(),
@@ -428,6 +649,7 @@ export const useCanvasHandlers = (
               width,
               height,
             },
+            rotation: 0,
           };
           currentZone.areas.push(shape);
           canvasSetters.setSelection({
@@ -435,6 +657,7 @@ export const useCanvasHandlers = (
               seats: [],
               rows: [],
               areas: [shape.uuid],
+              sections: [],
             },
           });
           break;
@@ -463,6 +686,7 @@ export const useCanvasHandlers = (
               seats: [],
               rows: [],
               areas: [shape.uuid],
+              sections: [],
             },
           });
           break;
@@ -493,6 +717,7 @@ export const useCanvasHandlers = (
               seats: [],
               rows: [],
               areas: [shape.uuid],
+              sections: [],
             },
           });
           break;
@@ -517,6 +742,7 @@ export const useCanvasHandlers = (
               seats: [],
               rows: [],
               areas: [shape.uuid],
+              sections: [],
             },
           });
           break;
@@ -545,6 +771,7 @@ export const useCanvasHandlers = (
               seats: [],
               rows: [],
               areas: [shape.uuid],
+              sections: [],
             },
           });
           break;
@@ -577,6 +804,7 @@ export const useCanvasHandlers = (
               seats: [],
               rows: [row.uuid],
               areas: [],
+              sections: [],
             },
           });
           break;
@@ -615,6 +843,7 @@ export const useCanvasHandlers = (
               seats: [],
               rows: rows.map((r) => r.uuid),
               areas: [],
+              sections: [],
             },
           });
           break;
@@ -637,7 +866,7 @@ export const useCanvasHandlers = (
   );
 
   const handleSelect = useCallback(
-    (type: 'seat' | 'row' | 'shape', id: string, event?: any) => {
+    (type: 'seat' | 'row' | 'shape' | 'section', id: string, event?: any) => {
       if (event) {
         event.cancelBubble = true;
       }
@@ -647,6 +876,7 @@ export const useCanvasHandlers = (
           seats: type === 'seat' ? [id] : [],
           rows: type === 'row' ? [id] : [],
           areas: type === 'shape' ? [id] : [],
+          sections: type === 'section' ? [id] : [],
         },
       };
 
@@ -657,11 +887,13 @@ export const useCanvasHandlers = (
   );
 
   const handleDragStart = useCallback(
-    (id: string, type: 'seat' | 'row' | 'shape') => {
+    (id: string, type: 'seat' | 'row' | 'shape' | 'section') => {
       const { selection } = canvasState;
       if (
         selection.selectedItems.seats.length == 1 ||
-        selection.selectedItems.rows.length == 1
+        selection.selectedItems.rows.length == 1 ||
+        selection.selectedItems.areas.length == 1 ||
+        selection.selectedItems.sections.length == 1
       ) {
         canvasSetters.setDraggedSeatId(id);
         canvasSetters.setIsDragging(true);
@@ -675,11 +907,13 @@ export const useCanvasHandlers = (
   );
 
   const handleDragEnd = useCallback(
-    (e: any, type: 'seat' | 'row' | 'shape') => {
+    (e: any, type: 'seat' | 'row' | 'shape' | 'section') => {
       const { draggedSeatId, isDragging, dragPreview } = canvasState;
       if (!draggedSeatId || !isDragging || !dragPreview) return;
 
       const pos = getMousePosition(e, zoom);
+      if (!pos) return;
+
       const updatedPlan = { ...seatingPlan };
 
       if (type === 'row') {
@@ -703,7 +937,26 @@ export const useCanvasHandlers = (
             },
           }));
         }
+      } else if (type === 'section') {
+        // Handle section drag
+        const sectionToMove = updatedPlan.zones[0].sections?.find(
+          (s) => s.uuid === draggedSeatId,
+        );
+
+        if (sectionToMove) {
+          sectionToMove.position = pos;
+        }
+      } else if (type === 'shape') {
+        // Handle shape drag
+        const shapeToMove = updatedPlan.zones[0].areas?.find(
+          (a) => a.uuid === draggedSeatId,
+        );
+
+        if (shapeToMove) {
+          shapeToMove.position = pos;
+        }
       } else {
+        // Handle seat drag (original implementation)
         updatedPlan.zones = updatedPlan.zones.map((z) => ({
           ...z,
           rows: z.rows.map((r) => ({

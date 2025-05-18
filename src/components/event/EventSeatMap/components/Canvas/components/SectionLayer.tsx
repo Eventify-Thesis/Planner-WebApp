@@ -1,19 +1,25 @@
 import React, { memo } from 'react';
-import { Layer, Text, Rect, Circle, Ellipse, Line, Group } from 'react-konva';
-import { SeatingPlan, Selection, EditorTool, Point, Shape } from '../../../types/index';
-import { getShapeStyles } from '../utils/styleUtils';
+import { Group, Rect, Circle, Line, Text, Layer, Ellipse } from 'react-konva';
+import {
+  SeatingPlan,
+  Selection,
+  EditorTool,
+  Point,
+  Section,
+} from '../../../types/index';
 import { getMousePosition } from '../utils/mouseUtils';
+import { getSectionStyles } from '../utils/styleUtils';
 
-interface ShapeLayerProps {
+export interface SectionLayerProps {
   seatingPlan: SeatingPlan;
   selection: Selection;
   currentTool: EditorTool;
   zoom: number;
+  onSelect: (type: 'section', id: string, event?: any) => void;
   onPlanChange: (plan: SeatingPlan) => void;
-  onSelect: (type: 'shape', id: string, event?: any) => void;
 }
 
-interface ShapeTextProps {
+interface SectionTextProps {
   text: {
     text: string;
     position?: Point;
@@ -23,33 +29,33 @@ interface ShapeTextProps {
     align?: string;
     verticalAlign?: string;
   };
-  shape: Shape;
+  section: Section;
 }
 
-const ShapeText = memo(({ text, shape }: ShapeTextProps) => {
+const SectionText = memo(({ text, section }: SectionTextProps) => {
   if (!text?.text) return null;
 
-  let centerX = shape.position.x;
-  let centerY = shape.position.y;
+  let centerX = section.position.x;
+  let centerY = section.position.y;
 
   // Calculate center based on shape type
-  switch (shape.type) {
+  switch (section.type) {
     case 'rectangle':
-      centerX += (shape.size?.width || 0) / 2;
-      centerY += (shape.size?.height || 0) / 2;
+      centerX += (section.size?.width || 0) / 2;
+      centerY += (section.size?.height || 0) / 2;
       break;
     case 'circle':
-      centerX = shape.position.x;
-      centerY = shape.position.y;
+      centerX = section.position.x;
+      centerY = section.position.y;
       break;
     case 'ellipse':
-      centerX = shape.position.x;
-      centerY = shape.position.y;
+      centerX = section.position.x;
+      centerY = section.position.y;
       break;
     case 'polygon':
-      if (shape.points && shape.points.length > 0) {
+      if (section.points && section.points.length > 0) {
         // Calculate centroid for polygon
-        const points = shape.points;
+        const points = section.points;
         let sumX = 0;
         let sumY = 0;
         points.forEach((point) => {
@@ -103,7 +109,7 @@ const ShapeText = memo(({ text, shape }: ShapeTextProps) => {
   );
 });
 
-export const ShapeLayer = memo(
+export const SectionLayer = memo(
   ({
     seatingPlan,
     selection,
@@ -111,17 +117,17 @@ export const ShapeLayer = memo(
     zoom,
     onPlanChange,
     onSelect,
-  }: ShapeLayerProps) => {
+  }: SectionLayerProps) => {
     const handleDragStart = (e: any, uuid: string) => {
       const mousePos = getMousePosition(e, zoom);
       if (!mousePos) return;
 
       // Get the shape being dragged and all selected shapes
-      const draggedShape = seatingPlan.zones[0].areas.find(
+      const draggedShape = seatingPlan.zones[0].sections.find(
         (a) => a.uuid === uuid,
       );
-      const selectedShapes = seatingPlan.zones[0].areas.filter((a) =>
-        selection.selectedItems.areas.includes(a.uuid),
+      const selectedShapes = seatingPlan.zones[0].sections.filter((a) =>
+        selection.selectedItems.sections.includes(a.uuid),
       );
 
       if (!draggedShape) return;
@@ -163,9 +169,9 @@ export const ShapeLayer = memo(
       const updatedPlan = { ...seatingPlan };
       updatedPlan.zones = updatedPlan.zones.map((z) => ({
         ...z,
-        areas: z.areas.map((area) => {
-          const shapeData = shapes.find((s) => s.uuid === area.uuid);
-          if (!shapeData) return area;
+        sections: z.sections.map((section) => {
+          const shapeData = shapes.find((s) => s.uuid === section.uuid);
+          if (!shapeData) return section;
 
           const newPosition = {
             x: shapeData.initialPos.x + dx,
@@ -173,11 +179,11 @@ export const ShapeLayer = memo(
           };
 
           return {
-            ...area,
+            ...section,
             position: newPosition,
-            text: area.text
+            text: section.text
               ? {
-                  ...area.text,
+                  ...section.text,
                   position: {
                     x: shapeData.initialTextPos.x + dx,
                     y: shapeData.initialTextPos.y + dy,
@@ -208,9 +214,9 @@ export const ShapeLayer = memo(
       const updatedPlan = { ...seatingPlan };
       updatedPlan.zones = updatedPlan.zones.map((z) => ({
         ...z,
-        areas: z.areas.map((area) => {
-          const shapeData = shapes.find((s) => s.uuid === area.uuid);
-          if (!shapeData) return area;
+        sections: z.sections.map((section) => {
+          const shapeData = shapes.find((s) => s.uuid === section.uuid);
+          if (!shapeData) return section;
 
           const newPosition = {
             x: shapeData.initialPos.x + dx,
@@ -218,11 +224,11 @@ export const ShapeLayer = memo(
           };
 
           return {
-            ...area,
+            ...section,
             position: newPosition,
-            text: area.text
+            text: section.text
               ? {
-                  ...area.text,
+                  ...section.text,
                   position: {
                     x: shapeData.initialTextPos.x + dx,
                     y: shapeData.initialTextPos.y + dy,
@@ -239,102 +245,97 @@ export const ShapeLayer = memo(
     return (
       <Layer>
         {seatingPlan.zones.flatMap((zone) =>
-          zone.areas.map((area) => {
-            const isSelected = selection.selectedItems.areas.includes(
-              area.uuid,
-            );
+          zone.sections.map((section) => {
+            const isSelected =
+              selection.selectedItems?.sections &&
+              selection.selectedItems.sections.length > 0 &&
+              selection.selectedItems.sections.includes(section.uuid);
             const commonProps = {
-              draggable:
-                currentTool === EditorTool.SELECT_ROW ||
-                currentTool === EditorTool.SELECT_SHAPE,
-              onClick: (e: any) => onSelect('shape', area.uuid, e),
-              onDragStart: (e: any) => handleDragStart(e, area.uuid),
-              onDragMove: (e: any) => handleDragMove(e, area.uuid),
-              onDragEnd: (e: any) => handleDragEnd(e, area.uuid),
+              draggable: currentTool === EditorTool.SELECT_SECTION,
+              onClick: (e: any) => onSelect('section', section.uuid, e),
+              onDragStart: (e: any) => handleDragStart(e, section.uuid),
+              onDragMove: (e: any) => handleDragMove(e, section.uuid),
+              onDragEnd: (e: any) => handleDragEnd(e, section.uuid),
               onMouseEnter: (e: any) => {
-                if (
-                  currentTool === EditorTool.SELECT_ROW ||
-                  currentTool === EditorTool.SELECT_SHAPE
-                ) {
+                if (currentTool === EditorTool.SELECT_SECTION) {
                   e.target.getStage()!.container().style.cursor = 'pointer';
                 }
               },
               onMouseLeave: (e: any) => {
                 e.target.getStage()!.container().style.cursor = 'default';
               },
-              ...getShapeStyles(area, isSelected),
+              ...getSectionStyles(section, isSelected, seatingPlan.categories),
             };
 
-            switch (area.type) {
+            // Render based on section type
+            switch (section.type) {
               case 'rectangle':
                 return (
-                  <Group key={area.uuid} rotation={area.rotation}>
+                  <Group key={section.uuid}>
                     <Rect
-                      id={area.uuid}
-                      x={area.position.x}
-                      y={area.position.y}
-                      width={area.size?.width || 0}
-                      height={area.size?.height || 0}
+                      width={section.size.width}
+                      height={section.size.height}
+                      cornerRadius={section.cornerRadius || 4}
+                      x={section.position.x}
+                      y={section.position.y}
                       {...commonProps}
                     />
-                    <ShapeText text={area.text} shape={area} />
+                    <SectionText text={section.text} section={section} />
                   </Group>
                 );
+
               case 'circle':
                 return (
-                  <Group key={area.uuid} rotationDeg={area.rotation || 0}>
+                  <Group key={section.uuid}>
                     <Circle
-                      id={area.uuid}
-                      x={area.position.x}
-                      y={area.position.y}
-                      radius={area.radius || 0}
                       {...commonProps}
+                      id={section.uuid}
+                      x={section.position.x}
+                      y={section.position.y}
+                      radius={section.radius || 0}
                     />
-                    <ShapeText text={area.text} shape={area} />
+                    <SectionText text={section.text} section={section} />
                   </Group>
                 );
               case 'ellipse':
                 return (
-                  <Group key={area.uuid} rotationDeg={area.rotation || 0}>
+                  <Group key={section.uuid}>
                     <Ellipse
-                      id={area.uuid}
-                      x={area.position.x}
-                      y={area.position.y}
-                      radiusX={area.size?.width ? area.size.width / 2 : 0}
-                      radiusY={area.size?.height ? area.size.height / 2 : 0}
                       {...commonProps}
+                      id={section.uuid}
+                      x={section.position.x}
+                      y={section.position.y}
+                      radiusX={section.size?.width ? section.size.width / 2 : 0}
+                      radiusY={
+                        section.size?.height ? section.size.height / 2 : 0
+                      }
                     />
-                    <ShapeText text={area.text} shape={area} />
+                    <SectionText text={section.text} section={section} />
                   </Group>
                 );
+
               case 'polygon':
+                if (!section.points || section.points.length < 3) return null;
+                const flatPoints = section.points.flatMap((p: Point) => [
+                  p.x - (section.position?.x || 0),
+                  p.y - (section.position?.y || 0),
+                ]);
                 return (
-                  <Group key={area.uuid} rotationDeg={area.rotation || 0}>
-                    <Line
-                      id={area.uuid}
-                      points={area.points || []}
-                      closed={true}
-                      {...commonProps}
-                    />
-                    <ShapeText text={area.text} shape={area} />
+                  <Group key={section.uuid}>
+                    <Line {...commonProps} points={flatPoints} closed={true} />
+                    {section.label && (
+                      <Text
+                        x={10}
+                        y={10}
+                        text={section.label}
+                        fontSize={section.textSize || 16}
+                        fill={section.textColor || '#333333'}
+                        fontStyle="bold"
+                      />
+                    )}
                   </Group>
                 );
-              case 'text':
-                return (
-                  <Group key={area.uuid} rotationDeg={area.rotation || 0}>
-                    <Text
-                      key={area.uuid}
-                      id={area.uuid}
-                      x={area.position.x}
-                      y={area.position.y}
-                      text={area.text.text || ''}
-                      fontSize={area.fontSize || 16}
-                      fontFamily={area.fontFamily || 'Arial'}
-                      fill={area.fill || '#000'}
-                      {...commonProps}
-                    />
-                  </Group>
-                );
+
               default:
                 return null;
             }
@@ -345,4 +346,4 @@ export const ShapeLayer = memo(
   },
 );
 
-ShapeLayer.displayName = 'ShapeLayer';
+SectionLayer.displayName = 'SectionLayer';

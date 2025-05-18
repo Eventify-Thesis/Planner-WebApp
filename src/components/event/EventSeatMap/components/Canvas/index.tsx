@@ -1,30 +1,17 @@
 import React, { useRef, useEffect, useCallback } from 'react';
-import {
-  Stage,
-  Layer,
-  Group,
-  Line,
-  Circle,
-  Rect,
-  Ellipse,
-  Arc,
-} from 'react-konva';
-import {
-  SeatingPlan,
-  EditorTool,
-  Selection,
-  Point,
-  CirclePreview,
-} from '../..//types/index';
-import { useCanvasState } from '../../hooks/useCanvasState';
+import { Stage, Layer, Group, Line, Circle, Rect, Ellipse } from 'react-konva';
+import type { KonvaEventObject } from 'konva/lib/Node';
+import { SeatingPlan, EditorTool, Selection } from '../../types';
 import { useCanvasHandlers } from '../../hooks/useCanvasHandlers';
 import { ShapeLayer } from './components/ShapeLayer';
 import { RowLayer } from './components/RowLayer';
+import { SectionLayer } from './components/SectionLayer';
 import { renderRowPreview, renderRectRowPreview } from './utils/rowUtils';
 import './Canvas.css';
 import GridLayer from './components/GridLayer';
 import TransformerLayer from './components/TransformerLayer';
 import BackgroundLayer from './components/BackgroundLayer';
+import Konva from 'konva';
 
 interface CanvasProps {
   seatingPlan: SeatingPlan;
@@ -39,6 +26,7 @@ interface CanvasProps {
   setters: any;
   actions: any;
   handlePlanChangeCanvas: (plan: SeatingPlan) => void;
+  mode?: 'seat' | 'section';
 }
 
 const Canvas: React.FC<CanvasProps> = ({
@@ -46,7 +34,6 @@ const Canvas: React.FC<CanvasProps> = ({
   currentTool,
   zoom,
   showGrid,
-  onPlanChange,
   selection,
   onSelectionChange,
   setCurrentTool,
@@ -54,16 +41,11 @@ const Canvas: React.FC<CanvasProps> = ({
   setters,
   actions,
   handlePlanChangeCanvas,
+  mode = 'seat',
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const {
-    handleMouseDown,
-    handleMouseMove,
-    handleMouseUp,
-    handleSelect,
-    handleDragStart,
-    handleDragEnd,
-  } = useCanvasHandlers(
+  // Get all canvas handlers for interactions
+  const canvasHandlers = useCanvasHandlers(
     zoom,
     seatingPlan,
     currentTool,
@@ -72,7 +54,17 @@ const Canvas: React.FC<CanvasProps> = ({
     state,
     setters,
     actions,
+    mode,
   );
+
+  const {
+    handleMouseDown,
+    handleMouseMove,
+    handleMouseUp,
+    handleSelect,
+    handleDragStart,
+    handleDragEnd,
+  } = canvasHandlers || {};
 
   const updateSize = useCallback(() => {
     if (containerRef.current) {
@@ -102,7 +94,7 @@ const Canvas: React.FC<CanvasProps> = ({
   };
 
   const handleCirclePreview = useCallback(
-    (e: Konva.KonvaEventObject<MouseEvent>) => {
+    (e: KonvaEventObject<MouseEvent>) => {
       if (!state.circlePreview) return;
 
       const stage = e.target.getStage();
@@ -223,7 +215,7 @@ const Canvas: React.FC<CanvasProps> = ({
 
         e.preventDefault();
         const updatedPlan = { ...seatingPlan };
-        const { seats, rows, areas } = state.selection.selectedItems;
+        const { seats, rows, areas, sections } = state.selection.selectedItems;
 
         // Remove selected seats
         if (seats.length > 0) {
@@ -247,17 +239,24 @@ const Canvas: React.FC<CanvasProps> = ({
           );
         }
 
+        // Remove selected sections
+        if (sections.length > 0) {
+          updatedPlan.zones[0].sections = updatedPlan.zones[0].sections.filter(
+            (section) => !sections.includes(section.uuid),
+          );
+        }
+
         actions.addToHistory(updatedPlan);
         handlePlanChangeCanvas(updatedPlan);
         setters.setSelection({
-          selectedItems: { seats: [], rows: [], areas: [] },
+          selectedItems: { seats: [], rows: [], areas: [], sections: [] },
         });
       }
 
       // Handle copy
       if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
         e.preventDefault();
-        const { seats, rows, areas } = state.selection.selectedItems;
+        const { seats, rows, areas, sections } = state.selection.selectedItems;
 
         if (seats.length > 0) {
           const selectedSeats = seatingPlan.zones[0].rows.flatMap((row) =>
@@ -287,6 +286,14 @@ const Canvas: React.FC<CanvasProps> = ({
           setters.setClipboard({
             type: 'shape',
             items: JSON.parse(JSON.stringify(selectedShapes)),
+          });
+        } else if (sections.length > 0) {
+          const selectedSections = seatingPlan.zones[0].sections.filter(
+            (section) => sections.includes(section.uuid),
+          );
+          setters.setClipboard({
+            type: 'section',
+            items: JSON.parse(JSON.stringify(selectedSections)),
           });
         }
       }
@@ -401,6 +408,79 @@ const Canvas: React.FC<CanvasProps> = ({
     };
 
     switch (currentTool) {
+      case EditorTool.ADD_SECTION_RECT:
+      case EditorTool.ADD_SECTION_CIRCLE:
+      case EditorTool.ADD_SECTION_POLYGON: {
+        // Section preview styling
+        const sectionProps = {
+          fill: 'rgba(200, 230, 255, 0.4)',
+          stroke: '#3366CC',
+          strokeWidth: 2,
+          dash: [5, 5],
+        };
+
+        if (
+          state.previewShape.type === 'circle' ||
+          currentTool === EditorTool.ADD_SECTION_CIRCLE
+        ) {
+          const dx = state.previewShape.endPoint.x - state.startPoint.x;
+          const dy = state.previewShape.endPoint.y - state.startPoint.y;
+          const radius = Math.sqrt(dx * dx + dy * dy) / 2;
+          const centerX =
+            (state.startPoint.x + state.previewShape.endPoint.x) / 2;
+          const centerY =
+            (state.startPoint.y + state.previewShape.endPoint.y) / 2;
+          return (
+            <Circle x={centerX} y={centerY} radius={radius} {...sectionProps} />
+          );
+        } else if (
+          state.previewShape.type === 'polygon' ||
+          currentTool === EditorTool.ADD_SECTION_POLYGON
+        ) {
+          const width = Math.abs(
+            state.previewShape.endPoint.x - state.startPoint.x,
+          );
+          const height = Math.abs(
+            state.previewShape.endPoint.y - state.startPoint.y,
+          );
+          const x = Math.min(state.startPoint.x, state.previewShape.endPoint.x);
+          const y = Math.min(state.startPoint.y, state.previewShape.endPoint.y);
+
+          const points = [
+            x,
+            y,
+            x + width,
+            y,
+            x + width,
+            y + height,
+            x,
+            y + height,
+          ];
+
+          return <Line points={points} closed={true} {...sectionProps} />;
+        } else {
+          // Default to rectangle preview for ADD_SECTION_RECT
+          const width = Math.abs(
+            state.previewShape.endPoint.x - state.startPoint.x,
+          );
+          const height = Math.abs(
+            state.previewShape.endPoint.y - state.startPoint.y,
+          );
+          const x = Math.min(state.startPoint.x, state.previewShape.endPoint.x);
+          const y = Math.min(state.startPoint.y, state.previewShape.endPoint.y);
+          return (
+            <Rect
+              x={x}
+              y={y}
+              width={width}
+              height={height}
+              cornerRadius={5}
+              {...sectionProps}
+            />
+          );
+        }
+      }
+
       case EditorTool.ADD_SHAPE: {
         const width = Math.abs(
           state.previewShape.endPoint.x - state.startPoint.x,
@@ -564,6 +644,15 @@ const Canvas: React.FC<CanvasProps> = ({
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
           onSeatDoubleClick={handleSeatDoubleClick}
+        />
+
+        <SectionLayer
+          seatingPlan={seatingPlan}
+          selection={state.selection}
+          currentTool={currentTool}
+          zoom={zoom}
+          onPlanChange={handlePlanChangeCanvas}
+          onSelect={handleSelect}
         />
 
         <TransformerLayer

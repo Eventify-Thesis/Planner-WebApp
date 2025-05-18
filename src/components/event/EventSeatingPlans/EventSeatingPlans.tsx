@@ -45,7 +45,12 @@ export const EventSeatingPlans = () => {
       dataIndex: 'name',
       key: 'name',
       render: (text: string, record: SeatingPlanModel) => (
-        <Link to={`/events/${eventId}/seatmap/${record.id}`}>{text}</Link>
+        <Link
+          style={{ color: 'blue' }}
+          to={`/events/${eventId}/seatmap/${record.id}`}
+        >
+          {text}
+        </Link>
       ),
     },
     {

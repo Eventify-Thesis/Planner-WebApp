@@ -1,6 +1,18 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { Grid, Stack } from '@mantine/core';
-import { Layout, Modal, Form, Input, message, Button } from 'antd';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { Modal as AntdModal } from 'antd';
+import {
+  Modal,
+  Button,
+  Title,
+  Text,
+  Group,
+  Paper,
+  Stack,
+  rem,
+} from '@mantine/core';
+import { createStyles } from '@mantine/styles';
+import { Layout, Form, Input, message } from 'antd';
+import { IconArmchair, IconSquare } from '@tabler/icons-react';
 import { v4 as uuidv4 } from 'uuid';
 import { useParams } from 'react-router-dom';
 import {
@@ -15,6 +27,7 @@ import {
   Row,
   Seat,
   Area,
+  Section,
 } from './types/index';
 import PlanSettingsPanel from './components/PlanSettingsPanel';
 import SeatSettingsPanel from './components/SeatSettingsPanel';
@@ -26,8 +39,56 @@ import useEditorState from './hooks/useEditorState';
 import './EventSeatMap.css';
 import { useCanvasState } from './hooks/useCanvasState';
 import { useCanvasHandlers } from './hooks/useCanvasHandlers';
-
+import SectionSettingsPanel from './components/SectionSettingsPanel';
 const { Content, Sider } = Layout;
+
+// Create styles for mode selection modal
+const useStyles = createStyles((theme) => ({
+  modalRoot: {
+    border: `1px solid ${theme.colors.gray[2]}`,
+    borderRadius: theme.radius.md,
+  },
+  modalTitle: {
+    fontWeight: 700,
+    fontSize: rem(24),
+    marginBottom: theme.spacing.md,
+    color: theme.colors.dark[8],
+  },
+  modeOption: {
+    padding: theme.spacing.xl,
+    borderRadius: theme.radius.md,
+    border: `1px solid ${theme.colors.gray[3]}`,
+    transition: 'all 0.2s ease',
+    cursor: 'pointer',
+    '&:hover': {
+      backgroundColor: theme.colors.blue[0],
+      transform: 'translateY(-2px)',
+      boxShadow: theme.shadows.sm,
+    },
+  },
+  modeOptionSelected: {
+    backgroundColor: theme.colors.blue[0],
+    borderColor: theme.colors.blue[5],
+    boxShadow: theme.shadows.sm,
+  },
+  modeIcon: {
+    margin: '0 auto',
+    display: 'block',
+    color: theme.colors.blue[6],
+    marginBottom: theme.spacing.md,
+  },
+  modeTitle: {
+    fontWeight: 700,
+    textAlign: 'center',
+    fontSize: rem(18),
+    marginBottom: theme.spacing.xs,
+  },
+  modeDescription: {
+    textAlign: 'center',
+    color: theme.colors.gray[6],
+    lineHeight: 1.5,
+  },
+}));
 
 const DEFAULT_SEATING_PLAN: SeatingPlan = {
   id: 'default',
@@ -37,35 +98,43 @@ const DEFAULT_SEATING_PLAN: SeatingPlan = {
     height: 600,
   },
   categories: [
-    { name: 'Category I', color: '#F44336' },
-    { name: 'Category II', color: '#9C27B0' },
-    { name: 'Category III', color: '#4CAF50' },
-    { name: 'Category IV', color: '#2196F3' },
-    { name: 'Category V', color: '#8BC34A' },
+    { name: 'General', color: '#C5172E' },
+    { name: 'Premium', color: '#C5172E' },
   ],
   zones: [
     {
-      uuid: 'default-zone',
-      name: 'Ground Floor',
-      zone_id: 'ground-floor',
+      uuid: uuidv4(),
+      name: 'Main Hall',
+      zone_id: 'main-hall',
       position: { x: 0, y: 0 },
       rows: [],
       areas: [],
+      sections: [],
     },
   ],
+  mode: undefined,
+  totalSeats: 0,
 };
 
 const EventSeatMap: React.FC = () => {
   const { eventId, planId } = useParams();
   const [seatingPlan, setSeatingPlan] =
     useState<SeatingPlan>(DEFAULT_SEATING_PLAN);
+
   const [showGrid, setShowGrid] = useState(true);
   const [saveModalVisible, setSaveModalVisible] = useState(false);
+  const [modeSelectionModalVisible, setModeSelectionModalVisible] =
+    useState(false);
+  const [selectedMode, setSelectedMode] = useState<'seat' | 'section'>('seat');
+  const [modeChangeModalVisible, setModeChangeModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
+  const { classes, cx } = useStyles();
 
   const { data: existingPlan, isLoading: isLoadingPlan } =
     useGetSeatingPlanDetail(eventId!, planId!);
+
+  const firstRender = useRef(true);
   const { createMutation, updateMutation } = useSeatingPlanMutations(
     eventId!,
     planId,
@@ -83,7 +152,7 @@ const EventSeatMap: React.FC = () => {
     canRedo,
   } = useEditorState();
   const [selection, setSelection] = useState<Selection>({
-    selectedItems: { seats: [], rows: [], areas: [] },
+    selectedItems: { seats: [], rows: [], areas: [], sections: [] },
   });
 
   const { state, setters, actions, handlePlanChangeCanvas } = useCanvasState(
@@ -230,6 +299,19 @@ const EventSeatMap: React.FC = () => {
     handlePlanChange(updatedPlan);
   };
 
+  const handleSectionsUpdate = (updatedSections: Section[]) => {
+    const updatedPlan = { ...seatingPlan };
+    updatedSections.forEach((updatedSection) => {
+      const sectionIndex = updatedPlan.zones[0].sections.findIndex(
+        (section) => section.uuid === updatedSection.uuid,
+      );
+      if (sectionIndex !== -1) {
+        updatedPlan.zones[0].sections[sectionIndex] = updatedSection;
+      }
+    });
+    handlePlanChange(updatedPlan);
+  };
+
   const handleShapesUpdate = (updatedShapes: Shape[]) => {
     const updatedPlan = { ...seatingPlan };
     updatedShapes.forEach((updatedShape) => {
@@ -243,36 +325,11 @@ const EventSeatMap: React.FC = () => {
     handlePlanChange(updatedPlan);
   };
 
-  const findSeatById = (id: string): Seat | null => {
-    for (const zone of seatingPlan.zones) {
-      for (const row of zone.rows) {
-        const seat = row.seats.find((seat) => seat.uuid === id);
-        if (seat) return seat;
-      }
-    }
-    return null;
-  };
-
-  const findRowById = (id: string): Row | null => {
-    for (const zone of seatingPlan.zones) {
-      const row = zone.rows.find((row) => row.uuid === id);
-      if (row) return row;
-    }
-    return null;
-  };
-
-  const findAreaById = (id: string): Area | null => {
-    for (const zone of seatingPlan.zones) {
-      const area = zone.areas.find((area) => area.uuid === id);
-      if (area) return area;
-    }
-    return null;
-  };
-
   const onCopy = () => {
-    const { seats, rows, areas } = selection.selectedItems;
+    const { seats, rows, areas, sections } = selection.selectedItems;
 
-    if (!seats.length && !rows.length && !areas.length) return;
+    if (!seats.length && !rows.length && !areas.length && !sections.length)
+      return;
 
     const copiedItems = {
       seats: seats.length
@@ -286,12 +343,18 @@ const EventSeatMap: React.FC = () => {
       areas: areas.length
         ? seatingPlan.zones[0].areas.filter((area) => areas.includes(area.uuid))
         : [],
+      sections: sections.length
+        ? seatingPlan.zones[0].sections.filter((section) =>
+            sections.includes(section.uuid),
+          )
+        : [],
     };
 
     if (
       copiedItems.seats.length ||
       copiedItems.rows.length ||
-      copiedItems.areas.length
+      copiedItems.areas.length ||
+      copiedItems.sections.length
     ) {
       setters.setClipboard(copiedItems);
     }
@@ -301,7 +364,7 @@ const EventSeatMap: React.FC = () => {
     handleCopy(null, true);
 
     const updatedPlan = { ...seatingPlan };
-    const { seats, rows, areas } = selection.selectedItems;
+    const { seats, rows, areas, sections } = selection.selectedItems;
 
     // Remove selected seats from all rows
     if (seats.length > 0) {
@@ -325,9 +388,18 @@ const EventSeatMap: React.FC = () => {
       );
     }
 
+    // Remove selected sections
+    if (sections.length > 0) {
+      updatedPlan.zones[0].sections = updatedPlan.zones[0].sections.filter(
+        (section) => !sections.includes(section.uuid),
+      );
+    }
+
     // Update the plan and clear selection
     handlePlanChangeCanvas(updatedPlan);
-    setSelection({ selectedItems: { seats: [], rows: [], areas: [] } });
+    setSelection({
+      selectedItems: { seats: [], rows: [], areas: [], sections: [] },
+    });
   };
 
   const onPaste = () => {
@@ -335,14 +407,16 @@ const EventSeatMap: React.FC = () => {
   };
 
   const handleNewPlan = () => {
-    Modal.confirm({
+    AntdModal.confirm({
       title: 'Create New Plan',
       content:
         'Are you sure you want to create a new plan? All unsaved changes will be lost.',
       onOk: () => {
         const newPlan: SeatingPlan = DEFAULT_SEATING_PLAN;
         setSeatingPlan(newPlan);
-        setSelection({ selectedItems: { seats: [], rows: [], areas: [] } });
+        setSelection({
+          selectedItems: { seats: [], rows: [], areas: [], sections: [] },
+        });
         setters.setClipboard(null);
       },
     });
@@ -371,7 +445,7 @@ const EventSeatMap: React.FC = () => {
             !plan.size ||
             !Array.isArray(plan.zones)
           ) {
-            Modal.error({
+            AntdModal.error({
               title: 'Invalid Plan Format',
               content: 'The selected file is not a valid seating plan.',
             });
@@ -381,12 +455,12 @@ const EventSeatMap: React.FC = () => {
           setSeatingPlan(plan);
           addToHistory(plan);
 
-          Modal.success({
+          AntdModal.success({
             title: 'Plan Loaded',
             content: `Successfully loaded plan: ${plan.name}`,
           });
         } catch (error) {
-          Modal.error({
+          AntdModal.error({
             title: 'Error Loading Plan',
             content:
               'Failed to parse the seating plan file. Please ensure it is a valid JSON file.',
@@ -395,7 +469,7 @@ const EventSeatMap: React.FC = () => {
       };
 
       reader.onerror = () => {
-        Modal.error({
+        AntdModal.error({
           title: 'Error Loading Plan',
           content: 'Failed to read the file. Please try again.',
         });
@@ -417,6 +491,18 @@ const EventSeatMap: React.FC = () => {
         )
         ?.seats.find((seat) => seat.uuid === selection.selectedItems.seats[0])
     : undefined;
+
+  const selectedSections =
+    selection.selectedItems?.sections &&
+    selection.selectedItems.sections.length > 0
+      ? selection.selectedItems.sections
+          .map((uuid) =>
+            seatingPlan.zones[0].sections.find(
+              (section) => section.uuid === uuid,
+            ),
+          )
+          .filter((section): section is Section => section !== undefined)
+      : [];
 
   const selectedRows = selection.selectedItems.rows
     .map((uuid) => seatingPlan.zones[0].rows.find((row) => row.uuid === uuid))
@@ -472,53 +558,202 @@ const EventSeatMap: React.FC = () => {
 
   // Load existing plan if available
   useEffect(() => {
-    if (existingPlan && !isLoadingPlan && planId !== 'new') {
+    if (
+      existingPlan &&
+      !isLoadingPlan &&
+      planId !== 'new' &&
+      firstRender.current
+    ) {
       const parsedPlan = JSON.parse(existingPlan.plan);
       setSeatingPlan(parsedPlan);
       addToHistory(parsedPlan);
+      firstRender.current = false;
+    } else if (
+      planId === 'new' &&
+      seatingPlan?.mode == undefined &&
+      firstRender.current
+    ) {
+      // For new plans, show the mode selection modal
+      setModeSelectionModalVisible(true);
+      firstRender.current = false;
     }
   }, [existingPlan, isLoadingPlan, planId, addToHistory]);
 
+  // Show the mode selection modal when the component mounts if no mode is set
+  useEffect(() => {
+    // If no mode is selected or it's first load, show the modal
+    if (!selectedMode && seatingPlan.mode === undefined && !isLoadingPlan) {
+      setModeSelectionModalVisible(true);
+    }
+  }, [selectedMode, seatingPlan.mode, isLoadingPlan]);
+
+  // Handler for mode selection from initial modal
+  const handleModeSelect = useCallback(
+    (mode: 'seat' | 'section') => {
+      setSelectedMode(mode);
+
+      // Update seating plan with the selected mode
+      setSeatingPlan((prevPlan) => ({
+        ...prevPlan,
+        mode: mode,
+      }));
+
+      setModeSelectionModalVisible(false);
+    },
+    [
+      seatingPlan,
+      selectedMode,
+      setSelectedMode,
+      setSeatingPlan,
+      setModeSelectionModalVisible,
+    ],
+  );
+
+  // Handler for mode change from header - opens confirmation dialog
+  const handleModeChangeRequest = (newMode: 'seat' | 'section') => {
+    if (seatingPlan.mode === newMode) return; // No change needed
+
+    // Open the confirmation modal
+    setModeChangeModalVisible(true);
+  };
+
+  // Handler for confirming mode change
+  const handleModeChangeConfirm = useCallback(() => {
+    const newMode = selectedMode == 'seat' ? 'section' : 'seat';
+
+    console.log('Confirm mode change to: ', newMode);
+    setSeatingPlan({
+      ...DEFAULT_SEATING_PLAN,
+      mode: newMode,
+    });
+
+    // Update selected mode
+    setSelectedMode(newMode);
+
+    // Close the confirmation modal
+    setModeChangeModalVisible(false);
+  }, [selectedMode, seatingPlan, setSeatingPlan, setSelectedMode]);
+
+  // Handler for cancelling mode change
+  const handleModeChangeCancel = () => {
+    // Close the confirmation modal
+    setModeChangeModalVisible(false);
+  };
+
   return (
     <Layout style={{ height: '100vh' }}>
+      {/* Save Modal */}
       <Modal
         title="Save Seating Plan"
-        open={saveModalVisible}
-        onCancel={() => setSaveModalVisible(false)}
-        footer={[
-          <Button key="cancel" onClick={() => setSaveModalVisible(false)}>
-            Cancel
-          </Button>,
-          <Button
-            key="save"
-            type="primary"
-            loading={loading}
-            onClick={handleModalSave}
-          >
-            Save
-          </Button>,
-        ]}
+        opened={saveModalVisible}
+        onClose={() => setSaveModalVisible(false)}
+        centered
       >
-        <Form
-          form={form}
-          layout="vertical"
-          initialValues={{ name: seatingPlan.name }}
-        >
-          <Form.Item
-            name="name"
-            label="Name"
-            rules={[{ required: true, message: 'Please enter a name' }]}
+        <Stack gap="md">
+          <Form
+            form={form}
+            layout="vertical"
+            initialValues={{ name: seatingPlan.name }}
           >
-            <Input placeholder="Enter seating plan name" />
-          </Form.Item>
-          <Form.Item
-            name="description"
-            label="Description"
-            rules={[{ required: true, message: 'Please enter a description' }]}
+            <Form.Item
+              name="name"
+              label="Name"
+              rules={[{ required: true, message: 'Please enter a name' }]}
+            >
+              <Input placeholder="Enter seating plan name" />
+            </Form.Item>
+            <Form.Item
+              name="description"
+              label="Description"
+              rules={[
+                { required: true, message: 'Please enter a description' },
+              ]}
+            >
+              <Input.TextArea placeholder="Enter seating plan description" />
+            </Form.Item>
+          </Form>
+          <Group justify="flex-end" mt="md">
+            <Button variant="subtle" onClick={() => setSaveModalVisible(false)}>
+              Cancel
+            </Button>
+            <Button loading={loading} onClick={handleModalSave}>
+              Save
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+
+      {/* Mode Selection Modal */}
+      <Modal
+        opened={modeSelectionModalVisible}
+        onClose={() => setModeSelectionModalVisible(false)}
+        title={<Title className={classes.modalTitle}>Choose Editor Mode</Title>}
+        centered
+        size="lg"
+        radius="md"
+        overlayProps={{ blur: 3 }}
+        classNames={{ root: classes.modalRoot }}
+      >
+        <Group gap="lg" grow>
+          <Paper
+            className={cx(
+              classes.modeOption,
+              selectedMode === 'seat' && classes.modeOptionSelected,
+            )}
+            onClick={() => handleModeSelect('seat')}
+            shadow="xs"
           >
-            <Input.TextArea placeholder="Enter seating plan description" />
-          </Form.Item>
-        </Form>
+            <IconArmchair size={48} className={classes.modeIcon} />
+            <Title order={3} className={classes.modeTitle}>
+              Seat Mode
+            </Title>
+            <Text className={classes.modeDescription}>
+              Create and manage individual seats, rows, and areas for your
+              seating plan.
+            </Text>
+          </Paper>
+
+          <Paper
+            className={cx(
+              classes.modeOption,
+              selectedMode === 'section' && classes.modeOptionSelected,
+            )}
+            onClick={() => handleModeSelect('section')}
+            shadow="xs"
+          >
+            <IconSquare size={48} className={classes.modeIcon} />
+            <Title order={3} className={classes.modeTitle}>
+              Section Mode
+            </Title>
+            <Text className={classes.modeDescription}>
+              Create and manage larger sections for your seating plan.
+            </Text>
+          </Paper>
+        </Group>
+      </Modal>
+
+      {/* Mode Change Confirmation Modal */}
+      <Modal
+        opened={modeChangeModalVisible}
+        onClose={handleModeChangeCancel}
+        title={<Title order={3}>Change Editor Mode</Title>}
+        centered
+        size="md"
+      >
+        <Stack gap="md">
+          <Text>
+            Changing the editor mode will reset your current work area. Are you
+            sure you want to continue?
+          </Text>
+          <Group justify="flex-end" mt="md">
+            <Button variant="subtle" onClick={handleModeChangeCancel}>
+              Cancel
+            </Button>
+            <Button color="red" onClick={handleModeChangeConfirm}>
+              Change Mode
+            </Button>
+          </Group>
+        </Stack>
       </Modal>
 
       <SeatMapHeader
@@ -527,20 +762,28 @@ const EventSeatMap: React.FC = () => {
         showGrid={showGrid}
         canUndo={canUndo}
         canRedo={canRedo}
+        mode={seatingPlan.mode as 'seat' | 'section'}
+        onModeChange={handleModeChangeRequest}
         canCopy={
           selection.selectedItems.seats.length > 0 ||
           selection.selectedItems.rows.length > 0 ||
-          selection.selectedItems.areas.length > 0
+          selection.selectedItems.areas.length > 0 ||
+          selection.selectedItems?.sections?.length > 0
         }
         canPaste={
-          state.clipboard?.areas.length > 0 ||
-          state.clipboard?.rows.length > 0 ||
-          state.clipboard?.seats.length > 0
+          !!state.clipboard &&
+          (!!(state.clipboard.areas && state.clipboard.areas.length > 0) ||
+            !!(state.clipboard.rows && state.clipboard.rows.length > 0) ||
+            !!(state.clipboard.seats && state.clipboard.seats.length > 0) ||
+            !!(
+              state.clipboard.sections && state.clipboard?.sections?.length > 0
+            ))
         }
         canCut={
           selection.selectedItems.seats.length > 0 ||
           selection.selectedItems.rows.length > 0 ||
-          selection.selectedItems.areas.length > 0
+          selection.selectedItems.areas.length > 0 ||
+          selection.selectedItems?.sections?.length > 0
         }
         onToolChange={handleToolChange}
         onZoomIn={handleZoomIn}
@@ -573,17 +816,20 @@ const EventSeatMap: React.FC = () => {
             setters={setters}
             actions={actions}
             handlePlanChangeCanvas={handlePlanChangeCanvas}
+            mode={selectedMode}
           />
         </Content>
         <Sider width={300} className="plan-settings-panel">
-          <Stack spacing="md">
+          <Stack gap="md">
             {selectedSeat ? (
               <SeatSettingsPanel
                 seat={selectedSeat}
                 categories={seatingPlan.categories}
                 onUpdate={handleSeatUpdate}
               />
-            ) : selectedShapes.length > 0 || selectedRows.length > 0 ? (
+            ) : selectedShapes.length > 0 ||
+              selectedRows.length > 0 ||
+              selectedSections.length > 0 ? (
               <>
                 {selectedShapes.length > 0 && (
                   <ShapeSettingsPanel
@@ -601,6 +847,13 @@ const EventSeatMap: React.FC = () => {
                     onStartCircleAlignment={handleStartCircleAlignment}
                   />
                 )}
+                {selectedSections.length > 0 && (
+                  <SectionSettingsPanel
+                    sections={selectedSections}
+                    onUpdate={handleSectionsUpdate}
+                    categories={seatingPlan.categories}
+                  />
+                )}
               </>
             ) : (
               <PlanSettingsPanel
@@ -611,6 +864,55 @@ const EventSeatMap: React.FC = () => {
           </Stack>
         </Sider>
       </Layout>
+
+      {/* Mode Selection Modal */}
+      <Modal
+        opened={modeSelectionModalVisible}
+        onClose={() => setModeSelectionModalVisible(false)}
+        title={<Title className={classes.modalTitle}>Choose Editor Mode</Title>}
+        centered
+        size="lg"
+        radius="md"
+        overlayProps={{ blur: 3 }}
+        classNames={{ root: classes.modalRoot }}
+      >
+        <Group gap="lg" grow>
+          <Paper
+            className={cx(
+              classes.modeOption,
+              selectedMode === 'seat' && classes.modeOptionSelected,
+            )}
+            onClick={() => handleModeSelect('seat')}
+            shadow="xs"
+          >
+            <IconArmchair size={48} className={classes.modeIcon} />
+            <Title order={3} className={classes.modeTitle}>
+              Seat Mode
+            </Title>
+            <Text className={classes.modeDescription}>
+              Create and manage individual seats, rows, and areas for your
+              seating plan.
+            </Text>
+          </Paper>
+
+          <Paper
+            className={cx(
+              classes.modeOption,
+              selectedMode === 'section' && classes.modeOptionSelected,
+            )}
+            onClick={() => handleModeSelect('section')}
+            shadow="xs"
+          >
+            <IconSquare size={48} className={classes.modeIcon} />
+            <Title order={3} className={classes.modeTitle}>
+              Section Mode
+            </Title>
+            <Text className={classes.modeDescription}>
+              Create and manage larger sections for your seating plan.
+            </Text>
+          </Paper>
+        </Group>
+      </Modal>
     </Layout>
   );
 };

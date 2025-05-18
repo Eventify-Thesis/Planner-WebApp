@@ -4,7 +4,7 @@ export const updateItemPosition = (
   seatingPlan: SeatingPlan,
   itemId: string,
   newPosition: Point,
-  type: 'seat' | 'row' | 'shape',
+  type: 'seat' | 'row' | 'shape' | 'section',
 ): SeatingPlan => {
   const updatedPlan = { ...seatingPlan };
 
@@ -60,6 +60,17 @@ export const updateItemPosition = (
         ),
       }));
       break;
+
+    case 'section':
+      updatedPlan.zones = updatedPlan.zones.map((zone) => ({
+        ...zone,
+        sections: zone.sections.map((section) =>
+          section.uuid === itemId
+            ? { ...section, position: newPosition }
+            : section,
+        ),
+      }));
+      break;
   }
 
   return updatedPlan;
@@ -68,13 +79,13 @@ export const updateItemPosition = (
 export const createDragPreview = (
   seatingPlan: SeatingPlan,
   itemId: string,
-  type: 'seat' | 'row' | 'shape',
+  type: 'seat' | 'row' | 'shape' | 'section',
 ) => {
   if (type === 'row') {
     const row = seatingPlan.zones
       .flatMap((z) => z.rows)
       .find((r) => r.uuid === itemId);
-    
+
     if (row) {
       const firstSeat = row.seats[0];
       return {
@@ -89,13 +100,37 @@ export const createDragPreview = (
       .flatMap((z) => z.rows)
       .flatMap((r) => r.seats)
       .find((s) => s.uuid === itemId);
-    
+
     if (seat) {
       return {
         type: 'seat',
         uuid: seat.uuid,
         position: seat.position,
         seats: [seat],
+      };
+    }
+  } else if (type === 'shape') {
+    const shape = seatingPlan.zones
+      .flatMap((z) => z.areas)
+      .find((a) => a.uuid === itemId);
+
+    if (shape) {
+      return {
+        type: 'shape',
+        uuid: shape.uuid,
+        position: shape.position,
+      };
+    }
+  } else if (type === 'section') {
+    const section = seatingPlan.zones
+      .flatMap((z) => z.sections || [])
+      .find((s) => s.uuid === itemId);
+
+    if (section) {
+      return {
+        type: 'section',
+        uuid: section.uuid,
+        position: section.position,
       };
     }
   }

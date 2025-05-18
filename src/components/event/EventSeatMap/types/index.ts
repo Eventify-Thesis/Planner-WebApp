@@ -49,6 +49,35 @@ export interface Shape {
   };
 }
 
+export interface Section {
+  uuid: string;
+  quantity: number;
+  name: string;
+  type: 'rectangle' | 'circle' | 'polygon' | 'ellipse';
+  position: Point;
+  size: Size;
+  rotation: number;
+  fill: string;
+  stroke: string;
+  strokeWidth: number;
+  cornerRadius?: number;
+  category?: string;
+  label?: string;
+  textSize?: number;
+  radius?: number; // For circle sections
+  points?: Point[]; // For polygon sections
+  text: {
+    position: Point;
+    color: string;
+    text: string;
+    fontSize: number;
+    fontFamily: string;
+    rotation: number;
+    align: 'left' | 'center' | 'right';
+    verticalAlign: 'top' | 'middle' | 'bottom';
+  };
+}
+
 /**
  * Represents a zone within a seating plan.
  *
@@ -67,6 +96,7 @@ export interface Zone {
   position: Point;
   rows: Row[];
   areas: Shape[]; // TODO: Define Area type if needed
+  sections: Section[];
 }
 
 export interface SeatingPlan {
@@ -77,6 +107,7 @@ export interface SeatingPlan {
   zones: Zone[];
   backgroundImage?: string;
   totalSeats: number;
+  mode?: 'seat' | 'section';
 }
 
 export interface Selection {
@@ -84,13 +115,15 @@ export interface Selection {
     seats: string[];
     rows: string[];
     areas: string[];
+    sections: string[];
   };
 }
 
 export interface Clipboard {
-  seats: string[];
-  rows: string[];
-  areas: string[];
+  seats: Seat[];
+  rows: Row[];
+  areas: Shape[];
+  sections: Section[];
 }
 
 export interface CirclePreview {
@@ -126,6 +159,7 @@ export enum EditorTool {
   SELECT_SEAT = 'SELECT_SEAT',
   SELECT_ROW = 'SELECT_ROW',
   SELECT_SHAPE = 'SELECT_SHAPE',
+  SELECT_SECTION = 'SELECT_SECTION',
   ADD_SHAPE = 'ADD_SHAPE',
   ADD_CIRCLE = 'ADD_CIRCLE',
   ADD_ELLIPSE = 'ADD_ELLIPSE',
@@ -134,6 +168,10 @@ export enum EditorTool {
   ADD_ROW = 'ADD_ROW',
   ADD_RECT_ROW = 'ADD_RECT_ROW',
   ADD_CIRCULAR_ROW = 'ADD_CIRCULAR_ROW',
+  ADD_SECTION_RECT = 'ADD_SECTION_RECT',
+  ADD_SECTION_CIRCLE = 'ADD_SECTION_CIRCLE',
+  ADD_SECTION_POLYGON = 'ADD_SECTION_POLYGON',
+  ADD_SECTION_ELLIPSE = 'ADD_SECTION_ELLIPSE',
   NONE = 'NONE',
   MOVE = 'move',
 }

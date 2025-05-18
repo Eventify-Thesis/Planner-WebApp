@@ -91,7 +91,7 @@ const EventSeatCategoryMapping: React.FC = () => {
   useEffect(() => {
     if (selectedShow && shows) {
       const show = shows.find((s) => s.id === selectedShow);
-      if (show?.seatingPlan) {
+      if (show?.seatingPlan && show.locked) {
         setSelectedSeatingPlan(show.seatingPlan.id);
       }
     }
@@ -311,7 +311,9 @@ const EventSeatCategoryMapping: React.FC = () => {
                   {seatingPlans?.map((plan) => {
                     const showSeatingPlanId = currentShow?.seatingPlanId;
                     const isPlanDisabled =
-                      showSeatingPlanId && showSeatingPlanId !== plan.id;
+                      currentShow?.locked &&
+                      showSeatingPlanId &&
+                      showSeatingPlanId !== plan.id;
 
                     return (
                       <Select.Option
