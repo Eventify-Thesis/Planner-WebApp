@@ -21,6 +21,7 @@ import { uploadFile } from '@/services/fileUpload.service';
 import { TicketTypeModel } from '@/domain/TicketTypeModel';
 import dayjs from 'dayjs';
 import classes from './TicketModal.module.css';
+import { safeSetFormValue } from '@/utils/formUtils';
 
 interface TicketModalProps {
   visible: boolean;
@@ -147,18 +148,22 @@ export const TicketModal: React.FC<TicketModalProps> = ({
                   },
                 ]}
               >
-                <InputNumber
+                <InputNumber<number>
                   disabled={isFree}
                   min={0}
                   style={{ width: '120px' }}
-                  formatter={value =>
+                  formatter={(value) =>
                     value !== undefined && value !== null
-                      ? `${Number(value).toLocaleString('vi-VN')} ₫`
+                      ? `${new Intl.NumberFormat('vi-VN').format(
+                          Number(value),
+                        )} ₫`
                       : ''
                   }
-                  parser={value =>
-                    value ? value.replace(/\s?₫|,/g, '') : ''
-                  }
+                  parser={(value) => {
+                    if (!value) return 0;
+                    const parsed = value.replace(/\s?₫|,/g, '');
+                    return isNaN(Number(parsed)) ? 0 : Number(parsed);
+                  }}
                 />
               </Form.Item>
 
@@ -168,7 +173,7 @@ export const TicketModal: React.FC<TicketModalProps> = ({
                   const checked = e.currentTarget.checked;
                   setIsFree(checked);
                   if (checked) {
-                    form.setFieldsValue({ price: 0 });
+                    safeSetFormValue(form.current, 'price', 0);
                   }
                 }}
                 label={t('show_and_ticket.ticket_modal.free')}

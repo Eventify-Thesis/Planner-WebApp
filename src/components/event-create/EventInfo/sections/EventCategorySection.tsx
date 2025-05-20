@@ -19,9 +19,10 @@ export const EventCategorySection: React.FC<EventCategorySectionProps> = ({
   const { language } = useLanguage();
 
   return (
-    <FormSection 
-    colorAccent="accent1"
-    title={t('event_create.event_category.title')}>
+    <FormSection
+      colorAccent="accent1"
+      title={t('event_create.event_category.title')}
+    >
       <Box className={styles.categoryContainer}>
         <Text className={styles.categoryLabel}>
           {t('event_create.event_category.label')}
@@ -35,11 +36,6 @@ export const EventCategorySection: React.FC<EventCategorySectionProps> = ({
             value: `${category.id}_${category.code}`,
           }))}
           {...form.getInputProps('category')}
-          onChange={(value) => {
-            if (value) {
-              form.values.category = value
-            }
-          }}
           clearable
           searchable
           nothingFoundMessage={t('event_create.event_category.nothing_found')}

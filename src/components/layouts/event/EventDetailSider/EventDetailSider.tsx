@@ -18,7 +18,7 @@ export const SiderDiv = styled.div`
     #ffd194,
     #70e1f5
   ); /* Chrome 10-25, Safari 5.1-6 */
-  height: 100vh;
+  height: 100%;
 
   background: linear-gradient(
     to bottom,
@@ -30,7 +30,7 @@ export const SiderDiv = styled.div`
 const StyledSider = styled(Sider)`
   background: rgba(0, 0, 0, 0.7);
   border-right: 1px solid #f0f0f0;
-  height: 100vh;
+  height: 100%;
   position: fixed;
   left: 0;
   top: 0;
@@ -59,7 +59,7 @@ const MenuSection = styled.div`
   }
 
   .ant-menu-item-group-title {
-    color: ${BASE_COLORS.red};
+    color: var(--primary-color);
     padding: 8px 16px;
     font-size: ${FONT_SIZE.xl};
   }
@@ -71,11 +71,13 @@ const MenuSection = styled.div`
   }
 
   .ant-menu-item:hover {
+    color: var(--primary-color) !important;
     background-color: rgba(255, 255, 255, 0.1);
   }
 
   .ant-menu-item-selected {
     background-color: rgba(255, 255, 255, 0.2) !important;
+    color: var(--primary-color) !important;
   }
 `;
 

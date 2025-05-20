@@ -145,7 +145,7 @@ export const FacebookPostsTable: React.FC = () => {
             leftSection={<IconSearch size={16} />}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.currentTarget.value)}
-            style={{ flex: 1 }}
+            style={{ flex: 1, marginTop: 20 }}
           />
           <SegmentedControl
             value={sortBy}

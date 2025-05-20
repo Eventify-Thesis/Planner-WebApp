@@ -52,7 +52,7 @@ const EventInfoForm: React.FC<FormStepProps> = ({ formRef }) => {
     initialValues: {
       eventLogoUrl: undefined,
       category: undefined,
-      eventType: undefined,
+      eventType: EventType.OFFLINE,
       eventBannerUrl: undefined,
       eventDescription: undefined,
       address: undefined,
@@ -114,10 +114,19 @@ const EventInfoForm: React.FC<FormStepProps> = ({ formRef }) => {
       setEventType(eventDetail.eventType);
 
       safeSetFormValue(formRef, 'category', category);
+
+      console.log(eventDetail.eventDescription);
       setEditorHtml(eventDetail.eventDescription);
+      setSelectedCity(eventDetail.cityId);
+      setSelectedDistrict(eventDetail.districtId);
+      setSelectedWard(eventDetail.wardId);
       safeSetFormValues(formRef, {
         ...eventDetail,
         category,
+        eventDescription: eventDetail.eventDescription,
+        cityId: eventDetail.cityId,
+        districtId: eventDetail.districtId,
+        wardId: eventDetail.wardId,
       });
 
       safeSetFormValue(formRef, 'orgName', eventDetail.orgName);
@@ -240,10 +249,7 @@ const EventInfoForm: React.FC<FormStepProps> = ({ formRef }) => {
         isWardsLoading={isWardsLoading}
       />
 
-      <EventCategorySection
-        form={form}
-        categories={categories}
-      />
+      <EventCategorySection form={form} categories={categories} />
 
       <EventDescriptionSection
         form={form}

@@ -21,6 +21,19 @@ const EventDashboardPage = React.lazy(
 const EventCreatePage = React.lazy(() => import('@/pages/EventCreatePage'));
 const EventEditPage = React.lazy(() => import('@/pages/EventEditPage'));
 const CheckInPage = React.lazy(() => import('@/components/layouts/CheckIn'));
+const QuizActiveGamePage = React.lazy(
+  () => import('@/pages/EventDetailPage/GameManagementPage/QuizActiveGamePage'),
+);
+const QuizWaitingRoomPage = React.lazy(
+  () =>
+    import('@/pages/EventDetailPage/GameManagementPage/QuizWaitingRoomPage'),
+);
+// const QuizPlayPage = React.lazy(
+//   () => import('@/pages/EventDetailPage/GameManagementPage/QuizPlayPage'),
+// );
+// const QuizResultsPage = React.lazy(
+//   () => import('@/pages/EventDetailPage/GameManagementPage/QuizResultsPage'),
+// );
 
 const AuthLayoutFallback = withLoading(AuthLayout);
 export const HOME_PATH = '/';
@@ -67,6 +80,16 @@ export const AppRouter: React.FC = () => {
         <Route
           path="/events/:eventId/check-in/:checkInListShortId"
           element={<CheckInPage />}
+        />
+
+        <Route
+          path="/events/:eventId/shows/:showId/game-management/:quizId/active"
+          element={<QuizActiveGamePage />}
+        />
+
+        <Route
+          path="/events/:eventId/shows/:showId/game-management/:quizId/play/waiting-room"
+          element={<QuizWaitingRoomPage />}
         />
 
         <Route path="/auth" element={<AuthLayoutFallback />}>

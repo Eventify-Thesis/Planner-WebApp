@@ -103,6 +103,11 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
                 value: EventType.ONLINE,
               },
             ]}
+            onChange={(value) => {
+              if (value) {
+                form.values.eventType = value;
+              }
+            }}
             size="sm"
             color="blue"
             radius="md"
@@ -163,6 +168,7 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
                         form.values.cityId = cityId;
                       }
                     }}
+                    value={selectedCity?.toString()}
                     searchable
                     clearable
                   />
@@ -199,6 +205,7 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
                         form.values.districtId = districtId;
                       }
                     }}
+                    value={selectedDistrict?.toString()}
                     searchable
                     clearable
                     rightSection={
@@ -244,6 +251,7 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
                           : `${ward.type} ${ward.name}`,
                       value: ward.originId.toString(),
                     }))}
+                    value={selectedWard?.toString()}
                     onChange={(value) => {
                       if (value) {
                         const wardId = parseInt(value, 10);

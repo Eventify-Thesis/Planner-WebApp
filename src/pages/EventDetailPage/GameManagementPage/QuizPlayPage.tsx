@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -8,37 +8,67 @@ import {
   Text,
   Card,
   ActionIcon,
-  Modal,
   Loader,
   Stack,
-  Paper,
-  Center,
-  Image,
-  Box,
-  Divider,
   Badge,
-  Progress,
+  Center,
+  RingProgress,
+  Box,
+  useMantineTheme,
 } from '@mantine/core';
-import { IconArrowLeft, IconPlayerPlay, IconQrcode } from '@tabler/icons-react';
-import { useDisclosure } from '@mantine/hooks';
+import {
+  IconArrowLeft,
+  IconPlayerPlay,
+  IconConfetti,
+  IconQuestionMark,
+} from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { useGetQuizById, useGetQuizQuestions } from '@/queries/useQuizQueries';
-import { useStartNextQuestion } from '@/mutations/useQuizMutations';
+import { createStyles } from '@mantine/styles';
+
+// Modern teen-friendly styles
+const useStyles = createStyles((theme) => ({
+  container: {
+    backgroundColor:
+      theme.colorScheme === 'dark' ? theme.colors.dark[7] : theme.white,
+    borderRadius: theme.radius.lg,
+    padding: theme.spacing.xl,
+    boxShadow: theme.shadows.md,
+  },
+  card: {
+    backgroundColor:
+      theme.colorScheme === 'dark' ? theme.colors.dark[6] : theme.white,
+    borderRadius: theme.radius.md,
+    overflow: 'hidden',
+    transition: 'transform 0.3s ease',
+    '&:hover': {
+      transform: 'translateY(-5px)',
+    },
+  },
+  header: {
+    backgroundImage: `linear-gradient(135deg, ${theme.colors.violet[6]} 0%, ${theme.colors.indigo[5]} 100%)`,
+    color: theme.white,
+    padding: `${theme.spacing.lg} ${theme.spacing.xl}`,
+    borderTopLeftRadius: theme.radius.md,
+    borderTopRightRadius: theme.radius.md,
+  },
+  button: {
+    transition: 'transform 0.2s ease',
+    '&:active': {
+      transform: 'scale(0.95)',
+    },
+  },
+}));
 
 export const QuizPlayPage: React.FC = () => {
+  const { classes } = useStyles();
+  const theme = useMantineTheme();
   const { eventId, showId, quizId } = useParams<{
     eventId: string;
     showId: string;
     quizId: string;
   }>();
   const navigate = useNavigate();
-  const [joinModalOpened, { open: openJoinModal, close: closeJoinModal }] =
-    useDisclosure(false);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState<
-    number | null
-  >(null);
-  // Create a join URL directly from the quiz ID
-  const joinUrl = `${window.location.origin}/join/${quizId}`;
 
   // Fetch quiz data
   const { data: quiz, isLoading: isQuizLoading } = useGetQuizById(
@@ -50,59 +80,30 @@ export const QuizPlayPage: React.FC = () => {
   const { data: questions, isLoading: isQuestionsLoading } =
     useGetQuizQuestions(Number(showId), Number(quizId));
 
-  // Mutations
-  const startNextQuestionMutation = useStartNextQuestion(
-    Number(showId),
-    Number(quizId),
-  );
-
-  const handleShowQRCode = () => {
-    openJoinModal();
-  };
-
   const handleStartQuiz = () => {
-    setCurrentQuestionIndex(0);
-  };
-
-  const handleNextQuestion = async () => {
-    if (questions && currentQuestionIndex !== null) {
-      if (currentQuestionIndex < questions.length - 1) {
-        try {
-          await startNextQuestionMutation.mutateAsync();
-          setCurrentQuestionIndex(currentQuestionIndex + 1);
-        } catch (error) {
-          notifications.show({
-            title: 'Error',
-            message: 'Failed to start next question',
-            color: 'red',
-          });
-        }
-      } else {
-        // End of quiz
-        notifications.show({
-          title: 'Quiz Completed',
-          message: 'All questions have been shown',
-          color: 'green',
-        });
-      }
-    }
+    // Redirect to the actual quiz play page with game setup
+    navigate(
+      `/events/${eventId}/shows/${showId}/game-management/${quizId}/play/waiting-room`,
+    );
   };
 
   if (isQuizLoading || isQuestionsLoading) {
-    return <Loader />;
+    return (
+      <Center h="100vh">
+        <Loader size="xl" variant="dots" />
+      </Center>
+    );
   }
 
-  const currentQuestion =
-    currentQuestionIndex !== null && questions
-      ? questions[currentQuestionIndex]
-      : null;
-
   return (
-    <Container size="xl" p="md">
-      <Group justify="space-between" mb="md">
+    <Container size="xl" className={classes.container}>
+      <Group justify="space-between" mb="xl">
         <Group>
           <ActionIcon
-            variant="subtle"
+            variant="light"
+            color="blue"
+            radius="xl"
+            size="lg"
             onClick={() =>
               navigate(
                 `/events/${eventId}/shows/${showId}/game-management/${quizId}`,
@@ -111,149 +112,87 @@ export const QuizPlayPage: React.FC = () => {
           >
             <IconArrowLeft size={20} />
           </ActionIcon>
-          <Title order={2}>{quiz?.title} - Play Mode</Title>
+          <Title order={2}>{quiz?.title || 'Quiz'}</Title>
         </Group>
-        <Group>
-          <Button
-            leftSection={<IconQrcode size={16} />}
-            onClick={handleShowQRCode}
-            variant="outline"
-          >
-            Show QR Code
-          </Button>
-          {currentQuestionIndex === null ? (
-            <Button
-              leftSection={<IconPlayerPlay size={16} />}
-              onClick={handleStartQuiz}
-              color="green"
-            >
-              Start Quiz
-            </Button>
-          ) : (
-            <Button
-              onClick={handleNextQuestion}
-              disabled={
-                !questions || currentQuestionIndex >= questions.length - 1
-              }
-            >
-              Next Question
-            </Button>
-          )}
-        </Group>
+        <Button
+          size="md"
+          radius="md"
+          leftSection={<IconPlayerPlay size={16} />}
+          className={classes.button}
+          gradient={{ from: 'indigo', to: 'cyan' }}
+          variant="gradient"
+          onClick={handleStartQuiz}
+        >
+          Start Quiz
+        </Button>
       </Group>
 
-      {currentQuestionIndex === null ? (
-        <Card withBorder shadow="sm" p="xl" ta="center">
-          <IconPlayerPlay
-            size={48}
-            stroke={1.5}
-            color="var(--mantine-color-blue-6)"
-          />
-          <Title order={3} mt="md">
-            Ready to Start Quiz
-          </Title>
-          <Text c="dimmed" mt="sm">
-            Click the "Start Quiz" button to begin. Make sure all participants
-            have joined.
-          </Text>
-          <Group justify="center" mt="xl">
-            <Badge size="lg">{questions?.length || 0} Questions</Badge>
-            <Badge size="lg" color="green">
-              Passing Score: {quiz?.passingScore}%
-            </Badge>
+      <Card shadow="md" radius="lg" className={classes.card} mb="xl">
+        <Box className={classes.header}>
+          <Group justify="space-between">
+            <Title order={3}>Quiz Configuration</Title>
+            <IconConfetti size={24} />
           </Group>
-        </Card>
-      ) : (
-        <Stack>
-          <Progress
-            value={
-              ((currentQuestionIndex + 1) / (questions?.length || 1)) * 100
-            }
-            size="sm"
-            mb="md"
-          />
+        </Box>
+        <Stack p="xl" gap="md">
+          <Group justify="center">
+            <RingProgress
+              size={120}
+              roundCaps
+              thickness={8}
+              sections={[{ value: 100, color: theme.colors.blue[6] }]}
+              label={
+                <Center>
+                  <IconQuestionMark size="2rem" stroke={1.5} />
+                </Center>
+              }
+            />
+          </Group>
 
-          <Group justify="space-between" mb="xs">
-            <Text size="sm">
-              Question {currentQuestionIndex + 1} of {questions?.length}
-            </Text>
-            {currentQuestion?.timeLimit && (
-              <Badge color="blue">
-                Time: {currentQuestion.timeLimit} seconds
+          <Group justify="center" mt="md">
+            <Badge size="lg" radius="md">
+              {questions?.length || 0} Questions
+            </Badge>
+            <Badge size="lg" radius="md" color="green">
+              Passing: {quiz?.passingScore}%
+            </Badge>
+            {quiz?.timeLimit && (
+              <Badge size="lg" radius="md" color="blue">
+                Time Limit: {quiz.timeLimit} min
               </Badge>
             )}
           </Group>
 
-          <Card withBorder shadow="sm" p="lg" mb="md">
-            <Title order={3} mb="xl">
-              {currentQuestion?.text}
-            </Title>
-
-            <Stack gap="md">
-              {currentQuestion?.options.map((option, index) => (
-                <Paper key={index} p="md" withBorder shadow="sm">
-                  <Group>
-                    <Text fw={600} size="lg">
-                      {index + 1}.
-                    </Text>
-                    <Text size="lg">{option}</Text>
-                  </Group>
-                </Paper>
-              ))}
-            </Stack>
-
-            <Divider my="xl" />
-
-            <Group justify="space-between">
-              <Text c="dimmed">
-                Correct Answer: Option{' '}
-                {(currentQuestion?.correctOption || 0) + 1}
-              </Text>
-              <Text c="dimmed">
-                {currentQuestionIndex + 1} / {questions?.length}
-              </Text>
-            </Group>
-          </Card>
-        </Stack>
-      )}
-
-      {/* Join Modal with QR Code */}
-      <Modal
-        opened={joinModalOpened}
-        onClose={closeJoinModal}
-        title="Join Quiz"
-        size="md"
-        centered
-      >
-        <Stack align="center">
-          <Text ta="center" mb="md">
-            Participants can join the quiz by scanning this QR code or using the
-            link below:
+          <Text c="dimmed" ta="center" mt="sm">
+            Click "Start Quiz" to begin. Once started, participants will be able
+            to join with a generated code.
           </Text>
-
-          <Box mb="md">
-            <Image
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
-                joinUrl,
-              )}`}
-              alt="QR Code"
-              width={200}
-              height={200}
-              mx="auto"
-            />
-          </Box>
-
-          <Paper withBorder p="sm" w="100%">
-            <Text ta="center" fw={500}>
-              {joinUrl}
-            </Text>
-          </Paper>
-
-          <Button onClick={closeJoinModal} mt="md">
-            Close
-          </Button>
         </Stack>
-      </Modal>
+      </Card>
+
+      <Card shadow="md" radius="lg" className={classes.card}>
+        <Box className={classes.header}>
+          <Group justify="space-between">
+            <Title order={3}>Instructions</Title>
+          </Group>
+        </Box>
+        <Stack p="xl" gap="md">
+          <Text>
+            1. Click the "Start Quiz" button to proceed to the game screen.
+          </Text>
+          <Text>
+            2. On the next screen, you'll receive a unique join code to share
+            with participants.
+          </Text>
+          <Text>
+            3. Once participants have joined, you can begin the quiz session.
+          </Text>
+          <Text>
+            4. You'll be able to control the pace of the quiz by moving through
+            questions manually.
+          </Text>
+        </Stack>
+      </Card>
     </Container>
   );
 };

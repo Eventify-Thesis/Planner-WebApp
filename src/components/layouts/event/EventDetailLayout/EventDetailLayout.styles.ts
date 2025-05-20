@@ -3,7 +3,7 @@ import { LAYOUT, media } from '@/styles/themes/constants';
 import { BaseLayout } from '@/components/common/BaseLayout/BaseLayout';
 
 export const LayoutMaster = styled(BaseLayout)`
-  height: 100vh;
+  height: 100%;
 `;
 
 export const LayoutMain = styled(BaseLayout)`
@@ -15,7 +15,9 @@ export const LayoutMain = styled(BaseLayout)`
     margin-left: unset;
   }
 
-    background: var(--tk-color-gray) !important;
+  background: var(--tk-color-gray) !important;
+  display: flex;
+  flex-direction: column;
 
   // background: #70e1f5;
   // background: -webkit-linear-gradient(to bottom, #ffd194, #70e1f5);
@@ -23,8 +25,9 @@ export const LayoutMain = styled(BaseLayout)`
 `;
 
 export const MainContent = styled.main`
-  overflow: auto;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  // height: calc(100vh - ${LAYOUT.desktop.headerHeight});
+  // max-height: calc(100vh - ${LAYOUT.desktop.headerHeight});
+  overflow-y: auto;
+  padding: 24px;
+  padding-bottom: 60px;
 `;

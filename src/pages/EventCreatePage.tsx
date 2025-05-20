@@ -89,7 +89,11 @@ const EventCreatePage: React.FC = () => {
       }
 
       show.ticketTypes.forEach((ticketType) => {
-        if (!ticketType.name || !ticketType.price || !ticketType.quantity) {
+        if (!ticketType.price) {
+          ticketType.price = 0;
+        }
+
+        if (!ticketType.name ||  !ticketType.quantity) {
           throw new Error(t('event_create.ticket_info_required'));
         }
 

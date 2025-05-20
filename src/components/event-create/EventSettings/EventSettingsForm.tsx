@@ -76,9 +76,12 @@ const styles = {
     border: '1px solid #ced4da',
     borderRight: 0,
     fontSize: '14px',
+    height: 40,
   },
   customTextInput: {
     flex: 1,
+    height: 40,
+    marginBottom: 40,
   },
   textInputWithLeftAddon: {
     borderTopLeftRadius: 0,
@@ -168,6 +171,7 @@ export const EventSettingsForm: React.FC<EventSettingsFormProps> = ({
         display: 'flex',
         flexDirection: 'column',
         gap: '2rem',
+        height: '100%',
         maxWidth: '100%',
       }}
     >
@@ -223,7 +227,15 @@ export const EventSettingsForm: React.FC<EventSettingsFormProps> = ({
 
         <Stack style={{ gap: '16px' }}>
           <Box style={{ position: 'relative' }}>
-            <Flex>
+            <div
+              style={{
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                display: 'flex',
+                height: 40,
+                flexDirection: 'row',
+              }}
+            >
               <Box style={styles.urlAddon}>{`${baseUrl}/events/`}</Box>
               <TextInput
                 required
@@ -236,7 +248,7 @@ export const EventSettingsForm: React.FC<EventSettingsFormProps> = ({
                 style={styles.customTextInput}
                 styles={{ input: styles.textInputWithLeftAddon }}
               />
-            </Flex>
+            </div>
           </Box>
 
           <Text size="sm" color="dimmed">

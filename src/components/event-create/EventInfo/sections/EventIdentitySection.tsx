@@ -118,7 +118,7 @@ export const EventIdentitySection: React.FC<EventIdentitySectionProps> = ({
               </Text>
             </Text>
             <Text size="xs" c="dimmed">
-              (Square format)
+              (720:958 format recommended)
             </Text>
           </Group>
           {fileList['logo']?.length > 0 ? (
@@ -177,7 +177,7 @@ export const EventIdentitySection: React.FC<EventIdentitySectionProps> = ({
               </Text>
             </Text>
             <Text size="xs" c="dimmed">
-              (16:9 format recommended)
+              (1280:720 format recommended)
             </Text>
           </Group>
           {fileList['banner']?.length > 0 ? (
@@ -297,7 +297,8 @@ export const EventIdentitySection: React.FC<EventIdentitySectionProps> = ({
                   },
                 },
               }}
-              s{...form.getInputProps('eventAbbrName')}
+              s
+              {...form.getInputProps('eventAbbrName')}
             />
           </Grid.Col>
         </Grid>

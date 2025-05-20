@@ -184,9 +184,7 @@ export const GameManagementPage: React.FC = () => {
             heading={t`No quizzes found`}
             subHeading={
               <>
-                <p>
-                  {t`Create a new quiz to get started.`}
-                </p>
+                <p>{t`Create a new quiz to get started.`}</p>
               </>
             }
           />

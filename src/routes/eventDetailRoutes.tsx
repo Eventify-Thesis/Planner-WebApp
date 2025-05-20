@@ -64,6 +64,15 @@ const QuizPlayPage = React.lazy(
   () => import('@/pages/EventDetailPage/GameManagementPage/QuizPlayPage'),
 );
 
+const QuizGamePage = React.lazy(
+  () =>
+    import('@/pages/EventDetailPage/GameManagementPage/QuizWaitingRoomPage'),
+);
+
+const QuizActiveGamePage = React.lazy(
+  () => import('@/pages/EventDetailPage/GameManagementPage/QuizActiveGamePage'),
+);
+
 const LoadingFallback = () => <div>Loading...</div>;
 
 export const eventDetailRoutes: RouteObject[] = [

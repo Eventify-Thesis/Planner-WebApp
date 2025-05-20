@@ -4,13 +4,14 @@ import { Box, Button, Group, Text, Card, ActionIcon } from '@mantine/core';
 import { IconTrash, IconSettings, IconPlus } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { ShowModel } from '@/domain/ShowModel';
+import { TicketTypeModel } from '@/domain/TicketTypeModel';
 import classes from './TicketSection.module.css';
 
 interface TicketSectionProps {
   show: ShowModel;
   showIndex: number;
   onAddTicket: () => void;
-  onEditTicket: (ticketTypeId: string) => void;
+  onEditTicket: (ticketType: TicketTypeModel) => void;
   onShowUpdate: (updatedShow: ShowModel) => void;
 }
 
@@ -50,7 +51,7 @@ export const TicketSection: React.FC<TicketSectionProps> = ({
                 <ActionIcon
                   variant="transparent"
                   color="white"
-                  onClick={() => onEditTicket(ticketType.id?.toString() || '')}
+                  onClick={() => onEditTicket(ticketType)}
                 >
                   <IconSettings size={16} />
                 </ActionIcon>
@@ -64,8 +65,14 @@ export const TicketSection: React.FC<TicketSectionProps> = ({
               </Group>
             </Box>
             <Box className={classes.ticketContent}>
-              <Text className={`${classes.ticketPrice} ${ticketType.isFree ? classes.ticketFree : ''}`}>
-                {ticketType.isFree ? 'Free' : `$${ticketType.price}`}
+              <Text
+                className={`${classes.ticketPrice} ${
+                  ticketType.isFree ? classes.ticketFree : ''
+                }`}
+              >
+                {ticketType.isFree ? 'Free' : `${new Intl.NumberFormat('vi-VN').format(
+                  Number(ticketType.price),
+                )} đ`}
               </Text>
             </Box>
           </Card>

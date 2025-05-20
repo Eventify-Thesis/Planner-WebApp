@@ -1,5 +1,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { quizClient, CreateQuizDto, UpdateQuizDto, CreateQuizQuestionDto, UpdateQuizQuestionDto } from '@/api/quiz.client';
+import {
+  quizClient,
+  CreateQuizDto,
+  UpdateQuizDto,
+  CreateQuizQuestionDto,
+  UpdateQuizQuestionDto,
+} from '@/api/quiz.client';
 import { QUIZ_KEYS } from '@/queries/useQuizQueries';
 import { IdParam } from '@/types/types';
 
@@ -12,7 +18,9 @@ export const useCreateQuiz = (eventId: IdParam, showId: IdParam) => {
       return await quizClient.createQuiz(eventId, showId, quizData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUIZ_KEYS.list(Number(showId)) });
+      queryClient.invalidateQueries({
+        queryKey: QUIZ_KEYS.list(Number(showId)),
+      });
     },
   });
 };
@@ -26,8 +34,12 @@ export const useUpdateQuiz = (eventId: IdParam, quizId: IdParam) => {
       return await quizClient.updateQuiz(eventId, quizId, quizData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUIZ_KEYS.detail(Number(eventId), Number(quizId)) });
-      queryClient.invalidateQueries({ queryKey: QUIZ_KEYS.list(Number(quizId)) });
+      queryClient.invalidateQueries({
+        queryKey: QUIZ_KEYS.detail(Number(eventId), Number(quizId)),
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUIZ_KEYS.list(Number(quizId)),
+      });
     },
   });
 };
@@ -41,7 +53,9 @@ export const useDeleteQuiz = (eventId: IdParam, showId: IdParam) => {
       return await quizClient.deleteQuiz(eventId, quizId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUIZ_KEYS.list(Number(showId)) });
+      queryClient.invalidateQueries({
+        queryKey: QUIZ_KEYS.list(Number(showId)),
+      });
     },
   });
 };
@@ -55,8 +69,12 @@ export const useActivateQuiz = (eventId: IdParam, quizId: IdParam) => {
       return await quizClient.activateQuiz(eventId, quizId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUIZ_KEYS.detail(Number(eventId), Number(quizId)) });
-      queryClient.invalidateQueries({ queryKey: QUIZ_KEYS.list(Number(quizId)) });
+      queryClient.invalidateQueries({
+        queryKey: QUIZ_KEYS.detail(Number(eventId), Number(quizId)),
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUIZ_KEYS.list(Number(quizId)),
+      });
     },
   });
 };
@@ -70,8 +88,12 @@ export const useDeactivateQuiz = (eventId: IdParam, quizId: IdParam) => {
       return await quizClient.deactivateQuiz(eventId, quizId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUIZ_KEYS.detail(Number(eventId), Number(quizId)) });
-      queryClient.invalidateQueries({ queryKey: QUIZ_KEYS.list(Number(quizId)) });
+      queryClient.invalidateQueries({
+        queryKey: QUIZ_KEYS.detail(Number(eventId), Number(quizId)),
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUIZ_KEYS.list(Number(quizId)),
+      });
     },
   });
 };
@@ -85,21 +107,34 @@ export const useCreateQuizQuestion = (eventId: IdParam, quizId: IdParam) => {
       return await quizClient.createQuizQuestion(eventId, quizId, questionData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUIZ_KEYS.questions(Number(eventId), Number(quizId)) });
+      queryClient.invalidateQueries({
+        queryKey: QUIZ_KEYS.questions(Number(eventId), Number(quizId)),
+      });
     },
   });
 };
 
 // Update a quiz question
-export const useUpdateQuizQuestion = (eventId: IdParam, quizId: IdParam, questionId: IdParam) => {
+export const useUpdateQuizQuestion = (
+  eventId: IdParam,
+  quizId: IdParam,
+  questionId: IdParam,
+) => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (questionData: UpdateQuizQuestionDto) => {
-      return await quizClient.updateQuizQuestion(eventId, quizId, questionId, questionData);
+      return await quizClient.updateQuizQuestion(
+        eventId,
+        quizId,
+        questionId,
+        questionData,
+      );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUIZ_KEYS.questions(Number(eventId), Number(quizId)) });
+      queryClient.invalidateQueries({
+        queryKey: QUIZ_KEYS.questions(Number(eventId), Number(quizId)),
+      });
     },
   });
 };
@@ -113,7 +148,9 @@ export const useDeleteQuizQuestion = (eventId: IdParam, quizId: IdParam) => {
       return await quizClient.deleteQuizQuestion(eventId, quizId, questionId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUIZ_KEYS.questions(Number(eventId), Number(quizId)) });
+      queryClient.invalidateQueries({
+        queryKey: QUIZ_KEYS.questions(Number(eventId), Number(quizId)),
+      });
     },
   });
 };
@@ -141,11 +178,17 @@ export const useGenerateQuizQuestions = (eventId: IdParam, quizId: IdParam) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (options: { topic: string; difficulty?: string; count?: number }) => {
+    mutationFn: async (options: {
+      topic: string;
+      difficulty?: string;
+      count?: number;
+    }) => {
       return await quizClient.generateQuizQuestions(eventId, quizId, options);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUIZ_KEYS.questions(Number(eventId), Number(quizId)) });
+      queryClient.invalidateQueries({
+        queryKey: QUIZ_KEYS.questions(Number(eventId), Number(quizId)),
+      });
     },
   });
 };

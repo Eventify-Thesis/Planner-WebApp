@@ -32,7 +32,7 @@ const useStyles = createStyles((theme: any) => ({
   },
   emptyText: {
     fontSize: theme.fontSizes.md,
-  }
+  },
 }));
 
 const EventList: React.FC<EventListProps> = ({ events }) => {

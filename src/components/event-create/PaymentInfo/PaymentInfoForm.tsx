@@ -9,14 +9,11 @@ import {
   Stack,
   Flex,
   Anchor,
-  Loader
+  Loader,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useTranslation } from 'react-i18next';
-import { 
-  IconBuildingBank, 
-  IconBuildingStore
-} from '@tabler/icons-react';
+import { IconBuildingBank, IconBuildingStore } from '@tabler/icons-react';
 import { useParams } from 'react-router-dom';
 import { BusinessType } from '@/constants/enums/event';
 import { useGetEventPayment } from '@/queries/useGetEventPayment';
@@ -90,26 +87,44 @@ export const PaymentInfoForm: React.FC<PaymentInfoFormProps> = ({
       taxNumber: '',
     },
     validate: {
-      bankAccount: (value) => 
-        !value ? t('payment_info.bank_account_required') : 
-        value.length > 100 ? t('payment_info.bank_account_max_length') : null,
-      bankAccountName: (value) => 
-        !value ? t('payment_info.bank_account_name_required') : 
-        value.length > 100 ? t('payment_info.bank_account_name_max_length') : null,
-      bankAccountNumber: (value) => 
-        !value ? t('payment_info.bank_account_number_required') : 
-        !/^\d+$/.test(value) ? t('payment_info.bank_account_number_invalid') : null,
-      bankOffice: (value) => 
-        !value ? t('payment_info.bank_office_required') : 
-        value.length > 100 ? t('payment_info.bank_office_max_length') : null,
-      businessType: (value) => 
+      bankAccount: (value) =>
+        !value
+          ? t('payment_info.bank_account_required')
+          : value.length > 100
+          ? t('payment_info.bank_account_max_length')
+          : null,
+      bankAccountName: (value) =>
+        !value
+          ? t('payment_info.bank_account_name_required')
+          : value.length > 100
+          ? t('payment_info.bank_account_name_max_length')
+          : null,
+      bankAccountNumber: (value) =>
+        !value
+          ? t('payment_info.bank_account_number_required')
+          : !/^\d+$/.test(value)
+          ? t('payment_info.bank_account_number_invalid')
+          : null,
+      bankOffice: (value) =>
+        !value
+          ? t('payment_info.bank_office_required')
+          : value.length > 100
+          ? t('payment_info.bank_office_max_length')
+          : null,
+      businessType: (value) =>
         !value ? t('payment_info.business_type_required') : null,
-      name: (value) => 
-        value && value.length > 100 ? t('payment_info.company_name_max_length') : null,
-      address: (value) => 
-        value && value.length > 200 ? t('payment_info.company_address_max_length') : null,
-      taxNumber: (value) => 
-        value && !/^\d+$/.test(value) ? t('payment_info.tax_number_invalid') : null,
+      name: (value) =>
+        value && value.length > 100
+          ? t('payment_info.company_name_max_length')
+          : null,
+      address: (value) =>
+        value && value.length > 200
+          ? t('payment_info.company_address_max_length')
+          : null,
+      taxNumber: (value) =>
+        value && !/^\d+$/.test(value)
+          ? t('payment_info.tax_number_invalid')
+          : null,
     },
   });
 
@@ -139,16 +154,22 @@ export const PaymentInfoForm: React.FC<PaymentInfoFormProps> = ({
     <Box w="100%" p="24px">
       {/* Payment Information Notice */}
       <Paper p="lg" mb="md" bg="blue.9" c="white">
-        <Text mb="sm">
-          {t('payment_info.notice')}
-        </Text>
+        <Text mb="sm">{t('payment_info.notice')}</Text>
         <Text>
           {t('payment_info.contact_info')}{' '}
-          <Anchor href={`tel:${t('payment_info.phone')}`} c="white" underline="always">
+          <Anchor
+            href={`tel:${t('payment_info.phone')}`}
+            c="white"
+            underline="always"
+          >
             {t('payment_info.phone')}
           </Anchor>{' '}
           or{' '}
-          <Anchor href={`mailto:${t('payment_info.email')}`} c="white" underline="always">
+          <Anchor
+            href={`mailto:${t('payment_info.email')}`}
+            c="white"
+            underline="always"
+          >
             {t('payment_info.email')}
           </Anchor>
         </Text>
@@ -209,13 +230,13 @@ export const PaymentInfoForm: React.FC<PaymentInfoFormProps> = ({
             label={t('payment_info.business_type')}
             placeholder={t('payment_info.business_type_placeholder')}
             data={[
-              { 
-                value: BusinessType.PERSONAL, 
-                label: t('payment_info.business_type_individual')
+              {
+                value: BusinessType.PERSONAL,
+                label: t('payment_info.business_type_individual'),
               },
-              { 
-                value: BusinessType.COMPANY, 
-                label: t('payment_info.business_type_company')
+              {
+                value: BusinessType.COMPANY,
+                label: t('payment_info.business_type_company'),
               },
             ]}
             {...form.getInputProps('businessType')}
@@ -223,14 +244,30 @@ export const PaymentInfoForm: React.FC<PaymentInfoFormProps> = ({
           />
 
           <TextInput
-            label={t('payment_info.company_name')}
-            placeholder={t('payment_info.company_name_placeholder')}
+            label={
+              form.values.businessType === BusinessType.PERSONAL
+                ? t('payment_info.individual_name')
+                : t('payment_info.company_name')
+            }
+            placeholder={
+              form.values.businessType === BusinessType.PERSONAL
+                ? t('payment_info.individual_name_placeholder')
+                : t('payment_info.company_name_placeholder')
+            }
             {...form.getInputProps('name')}
           />
 
           <TextInput
-            label={t('payment_info.company_address')}
-            placeholder={t('payment_info.company_address_placeholder')}
+            label={
+              form.values.businessType === BusinessType.PERSONAL
+                ? t('payment_info.individual_address')
+                : t('payment_info.company_address')
+            }
+            placeholder={
+              form.values.businessType === BusinessType.PERSONAL
+                ? t('payment_info.individual_address_placeholder')
+                : t('payment_info.company_address_placeholder')
+            }
             {...form.getInputProps('address')}
           />
 

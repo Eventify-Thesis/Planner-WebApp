@@ -18,7 +18,12 @@ import {
   IconSend,
   IconTrash,
 } from '@tabler/icons-react';
-import { prettyDate, relativeDate } from '../../../utils/dates.ts';
+import {
+  formatDate,
+  prettyDate,
+  relativeDate,
+  utcToTz,
+} from '../../../utils/dates.ts';
 import { ViewOrderModal } from '../../modals/ViewOrderModal';
 import { useDisclosure } from '@mantine/hooks';
 import { useState } from 'react';
@@ -137,13 +142,6 @@ export const OrdersTable = ({ orders }: OrdersTableProps) => {
               leftSection={<IconSend size={14} />}
             >{t`Message buyer`}</Menu.Item>
 
-            {/* {!order.is_free_order && (
-              <Menu.Item
-                onClick={() => handleModalClick(order.id, refundModal)}
-                leftSection={<IconReceiptRefund size={14} />}
-              >{t`Refund order`}</Menu.Item>
-            )} */}
-
             {order.status === OrderStatus.PAID && (
               <Menu.Item
                 onClick={() =>
@@ -190,6 +188,11 @@ export const OrdersTable = ({ orders }: OrdersTableProps) => {
         </TableHead>
         <MantineTable.Tbody>
           {orders.map((order) => {
+            const timeZoneOrderDate = utcToTz(
+              order.createdAt.toString(),
+              'Asia/Bangkok',
+            );
+
             return (
               <MantineTable.Tr key={order.id}>
                 <MantineTable.Td>
@@ -199,7 +202,11 @@ export const OrdersTable = ({ orders }: OrdersTableProps) => {
                 </MantineTable.Td>
                 <MantineTable.Td>
                   <div>
-                    <b>{order.firstName + ' ' + order.lastName}</b>
+                    {order.firstName && order.lastName ? (
+                      <b>{order.firstName + ' ' + order.lastName}</b>
+                    ) : (
+                      <b>Not available</b>
+                    )}
                   </div>
                   <Anchor target={'_blank'} href={`mailto:${order.email}`}>
                     {order.email}
@@ -215,12 +222,9 @@ export const OrdersTable = ({ orders }: OrdersTableProps) => {
                 </MantineTable.Td>
                 <MantineTable.Td>
                   <Tooltip.Floating
-                    label={prettyDate(
-                      order.createdAt.toString(),
-                      'Asia/Bangkok',
-                    )}
+                    label={prettyDate(timeZoneOrderDate, 'Asia/Bangkok')}
                   >
-                    <span>{relativeDate(order.createdAt.toString())}</span>
+                    <span>{relativeDate(timeZoneOrderDate)}</span>
                   </Tooltip.Floating>
                 </MantineTable.Td>
                 <MantineTable.Td>
@@ -240,6 +244,10 @@ export const OrdersTable = ({ orders }: OrdersTableProps) => {
   const OrderTableMobile = () => (
     <ShowForMobile>
       {orders.map((order) => {
+        const timeZoneOrderDate = utcToTz(
+          order.createdAt.toString(),
+          'Asia/Bangkok',
+        );
         return (
           <Card className={classes.orderCard} key={order.id}>
             <div className={classes.colDetails}>
@@ -247,7 +255,11 @@ export const OrdersTable = ({ orders }: OrdersTableProps) => {
                 <OrderAmountPopover order={order} />
               </div>
               <div className={classes.name}>
-                {order.firstName + ' ' + order.lastName}
+                {order.firstName && order.lastName ? (
+                  <b>{order.firstName + ' ' + order.lastName}</b>
+                ) : (
+                  <b>Not available</b>
+                )}
               </div>
               <Anchor
                 className={classes.email}
@@ -264,11 +276,11 @@ export const OrdersTable = ({ orders }: OrdersTableProps) => {
                 </Anchor>
               </span>
               <Tooltip.Floating
-                label={prettyDate(order.createdAt.toString(), 'Asia/Bangkok')}
+                label={prettyDate(timeZoneOrderDate, 'Asia/Bangkok')}
               >
                 <span className={classes.createdDate}>
                   {t`Created`}:{' '}
-                  <b>{relativeDate(order.createdAt.toString())}</b>
+                  <b>{utcToTz(timeZoneOrderDate, 'Asia/Bangkok')}</b>
                 </span>
               </Tooltip.Floating>
             </div>

@@ -31,6 +31,7 @@ import { safeSetFormValues } from '@/utils/formUtils';
 import { showError } from '@/utils/notifications';
 import { Loading } from '@/components/common/Loading/Loading';
 import './ShowAndTicketForm.css';
+import { deepEqual } from 'assert';
 
 export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
   const { t } = useTranslation();
@@ -51,7 +52,11 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
   const [currentTicketType, setCurrentTicketType] = useState<TicketTypeModel>();
   const [activeKey, setActiveKey] = useState<string[]>(['0']);
 
-  const { data: showsData, refetch: refetchShows, isLoading } = useListShows(eventId!);
+  const {
+    data: showsData,
+    refetch: refetchShows,
+    isLoading,
+  } = useListShows(eventId!);
 
   const months = Array.from({ length: 12 }, (_, i) => {
     const date = dayjs().month(i);
@@ -187,10 +192,7 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
     handleOpenTicketModal(showIndex);
   };
 
-  const handleEditTicket = (showIndex: number, ticketTypeId: string) => {
-    const ticketType = shows[showIndex].ticketTypes.find(
-      (t) => t.id && t.id.toString() === ticketTypeId,
-    );
+  const handleEditTicket = (showIndex: number, ticketType: TicketTypeModel) => {
     setCurrentShow(showIndex);
     setCurrentTicketType(ticketType);
     setTicketModalVisible(true);
@@ -201,7 +203,7 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
       const newShows = [...shows];
       const ticketIndex = currentTicketType
         ? newShows[currentShow].ticketTypes.findIndex(
-            (t) => t.id && t.id.toString() === currentTicketType.id?.toString(),
+            (t) => t.id === ticketType.id,
           )
         : -1;
       if (ticketIndex !== -1) {
@@ -209,7 +211,7 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
       } else {
         newShows[currentShow].ticketTypes.push({
           ...ticketType,
-          id: Date.now().toString(), // Ensure each ticketType has a unique ID
+          id: - (new Date().getTime() - 10000000),
           position: (newShows[currentShow].ticketTypes.length as number) || 0,
         });
       }
@@ -267,8 +269,6 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
       )}
     </Box>
   );
-
-
 
   return (
     <Box ref={formRef} className={classes.formContainer}>

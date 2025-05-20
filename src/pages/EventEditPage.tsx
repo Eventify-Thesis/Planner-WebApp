@@ -164,8 +164,6 @@ const EventEditPage: React.FC = () => {
         id: eventId,
       });
 
-      showSuccess(t('event_create.event_info_saved_successfully'));
-
       if (event) {
         navigate(`?step=${steps[current].key}`, {
           replace: true,
@@ -197,7 +195,15 @@ const EventEditPage: React.FC = () => {
       }
 
       show.ticketTypes.forEach((ticketType) => {
-        if (!ticketType.name || !ticketType.price || !ticketType.quantity) {
+        if (ticketType.id < 0) {
+          delete ticketType.id;
+        }
+
+        if (!ticketType.price) {
+          ticketType.price = 0;
+        }
+
+        if (!ticketType.name  || !ticketType.quantity) {
           throw new Error(t('event_create.ticket_info_required'));
         }
 
@@ -259,8 +265,10 @@ const EventEditPage: React.FC = () => {
   };
 
   const handleStepChange = async (nextStep: number) => {
+    console.log(formRefs[current].current);
     try {
-      formRefs[current].current?.reset();
+      console.log(formRefs[current].current);
+      formRefs[current].current.values = {};
 
       if (eventId) {
         navigate(`?step=${steps[nextStep].key}`, {
@@ -270,7 +278,6 @@ const EventEditPage: React.FC = () => {
 
       setCurrent(nextStep);
     } catch (error) {
-      console.log(error);
       showError(
         error.message ||
           (nextStep > current
@@ -329,7 +336,6 @@ const EventEditPage: React.FC = () => {
                 active={current}
                 onStepClick={handleStepChange}
                 size="md"
-                allowNextStepsSelect={false}
                 styles={(theme) => ({
                   root: {
                     padding: 'px 0',

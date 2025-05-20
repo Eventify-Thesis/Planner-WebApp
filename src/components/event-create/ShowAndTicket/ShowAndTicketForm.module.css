@@ -11,7 +11,7 @@
 }
 
 .formContainer {
-  height: 100vh;
+  height: 100%;
   padding: 0 24px 24px 24px;
   background-color: var(--mantine-color-gray-0);
 }

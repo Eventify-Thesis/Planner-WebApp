@@ -30,6 +30,7 @@ import { useCreateSchedule } from '@/mutations/useCreateSchedule';
 import { useUpdateSchedule } from '@/mutations/useUpdateSchedule';
 import { useDeleteSchedule } from '@/mutations/useDeleteSchedule';
 import { ScheduleModel } from '@/api/schedule.client';
+import './ShowScheduleCalendar.css';
 import { useParams } from 'react-router-dom';
 
 interface ShowScheduleCalendarProps {
