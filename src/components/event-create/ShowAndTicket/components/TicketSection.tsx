@@ -11,7 +11,7 @@ interface TicketSectionProps {
   show: ShowModel;
   showIndex: number;
   onAddTicket: () => void;
-  onEditTicket: (ticketType: TicketTypeModel) => void;
+  onEditTicket: (showIndex: number, ticketType: TicketTypeModel) => void;
   onShowUpdate: (updatedShow: ShowModel) => void;
 }
 
@@ -29,6 +29,8 @@ export const TicketSection: React.FC<TicketSectionProps> = ({
     updatedTickets.splice(ticketIndex, 1);
     onShowUpdate({ ...show, ticketTypes: updatedTickets });
   };
+
+  console.log(show.ticketTypes);
 
   return (
     <Form.Item
@@ -51,7 +53,11 @@ export const TicketSection: React.FC<TicketSectionProps> = ({
                 <ActionIcon
                   variant="transparent"
                   color="white"
-                  onClick={() => onEditTicket(ticketType)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    console.log(ticketType);
+                    onEditTicket(showIndex, ticketType);
+                  }}
                 >
                   <IconSettings size={16} />
                 </ActionIcon>
@@ -70,9 +76,11 @@ export const TicketSection: React.FC<TicketSectionProps> = ({
                   ticketType.isFree ? classes.ticketFree : ''
                 }`}
               >
-                {ticketType.isFree ? 'Free' : `${new Intl.NumberFormat('vi-VN').format(
-                  Number(ticketType.price),
-                )} đ`}
+                {ticketType.isFree
+                  ? 'Free'
+                  : `${new Intl.NumberFormat('vi-VN').format(
+                      Number(ticketType.price),
+                    )} đ`}
               </Text>
             </Box>
           </Card>

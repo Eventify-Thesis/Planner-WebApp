@@ -28,6 +28,5 @@ export const MainContent = styled.main`
   // height: calc(100vh - ${LAYOUT.desktop.headerHeight});
   // max-height: calc(100vh - ${LAYOUT.desktop.headerHeight});
   overflow-y: auto;
-  padding: 24px;
   padding-bottom: 60px;
 `;

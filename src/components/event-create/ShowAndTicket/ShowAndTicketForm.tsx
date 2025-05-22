@@ -193,6 +193,7 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
   };
 
   const handleEditTicket = (showIndex: number, ticketType: TicketTypeModel) => {
+    console.log(showIndex, ticketType);
     setCurrentShow(showIndex);
     setCurrentTicketType(ticketType);
     setTicketModalVisible(true);
@@ -203,7 +204,7 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
       const newShows = [...shows];
       const ticketIndex = currentTicketType
         ? newShows[currentShow].ticketTypes.findIndex(
-            (t) => t.id === ticketType.id,
+            (t) => t.id == ticketType.id,
           )
         : -1;
       if (ticketIndex !== -1) {
@@ -211,7 +212,7 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
       } else {
         newShows[currentShow].ticketTypes.push({
           ...ticketType,
-          id: - (new Date().getTime() - 10000000),
+          id: -(new Date().getTime() - 10000000),
           position: (newShows[currentShow].ticketTypes.length as number) || 0,
         });
       }
@@ -335,9 +336,7 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
                 show={show}
                 showIndex={index}
                 onAddTicket={() => handleAddTicket(index)}
-                onEditTicket={(ticketTypeId) =>
-                  handleEditTicket(index, ticketTypeId)
-                }
+                onEditTicket={handleEditTicket}
                 onShowUpdate={(updatedShow) =>
                   handleShowUpdate(index, updatedShow)
                 }

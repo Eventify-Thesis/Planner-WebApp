@@ -77,6 +77,7 @@ export const TicketModal: React.FC<TicketModalProps> = ({
       const values = await form.validateFields();
       onSave({
         ...values,
+        id: initialValues?.id,
         isFree,
         imageUrl: imageUrl,
         position: initialValues?.position || 0,
@@ -148,21 +149,24 @@ export const TicketModal: React.FC<TicketModalProps> = ({
                   },
                 ]}
               >
-                <InputNumber<number>
+                <InputNumber
                   disabled={isFree}
                   min={0}
                   style={{ width: '120px' }}
-                  formatter={(value) =>
-                    value !== undefined && value !== null
+                  step={1}
+                  formatter={(value) => {
+                    const number = Number(value);
+                    return !isNaN(number)
                       ? `${new Intl.NumberFormat('vi-VN').format(
-                          Number(value),
+                          Math.floor(number),
                         )} ₫`
-                      : ''
-                  }
+                      : '';
+                  }}
                   parser={(value) => {
                     if (!value) return 0;
-                    const parsed = value.replace(/\s?₫|,/g, '');
-                    return isNaN(Number(parsed)) ? 0 : Number(parsed);
+                    const parsed = value.replace(/[₫.,\s]/g, ''); // remove currency, commas, dots, and spaces
+                    const num = parseInt(parsed, 10);
+                    return isNaN(num) ? 0 : num;
                   }}
                 />
               </Form.Item>
