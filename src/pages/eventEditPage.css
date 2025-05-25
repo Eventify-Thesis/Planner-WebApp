@@ -70,3 +70,7 @@ textarea:focus {
 .mantine-SegmentedControl-indicator {
   box-shadow: 0 2px 5px rgba(34, 139, 230, 0.2);
 }
+
+.mantine-Stepper-stepCompletedIcon {
+  border-radius: 50% !important;
+}

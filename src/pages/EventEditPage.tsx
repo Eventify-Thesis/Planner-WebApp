@@ -410,17 +410,19 @@ const EventEditPage: React.FC = () => {
                     },
                     step: {
                       flex: 1,
+                      borderRadius: '50%',
                     },
                     stepIcon: {
                       borderWidth: 2,
                       width: 32,
                       height: 32,
+                      borderRadius: '50%',
                       fontSize: theme.fontSizes.sm,
-                      // '&[data-completed]': {
-                      //   backgroundColor: theme.colors.blue[6],
-                      //   borderColor: theme.colors.blue[6],
-                      //   color: theme.white,
-                      // },
+                      '&[data-completed]': {
+                        backgroundColor: theme.colors.blue[6],
+                        borderColor: theme.colors.blue[6],
+                        color: theme.white,
+                      },
                     },
                     separator: {
                       flex: 1,

@@ -6,17 +6,7 @@ import { BaseButton } from '@/components/common/BaseButton/BaseButton';
 import { BaseLayout } from '@/components/common/BaseLayout/BaseLayout';
 
 export const SiderDiv = styled.div`
-  background: rgba(0, 0, 0, 0.7); /* fallback for old browsers */
-  // background: -webkit-linear-gradient(
-  //   to bottom,
-  //   #ffd194,
-  //   #70e1f5
-  // ); /* Chrome 10-25, Safari 5.1-6 */
-  // background: linear-gradient(
-  //   to bottom,
-  //   #ffd194,
-  //   #70e1f5
-  // ); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+  background: black; /* fallback for old browsers */
 `;
 
 export const Sider = styled(BaseLayout.Sider)`
@@ -41,7 +31,7 @@ export const Sider = styled(BaseLayout.Sider)`
   }
 `;
 
-export const CollapseButton = styled(BaseButton) <{ $isCollapsed: boolean }>`
+export const CollapseButton = styled(BaseButton)<{ $isCollapsed: boolean }>`
   background: var(--collapse-background-color);
 
   border: 1px solid var(--border-color);

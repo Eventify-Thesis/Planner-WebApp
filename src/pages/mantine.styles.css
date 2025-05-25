@@ -54,5 +54,5 @@
 }
 
 .mantine-Stepper-stepCompletedIcon {
-  border-radius: 50%;
+  border-radius: 50% !important;
 }

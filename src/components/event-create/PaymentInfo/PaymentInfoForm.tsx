@@ -25,7 +25,7 @@ const styles = {
     backgroundColor: '#f8f9fa',
     borderRadius: '8px',
     padding: '20px',
-    marginBottom: '16px',
+    marginBottom: '32px !important',
     boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
   },
   sectionTitle: {
@@ -153,7 +153,7 @@ export const PaymentInfoForm: React.FC<PaymentInfoFormProps> = ({
   return (
     <Box w="100%" p="24px">
       {/* Payment Information Notice */}
-      <Paper p="lg" mb="md" bg="blue.9" c="white">
+      <Paper p="lg" mb="md" bg="blue.9" c="white" mb="32px !important">
         <Text mb="sm">{t('payment_info.notice')}</Text>
         <Text>
           {t('payment_info.contact_info')}{' '}
@@ -176,7 +176,7 @@ export const PaymentInfoForm: React.FC<PaymentInfoFormProps> = ({
       </Paper>
 
       {/* Account Information */}
-      <Paper style={styles.section}>
+      <Paper style={styles.section} mb="32px !important">
         <SectionTitle
           icon={<IconBuildingBank size={18} />}
           title={t('payment_info.account_information')}
@@ -218,7 +218,7 @@ export const PaymentInfoForm: React.FC<PaymentInfoFormProps> = ({
       </Paper>
 
       {/* Business Information */}
-      <Paper style={styles.section}>
+      <Paper style={styles.section} mb="32px !important">
         <SectionTitle
           icon={<IconBuildingStore size={18} />}
           title={t('payment_info.business_information')}

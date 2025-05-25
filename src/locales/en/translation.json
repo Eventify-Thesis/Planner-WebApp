@@ -193,6 +193,7 @@
     "save": "Save",
     "continue": "Continue",
     "back": "Back",
+    "top": "Scroll to top",
     "previous_step_required": "Please complete the current step before moving on",
     "next_step_required": "Please complete the previous step before moving on",
     "failed_to_save": "Failed to save event",

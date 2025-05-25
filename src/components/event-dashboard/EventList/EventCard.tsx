@@ -199,6 +199,13 @@ const useStyles = createStyles((theme: any) => ({
     border: '1px solid rgba(10, 207, 131, 0.3)',
     backdropFilter: 'blur(4px)',
     zIndex: 2,
+
+    [theme.fn.smallerThan('md')]: {
+      display: 'none',
+      visibility: 'hidden',
+      opacity: 0,
+      pointerEvents: 'none',
+    },
   },
 
   rightSection: {
@@ -215,8 +222,8 @@ const useStyles = createStyles((theme: any) => ({
     border: `1px solid ${theme.colors.dark[5]}`,
     zIndex: 2,
 
-    [`@media (max-width: ${theme.breakpoints.md}px)`]: {
-      display: 'none !important',
+    [theme.fn.smallerThan('md')]: {
+      display: 'none',
       visibility: 'hidden',
       opacity: 0,
       pointerEvents: 'none',
