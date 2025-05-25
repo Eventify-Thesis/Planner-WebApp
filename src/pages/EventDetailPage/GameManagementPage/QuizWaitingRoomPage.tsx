@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -113,9 +113,6 @@ export const QuizWaitingRoomPage: React.FC = () => {
     showId: string;
     quizId: string;
   }>();
-  const [lastJoinedUser, setLastJoinedUser] = useState<string>('');
-  const [showJoinMessage, setShowJoinMessage] = useState<boolean>(false);
-  const { socket, isConnected, connect, currentCode } = useSocket();
 
   const navigate = useNavigate();
 
@@ -134,111 +131,59 @@ export const QuizWaitingRoomPage: React.FC = () => {
   );
 
   const joinCode = joinCodeData?.code;
-  const expiresAt = joinCodeData?.expiresAt;
-
-  // Generate join code mutation
+  const socketRef = useRef<Socket | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
     if (!joinCode) return;
 
-    // Connect to socket only if not already connected to the same code
-    if (!socket || currentCode !== joinCode) {
-      console.log('Connecting to socket for quiz code:', joinCode);
-      connect(joinCode, true);
-    } else {
-      console.log(
-        'Reusing existing socket connection for quiz code:',
-        joinCode,
-      );
-    }
+    socketRef.current = io(`${import.meta.env.VITE_API_BASE_URL}/quiz`, {
+      transports: ['websocket'],
+      autoConnect: true,
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      timeout: 10000,
+      auth: {
+        code: joinCode,
+        userId: 'host-user',
+        username: 'Quiz Host',
+        isHost: true,
+      },
+    });
 
-    // Set up event handlers only once when socket is available
-    if (socket) {
-      // Remove any existing handlers first
-      // socket.off('connect');
-      // socket.off('disconnect');
-      // socket.off('connect_error');
-      // socket.off('joinedQuiz');
-      // socket.off('participantJoined');
-      // socket.off('participantLeft');
-
-      socket.on('disconnect', (reason) => {
-        console.log('Disconnected from WebSocket:', reason);
-        if (reason === 'io server disconnect') {
-          // Server initiated disconnect, try to reconnect
-          socket.connect();
-        }
+    const handleConnect = () => {
+      setIsConnected(true);
+      socketRef.current?.emit('joinQuizByCode', {
+        code: joinCode,
+        userId: 'host-user',
+        username: 'Quiz Host',
+        isHost: true,
       });
+    };
 
-      socket.on('connect_error', (error) => {
-        console.error('Connection error:', error);
-        notifications.show({
-          title: 'Connection Error',
-          message: 'Failed to connect to the game server. Retrying...',
-          color: 'yellow',
-        });
-      });
+    const handleDisconnect = () => {
+      setIsConnected(false);
+    };
 
-      socket.on('joinedQuiz', (data) => {
-        console.log('Host joined quiz:', data);
-        if (data.activeUsers && Array.isArray(data.activeUsers)) {
-          setParticipants(data.activeUsers);
-        }
-      });
+    const handleParticipantJoined = (data: any) => {
+      if (data.userId === 'host-user') return;
+      setParticipants((prev) => [...prev, data]);
+    };
 
-      socket.on('participantJoined', (data) => {
-        console.log('Participant joined:', data.userId, data.username);
-        setParticipants((prevParticipants) => {
-          if (!prevParticipants.some((p) => p.userId === data.userId)) {
-            return [
-              ...prevParticipants,
-              {
-                userId: data.userId,
-                username: data.username,
-                joinTime: new Date(),
-              },
-            ];
-          }
-          return prevParticipants;
-        });
-
-        setLastJoinedUser(data.username);
-        setShowJoinMessage(true);
-        setTimeout(() => setShowJoinMessage(false), 3000);
-
-        notifications.show({
-          title: 'New Player',
-          message: `${data.username} has joined the game`,
-          color: 'blue',
-        });
-      });
-
-      socket.on('participantLeft', (data) => {
-        console.log('Participant left:', data);
-        setParticipants((prev) => prev.filter((p) => p.userId !== data.userId));
-
-        notifications.show({
-          title: 'Player Left',
-          message: `${data.username} has left the game`,
-          color: 'gray',
-        });
-      });
-    }
+    socketRef.current?.on('connect', handleConnect);
+    socketRef.current?.on('disconnect', handleDisconnect);
+    socketRef.current?.on('participantJoined', handleParticipantJoined);
 
     return () => {
-      if (socket) {
-        socket.off('connect');
-        socket.off('disconnect');
-        socket.off('connect_error');
-        socket.off('joinedQuiz');
-        socket.off('participantJoined');
-        socket.off('participantLeft');
-      }
+      socketRef.current?.off('connect', handleConnect);
+      socketRef.current?.off('disconnect', handleDisconnect);
+      socketRef.current?.off('participantJoined', handleParticipantJoined);
     };
-  }, [socket, joinCode]);
+  }, [joinCode]);
 
   const handleStartGame = async () => {
-    if (participants.length === 1) {
+    if (participants.length < 1) {
       notifications.show({
         title: 'No participants',
         message: 'Wait for participants to join before starting the game.',
@@ -247,19 +192,24 @@ export const QuizWaitingRoomPage: React.FC = () => {
       return;
     }
 
-    if (!socket || !isConnected) {
-      socket?.connect();
+    if (!socketRef.current || !isConnected) {
+      socketRef.current?.connect();
     }
 
-    console.log('Starting game...', { socket, isConnected, joinCode });
-    socket?.emit('startQuiz', {
-      code: joinCode,
-      userId: 'host-user',
-      username: 'Quiz Host',
+    console.log('Starting game...', {
+      socket: socketRef.current,
+      isConnected,
+      joinCode,
     });
 
+    setTimeout(() => {
+      socketRef.current?.emit('startQuiz', {
+        code: joinCode,
+      });
+    }, 1000);
+
     navigate(
-      `/events/${eventId}/shows/${showId}/game-management/${quizId}/active?code=${joinCode}`,
+      `/events/${eventId}/shows/${showId}/game-management/${quizId}/active/${joinCode}`,
     );
   };
 

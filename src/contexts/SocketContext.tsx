@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useUser } from '@clerk/clerk-react';
 
@@ -24,7 +30,11 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
   const connect = (code: string, isHost: boolean = false) => {
     // If a socket exists with the same code, reuse it
-    if (persistentSocket && persistentCode === code && persistentSocket.connected) {
+    if (
+      persistentSocket &&
+      persistentCode === code &&
+      persistentSocket.connected
+    ) {
       console.log('Reusing existing socket connection for code:', code);
       setSocket(persistentSocket);
       setIsConnected(true);
@@ -37,7 +47,12 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       persistentSocket.disconnect();
     }
 
-    console.log('Creating new socket connection for code:', code, 'isHost:', isHost);
+    console.log(
+      'Creating new socket connection for code:',
+      code,
+      'isHost:',
+      isHost,
+    );
     const newSocket = io(`${import.meta.env.VITE_API_BASE_URL}/quiz`, {
       transports: ['websocket', 'polling'],
       autoConnect: true,
@@ -48,22 +63,22 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       timeout: 20000,
       auth: {
         code,
-        isHost,
-        userId: isHost ? 'host-user' : user?.id,
-        username: isHost ? 'Quiz Host' : user?.fullName,
+        isHost: true,
+        userId: 'host-user',
+        username: 'Quiz Host',
       },
     });
 
     newSocket.on('connect', () => {
       setIsConnected(true);
       console.log('Connected to WebSocket');
-      
+
       // Join the quiz using the code
       newSocket.emit('joinQuizByCode', {
         code,
-        userId: isHost ? 'host-user' : user?.id,
-        username: isHost ? 'Quiz Host' : user?.fullName,
-        isHost,
+        userId: 'host-user',
+        username: 'Quiz Host',
+        isHost: true,
       });
     });
 
@@ -103,7 +118,9 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <SocketContext.Provider value={{ socket, isConnected, connect, disconnect, currentCode }}>
+    <SocketContext.Provider
+      value={{ socket, isConnected, connect, disconnect, currentCode }}
+    >
       {children}
     </SocketContext.Provider>
   );
@@ -115,4 +132,4 @@ export function useSocket() {
     throw new Error('useSocket must be used within a SocketProvider');
   }
   return context;
-} 
+}
