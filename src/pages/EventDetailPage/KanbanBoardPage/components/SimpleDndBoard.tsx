@@ -584,7 +584,9 @@ export const SimpleDndBoard: React.FC<SimpleDndBoardProps> = () => {
                   onDeleteTask={handleDeleteTask}
                   onChangeTaskStatus={handleChangeTaskStatus}
                   availableColumns={availableColumns}
-                  onUpdateColumn={(columnId, name) => onColumnUpdate(columnId, { name })}
+                  onUpdateColumn={(columnId, name) =>
+                    onColumnUpdate(columnId, { name })
+                  }
                 />
               );
             })}

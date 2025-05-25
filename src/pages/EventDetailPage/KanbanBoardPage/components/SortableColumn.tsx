@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
@@ -15,6 +15,8 @@ import {
   ColorPicker,
   Group,
   Box,
+  Modal,
+  Textarea,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useDisclosure } from '@mantine/hooks';
@@ -82,6 +84,7 @@ export const SortableColumn: React.FC<SortableColumnProps> = ({
     colorPickerOpened,
     { toggle: toggleColorPicker, close: closeColorPicker },
   ] = useDisclosure(false);
+  const tasksContainerRef = useRef<HTMLDivElement>(null);
 
   // Column name editing state
   const [isEditingName, setIsEditingName] = useState(false);
@@ -107,6 +110,7 @@ export const SortableColumn: React.FC<SortableColumnProps> = ({
   const form = useForm({
     initialValues: {
       title: '',
+      description: '',
     },
     validate: {
       title: (value) =>
@@ -114,11 +118,30 @@ export const SortableColumn: React.FC<SortableColumnProps> = ({
     },
   });
 
-  // Handle form submission
-  const handleSubmit = form.onSubmit((values) => {
+  // Quick form for inline task creation
+  const quickForm = useForm({
+    initialValues: {
+      title: '',
+    },
+    validate: {
+      title: (value) =>
+        value.trim().length === 0 ? 'Title is required' : null,
+    },
+  });
+
+  // Auto scroll to bottom when tasks change
+  useEffect(() => {
+    if (tasksContainerRef.current) {
+      tasksContainerRef.current.scrollTop =
+        tasksContainerRef.current.scrollHeight;
+    }
+  }, [tasks]);
+
+  // Handle quick form submission
+  const handleQuickSubmit = quickForm.onSubmit((values) => {
     if (onAddTask) {
       onAddTask(column.id, values.title);
-      form.reset();
+      quickForm.reset();
       closeAddTask();
     }
   });
@@ -306,98 +329,123 @@ export const SortableColumn: React.FC<SortableColumnProps> = ({
             )}
           </Group>
 
-          <Menu shadow="md" width={200} position="bottom-end">
-            <Menu.Target>
-              <ActionIcon
-                variant="transparent"
-                color="gray.0"
-                size="sm"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <IconDotsVertical size={16} />
-              </ActionIcon>
-            </Menu.Target>
-
-            <Menu.Dropdown>
-              <Menu.Label>Column Actions</Menu.Label>
-
-              {onMoveColumn && !isFirstColumn && (
-                <Menu.Item
-                  leftSection={<IconChevronLeft size={14} />}
-                  onClick={() => onMoveColumn(column.id, 'left')}
-                >
-                  Move left
-                </Menu.Item>
-              )}
-
-              {onMoveColumn && !isLastColumn && (
-                <Menu.Item
-                  leftSection={<IconChevronRight size={14} />}
-                  onClick={() => onMoveColumn(column.id, 'right')}
-                >
-                  Move right
-                </Menu.Item>
-              )}
-
-              {onChangeColor && (
-                <Menu.Item
-                  leftSection={<IconColorSwatch size={14} />}
-                  onClick={toggleColorPicker}
-                  closeMenuOnClick={false}
-                >
-                  <div style={{ position: 'relative' }}>
-                    Change color
-                    <Popover
-                      opened={colorPickerOpened}
-                      onChange={closeColorPicker}
-                      position="right"
-                      withArrow
-                      shadow="md"
-                    >
-                      <Popover.Target>
-                        <div></div>
-                      </Popover.Target>
-                      <Popover.Dropdown>
-                        <ColorPicker
-                          format="hex"
-                          value={customColor || theme.colors.blue[7]}
-                          onChange={handleColorChange}
-                          swatches={[
-                            theme.colors.blue[7],
-                            theme.colors.cyan[7],
-                            theme.colors.green[7],
-                            theme.colors.yellow[7],
-                            theme.colors.orange[7],
-                            theme.colors.red[7],
-                            theme.colors.pink[7],
-                            theme.colors.violet[7],
-                          ]}
-                        />
-                      </Popover.Dropdown>
-                    </Popover>
-                  </div>
-                </Menu.Item>
-              )}
-
-              {onDeleteColumn && (
-                <Menu.Item
-                  color="red"
-                  leftSection={<IconTrash size={14} />}
-                  onClick={() => {
-                    if (window.confirm(`Delete column "${column.name}"?`)) {
-                      onDeleteColumn(column.id);
-                    }
+          <Group gap="xs">
+            {onAddTask && (
+              <>
+                <ActionIcon
+                  variant="transparent"
+                  color="gray.0"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openAddTask();
+                  }}
+                  title="Quick add task"
+                  style={{
+                    transition: 'transform 0.2s ease',
+                    '&:hover': {
+                      transform: 'scale(1.1)',
+                    },
                   }}
                 >
-                  Delete column
-                </Menu.Item>
-              )}
-            </Menu.Dropdown>
-          </Menu>
+                  <IconPlus size={16} />
+                </ActionIcon>
+              </>
+            )}
+            <Menu shadow="md" width={200} position="bottom-end">
+              <Menu.Target>
+                <ActionIcon
+                  variant="transparent"
+                  color="gray.0"
+                  size="sm"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <IconDotsVertical size={16} />
+                </ActionIcon>
+              </Menu.Target>
+
+              <Menu.Dropdown>
+                <Menu.Label>Column Actions</Menu.Label>
+
+                {onMoveColumn && !isFirstColumn && (
+                  <Menu.Item
+                    leftSection={<IconChevronLeft size={14} />}
+                    onClick={() => onMoveColumn(column.id, 'left')}
+                  >
+                    Move left
+                  </Menu.Item>
+                )}
+
+                {onMoveColumn && !isLastColumn && (
+                  <Menu.Item
+                    leftSection={<IconChevronRight size={14} />}
+                    onClick={() => onMoveColumn(column.id, 'right')}
+                  >
+                    Move right
+                  </Menu.Item>
+                )}
+
+                {onChangeColor && (
+                  <Menu.Item
+                    leftSection={<IconColorSwatch size={14} />}
+                    onClick={toggleColorPicker}
+                    closeMenuOnClick={false}
+                  >
+                    <div style={{ position: 'relative' }}>
+                      Change color
+                      <Popover
+                        opened={colorPickerOpened}
+                        onChange={closeColorPicker}
+                        position="right"
+                        withArrow
+                        shadow="md"
+                      >
+                        <Popover.Target>
+                          <div></div>
+                        </Popover.Target>
+                        <Popover.Dropdown>
+                          <ColorPicker
+                            format="hex"
+                            value={customColor || theme.colors.blue[7]}
+                            onChange={handleColorChange}
+                            swatches={[
+                              theme.colors.blue[7],
+                              theme.colors.cyan[7],
+                              theme.colors.green[7],
+                              theme.colors.yellow[7],
+                              theme.colors.orange[7],
+                              theme.colors.red[7],
+                              theme.colors.pink[7],
+                              theme.colors.violet[7],
+                            ]}
+                          />
+                        </Popover.Dropdown>
+                      </Popover>
+                    </div>
+                  </Menu.Item>
+                )}
+
+                {onDeleteColumn && (
+                  <Menu.Item
+                    color="red"
+                    leftSection={<IconTrash size={14} />}
+                    onClick={() => {
+                      if (window.confirm(`Delete column "${column.name}"?`)) {
+                        onDeleteColumn(column.id);
+                      }
+                    }}
+                  >
+                    Delete column
+                  </Menu.Item>
+                )}
+              </Menu.Dropdown>
+            </Menu>
+          </Group>
         </div>
 
         {/* Tasks container with scrolling */}
         <div
+          ref={tasksContainerRef}
           style={{
             padding: '10px',
             flexGrow: 1,
@@ -423,14 +471,14 @@ export const SortableColumn: React.FC<SortableColumnProps> = ({
             </Text>
           )}
 
-          {/* Add task form */}
+          {/* Quick add task form */}
           {isAddingTask ? (
             <Paper p="xs" shadow="xs" mt="md" withBorder>
-              <form onSubmit={handleSubmit}>
+              <form onSubmit={handleQuickSubmit}>
                 <TextInput
                   placeholder="Enter task title"
                   size="sm"
-                  {...form.getInputProps('title')}
+                  {...quickForm.getInputProps('title')}
                   autoFocus
                 />
                 <Group mt="xs" justify="flex-end">
@@ -440,7 +488,7 @@ export const SortableColumn: React.FC<SortableColumnProps> = ({
                     size="xs"
                     onClick={() => {
                       closeAddTask();
-                      form.reset();
+                      quickForm.reset();
                     }}
                   >
                     Cancel
@@ -462,7 +510,7 @@ export const SortableColumn: React.FC<SortableColumnProps> = ({
                 onClick={openAddTask}
                 size="sm"
               >
-                Add task
+                Quick add task
               </Button>
             )
           )}

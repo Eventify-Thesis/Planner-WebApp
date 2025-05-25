@@ -14,6 +14,7 @@ import {
   Popover,
   Select,
   Modal,
+  Transition,
 } from '@mantine/core';
 import {
   IconArrowUp,
@@ -58,6 +59,7 @@ export const SortableTask: React.FC<SortableTaskProps> = ({
   availableColumns,
 }) => {
   const [statusChangeOpen, setStatusChangeOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const theme = useMantineTheme();
 
   // Set up sortable
@@ -213,26 +215,36 @@ export const SortableTask: React.FC<SortableTaskProps> = ({
     <>
       <Paper
         ref={setNodeRef}
-        shadow="xs"
+        shadow={isHovered ? 'sm' : 'xs'}
         p="md"
-        radius="sm"
+        radius="md"
         withBorder
         style={{
           transform: CSS.Transform.toString(transform),
-          transition,
+          transition: `${transition}, all 0.2s ease`,
           margin: '0 0 8px 0',
-          padding: '10px 12px',
-          cursor: 'default', // Change default cursor to normal
+          padding: '12px 14px',
+          cursor: 'pointer',
           opacity: isDragging ? 0.5 : 1,
           zIndex: isDragging ? 100 : 1,
-          borderLeft: `3px solid ${theme.colors[priorityInfo.color][6]}`,
-          boxShadow: isDragging ? '0 5px 10px rgba(0, 0, 0, 0.15)' : undefined,
-          backgroundColor: isDragging ? theme.colors.gray[1] : undefined,
+          borderLeft: `4px solid ${theme.colors[priorityInfo.color][6]}`,
+          boxShadow: isDragging
+            ? '0 8px 16px rgba(0, 0, 0, 0.1)'
+            : isHovered
+            ? '0 4px 8px rgba(0, 0, 0, 0.05)'
+            : undefined,
+          backgroundColor: isDragging
+            ? theme.colors.gray[1]
+            : isHovered
+            ? theme.white
+            : theme.colors.gray[0],
           position: 'relative',
-          touchAction: 'none', // Prevent scrolling on touch devices while dragging
+          touchAction: 'none',
         }}
         onClick={onClick}
-        {...attributes} // Place attributes here without any touch listeners
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        {...attributes}
       >
         {/* Drag handle */}
         <div
@@ -241,17 +253,18 @@ export const SortableTask: React.FC<SortableTaskProps> = ({
             top: '50%',
             left: '2px',
             transform: 'translateY(-50%)',
-            cursor: isDragging ? 'grabbing' : 'grab', // Change cursor during drag
+            cursor: isDragging ? 'grabbing' : 'grab',
             color: theme.colors.gray[5],
             display: 'flex',
             alignItems: 'center',
-            opacity: isDragging ? 0.8 : 0.5, // Slightly more visible when dragging
-            padding: '16px 4px', // Wider area for easier grabbing
-            touchAction: 'none', // Prevent scrolling on touch devices
+            opacity: isHovered ? 0.8 : 0.4,
+            padding: '16px 4px',
+            transition: 'opacity 0.2s ease',
+            touchAction: 'none',
           }}
-          {...listeners} // Apply listeners only to the drag handle
+          {...listeners}
         >
-          <IconGripVertical size={12} />
+          <IconGripVertical size={14} />
         </div>
 
         {/* Main content */}
@@ -260,8 +273,8 @@ export const SortableTask: React.FC<SortableTaskProps> = ({
             display: 'flex',
             flexDirection: 'column',
             flex: 1,
-            padding: '0 0 0 12px',
-            gap: '6px',
+            padding: '0 0 0 16px',
+            gap: '8px',
             overflow: 'hidden',
           }}
         >
@@ -271,12 +284,22 @@ export const SortableTask: React.FC<SortableTaskProps> = ({
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'flex-start',
+              gap: '8px',
             }}
           >
             <Text
-              size="sm"
-              fw={500}
-              style={{ cursor: 'pointer', lineHeight: 1.3, flex: 1 }}
+              size="lg"
+              c="dark.7"
+              fw={600}
+              style={{
+                cursor: 'pointer',
+                lineHeight: 1.4,
+                flex: 1,
+                transition: 'color 0.2s ease',
+                '&:hover': {
+                  color: theme.colors.blue[6],
+                },
+              }}
             >
               {task.title}
             </Text>
@@ -286,20 +309,24 @@ export const SortableTask: React.FC<SortableTaskProps> = ({
               <Menu shadow="md" width={200} position="bottom-end">
                 <Menu.Target>
                   <ActionIcon
-                    size="xs"
+                    size="sm"
                     variant="subtle"
+                    color="gray"
                     aria-label="Task actions"
                     onClick={(e) => e.stopPropagation()}
+                    style={{
+                      opacity: isHovered ? 1 : 0.6,
+                      transition: 'opacity 0.2s ease',
+                    }}
                   >
-                    <IconDotsVertical size={14} />
+                    <IconDotsVertical size={16} />
                   </ActionIcon>
                 </Menu.Target>
 
                 <Menu.Dropdown>
                   <Menu.Label>Task Actions</Menu.Label>
-
                   <Menu.Item
-                    leftSection={<IconEdit size={14} />}
+                    leftSection={<IconEdit size={16} />}
                     onClick={handleEditClick}
                   >
                     Edit task
@@ -307,7 +334,7 @@ export const SortableTask: React.FC<SortableTaskProps> = ({
 
                   {onChangeStatus && availableColumns && (
                     <Menu.Item
-                      leftSection={<IconArrowsExchange size={14} />}
+                      leftSection={<IconArrowsExchange size={16} />}
                       onClick={handleStatusClick}
                     >
                       Change status
@@ -317,7 +344,7 @@ export const SortableTask: React.FC<SortableTaskProps> = ({
                   {onDelete && (
                     <Menu.Item
                       color="red"
-                      leftSection={<IconTrash size={14} />}
+                      leftSection={<IconTrash size={16} />}
                       onClick={handleDeleteClick}
                     >
                       Delete task
@@ -330,7 +357,7 @@ export const SortableTask: React.FC<SortableTaskProps> = ({
 
           {/* Task labels if any */}
           {task.labels && task.labels.length > 0 && (
-            <Group gap={4} mt={5}>
+            <Group gap={6} mt={2}>
               {task.labels.map((label) => {
                 const labelInfo = getLabelInfo(label);
                 return (
@@ -341,10 +368,17 @@ export const SortableTask: React.FC<SortableTaskProps> = ({
                     withArrow
                   >
                     <Badge
-                      size="xs"
+                      size="sm"
                       color={labelInfo.color}
                       variant="light"
-                      style={{ padding: '3px 6px' }}
+                      style={{
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          transform: 'translateY(-1px)',
+                        },
+                      }}
                       leftSection={labelInfo.icon}
                     >
                       {labelInfo.label}
@@ -355,35 +389,29 @@ export const SortableTask: React.FC<SortableTaskProps> = ({
             </Group>
           )}
 
-          {/* Task description preview */}
-          {task.description && (
-            <Text
-              size="xs"
-              color="dimmed"
-              lineClamp={2}
-              style={{ marginBottom: '8px' }}
-            >
-              {task.description}
-            </Text>
-          )}
-
           {/* Task metadata */}
           <div
             style={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              marginTop: '8px',
+              marginTop: '4px',
+              gap: '8px',
             }}
           >
             {/* Due date */}
             <div>
               {formattedDueDate && (
                 <Badge
-                  size="md"
+                  size="sm"
                   color={isOverdue() ? 'red' : isDueSoon() ? 'orange' : 'gray'}
-                  variant="dot"
-                  leftSection={<IconCalendarEvent size={10} />}
+                  variant="light"
+                  leftSection={<IconCalendarEvent size={12} />}
+                  style={{
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    transition: 'all 0.2s ease',
+                  }}
                 >
                   {formattedDueDate}
                 </Badge>
@@ -392,21 +420,35 @@ export const SortableTask: React.FC<SortableTaskProps> = ({
 
             {/* Assigned users */}
             {assignments.length > 0 && (
-              <Avatar.Group spacing="sm">
+              <Avatar.Group spacing="xs">
                 {assignments.slice(0, 3).map((assignment) => (
                   <Avatar
                     key={assignment.id}
-                    size="xs"
+                    size="sm"
                     radius="xl"
                     color="blue"
+                    style={{
+                      border: `2px solid ${theme.white}`,
+                      transition: 'transform 0.2s ease',
+                      '&:hover': {
+                        transform: 'translateY(-2px)',
+                      },
+                    }}
                   >
-                    {/* Display first character of assignment ID as fallback */}
                     {assignment.member.firstName.charAt(0).toUpperCase() +
                       assignment.member.lastName.charAt(0).toUpperCase()}
                   </Avatar>
                 ))}
                 {assignments.length > 3 && (
-                  <Avatar size="xs" radius="xl">
+                  <Avatar
+                    size="sm"
+                    radius="xl"
+                    style={{
+                      border: `2px solid ${theme.white}`,
+                      backgroundColor: theme.colors.gray[3],
+                      color: theme.colors.gray[7],
+                    }}
+                  >
                     +{assignments.length - 3}
                   </Avatar>
                 )}
@@ -416,7 +458,7 @@ export const SortableTask: React.FC<SortableTaskProps> = ({
         </div>
       </Paper>
 
-      {/* Use Modal instead of Popover for status change */}
+      {/* Status change modal */}
       {onChangeStatus && availableColumns && (
         <Modal
           opened={statusChangeOpen}
@@ -424,8 +466,14 @@ export const SortableTask: React.FC<SortableTaskProps> = ({
           title="Change task status"
           size="xs"
           centered
+          styles={{
+            title: {
+              fontWeight: 600,
+              fontSize: '1.1rem',
+            },
+          }}
         >
-          <Text size="sm" fw={500} mb={10}>
+          <Text size="sm" fw={500} mb={12}>
             Move task to:
           </Text>
           <Select
@@ -439,6 +487,13 @@ export const SortableTask: React.FC<SortableTaskProps> = ({
             searchable
             clearable={false}
             autoFocus
+            styles={{
+              input: {
+                '&:focus': {
+                  borderColor: theme.colors.blue[6],
+                },
+              },
+            }}
           />
         </Modal>
       )}

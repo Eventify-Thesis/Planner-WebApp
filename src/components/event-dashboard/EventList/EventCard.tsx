@@ -1,16 +1,13 @@
-
 import { EventCardActions } from './EventCardActions';
 import { EventStatus } from '@/constants/enums/event';
-import { 
-  Card, 
-  Image, 
-  Text, 
-  Flex, 
-  Box, 
-  Anchor
-} from '@mantine/core';
+import { Card, Image, Text, Flex, Box, Anchor, Group } from '@mantine/core';
 import { createStyles } from '@mantine/styles';
-import { IconCalendar, IconMapPin } from '@tabler/icons-react';
+import {
+  IconCalendar,
+  IconMapPin,
+  IconClock,
+  IconUser,
+} from '@tabler/icons-react';
 import dayjs from 'dayjs';
 import 'dayjs/locale/vi';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -24,10 +21,11 @@ interface EventCardProps {
   startTime: Date;
   status: EventStatus;
   venueName: string;
-  // Keep as props in interface but don't use them to maintain compatibility
   endTime?: string;
   role?: string;
 }
+
+// @ts-ignore
 
 const useStyles = createStyles((theme: any) => ({
   card: {
@@ -40,12 +38,12 @@ const useStyles = createStyles((theme: any) => ({
     transition: 'transform 0.2s ease, box-shadow 0.2s ease',
     boxShadow: '0 2px 5px rgba(0, 0, 0, 0.1)',
     position: 'relative',
-    
+
     '&:hover': {
       transform: 'translateY(-3px)',
       boxShadow: '0 5px 15px rgba(0, 0, 0, 0.2)',
     },
-    
+
     '&::before': {
       content: '""',
       position: 'absolute',
@@ -60,7 +58,7 @@ const useStyles = createStyles((theme: any) => ({
   },
   cardContent: {
     display: 'flex',
-    padding: theme.spacing.md,
+    padding: theme.spacing.sm,
     gap: theme.spacing.md,
     backgroundColor: theme.colors.dark[8],
     width: '100%',
@@ -68,7 +66,8 @@ const useStyles = createStyles((theme: any) => ({
     borderBottom: `1px solid ${theme.colors.dark[6]}`,
     position: 'relative',
     zIndex: 1,
-    
+    minHeight: '140px',
+
     '&::after': {
       content: '""',
       position: 'absolute',
@@ -86,21 +85,21 @@ const useStyles = createStyles((theme: any) => ({
     },
   },
   image: {
-    width: 160,
-    height: 120,
-    borderRadius: theme.radius.md,
-    objectFit: 'cover',
-    border: `2px solid ${theme.colors.dark[5]}`,
+    width: '200px !important',
+    height: '100px !important',
+    borderRadius: '5px !important',
+    objectFit: 'cover !important',
+    border: `2px solid rgb(66, 235, 100) !important`,
     boxShadow: '0 3px 8px rgba(0, 0, 0, 0.15)',
     transition: 'transform 0.3s ease-in-out',
-    
+
     '&:hover': {
       transform: 'scale(1.02)',
     },
 
     [`@media (max-width: ${theme.breakpoints.sm}px)`]: {
-      width: '100%',
-      height: 120,
+      width: '160px !important',
+      height: '100px !important',
     },
   },
   details: {
@@ -109,6 +108,7 @@ const useStyles = createStyles((theme: any) => ({
     display: 'flex',
     flexDirection: 'column',
     color: 'white',
+    gap: theme.spacing.xs,
   },
   title: {
     fontSize: '20px !important',
@@ -119,7 +119,7 @@ const useStyles = createStyles((theme: any) => ({
     textDecoration: 'none',
     position: 'relative',
     display: 'inline-block',
-    
+
     '&::after': {
       content: '""',
       position: 'absolute',
@@ -130,14 +130,14 @@ const useStyles = createStyles((theme: any) => ({
       background: 'linear-gradient(to right, #4263EB, #0ACF83)',
       transition: 'width 0.3s ease',
     },
-    
+
     '&:hover': {
       textDecoration: 'none',
-      
+
       '&::after': {
         width: '100%',
       },
-    }
+    },
   },
   infoItem: {
     display: 'flex',
@@ -172,7 +172,7 @@ const useStyles = createStyles((theme: any) => ({
     borderTop: `1px solid ${theme.colors.dark[6]}`,
     position: 'relative',
     overflow: 'hidden',
-    
+
     '&::before': {
       content: '""',
       position: 'absolute',
@@ -184,7 +184,7 @@ const useStyles = createStyles((theme: any) => ({
       pointerEvents: 'none',
     },
   },
-  
+
   statusBadge: {
     position: 'absolute',
     top: theme.spacing.xs,
@@ -199,7 +199,44 @@ const useStyles = createStyles((theme: any) => ({
     border: '1px solid rgba(10, 207, 131, 0.3)',
     backdropFilter: 'blur(4px)',
     zIndex: 2,
-  }
+  },
+
+  rightSection: {
+    position: 'absolute',
+    top: theme.spacing.xs,
+    right: '120px',
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+    padding: theme.spacing.xs,
+    backgroundColor: theme.colors.dark[7],
+    borderRadius: theme.radius.md,
+    border: `1px solid ${theme.colors.dark[5]}`,
+    zIndex: 2,
+
+    [`@media (max-width: ${theme.breakpoints.md}px)`]: {
+      display: 'none !important',
+      visibility: 'hidden',
+      opacity: 0,
+      pointerEvents: 'none',
+    },
+  },
+
+  statItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+    padding: theme.spacing.xs,
+    backgroundColor: theme.colors.dark[6],
+    borderRadius: theme.radius.sm,
+  },
+
+  statValue: {
+    fontSize: theme.fontSizes.sm,
+    fontWeight: '700 !important',
+    WebkitTextFillColor: 'white',
+  },
 }));
 
 export const EventCard = ({
@@ -209,20 +246,28 @@ export const EventCard = ({
   eventName,
   url,
   startTime,
+  endTime,
+  role,
   status,
   venueName,
-  // We don't use these parameters but keep them in the props for compatibility
-  // endTime,
-  // role,
 }: EventCardProps) => {
   const { classes } = useStyles();
   const { language } = useLanguage();
   const locale = language === 'en' ? 'en' : 'vi';
   const eventUrl = `${import.meta.env.VITE_USER_BASE_URL}/${url}-${id}`;
 
+  // Calculate duration in days
+  const getDuration = () => {
+    if (!startTime || !endTime) return 'N/A';
+    const start = dayjs(startTime);
+    const end = dayjs(endTime);
+    const days = end.diff(start, 'day');
+    return `${days} days`;
+  };
+
   // Function to determine badge styling based on event status
   const getStatusBadgeStyle = () => {
-    switch(status) {
+    switch (status) {
       case EventStatus.UPCOMING:
         return {
           backgroundColor: 'rgba(10, 207, 131, 0.2)',
@@ -258,7 +303,7 @@ export const EventCard = ({
 
   // Get status text based on status enum
   const getStatusText = () => {
-    switch(status) {
+    switch (status) {
       case EventStatus.UPCOMING:
         return 'Upcoming';
       case EventStatus.PUBLISHED:
@@ -276,9 +321,20 @@ export const EventCard = ({
 
   return (
     <Card className={classes.card} radius="md" withBorder p={0}>
-      <Text 
+      <Box className={classes.rightSection}>
+        <Box className={classes.statItem}>
+          <IconClock size={16} stroke={1.5} color="#4263EB" />
+          <Text className={classes.statValue}>{getDuration()}</Text>
+        </Box>
 
-        className={classes.statusBadge} 
+        <Box className={classes.statItem}>
+          <IconUser size={16} stroke={1.5} color="#0ACF83" />
+          <Text className={classes.statValue}>{role || 'N/A'}</Text>
+        </Box>
+      </Box>
+
+      <Text
+        className={classes.statusBadge}
         style={{
           ...badgeStyle,
           padding: '8px',
@@ -287,26 +343,19 @@ export const EventCard = ({
         {getStatusText()}
       </Text>
       <Box className={classes.cardContent}>
-        <Image 
-          src={eventBannerUrl} 
+        <Image
+          src={eventBannerUrl}
           alt={eventName}
           className={classes.image}
           fallbackSrc="https://placehold.co/600x400?text=Event+Image"
           style={{
-            width: '260px',
-            height: '160px',
-            borderRadius: '8px',
-            objectFit: 'cover',
-            border: '2px solid #0ACF83',
-            transition: 'transform 0.3s ease-in-out',
-            
-            '&:hover': {
-              transform: 'scale(1.02)',
-            },
+            width: '200px',
+            height: '100px',
+            border: '1px solid rgb(66, 235, 100)',
           }}
         />
         <Box className={classes.details}>
-          <Anchor 
+          <Anchor
             href={eventUrl}
             onClick={(e) => {
               e.preventDefault();
@@ -320,7 +369,7 @@ export const EventCard = ({
           >
             {eventName}
           </Anchor>
-          
+
           <Flex direction="column" gap="xs">
             <Flex align="center" gap="xs" className={classes.infoItem}>
               <IconCalendar size={20} stroke={1.5} color="white" />
@@ -330,27 +379,29 @@ export const EventCard = ({
                   : 'TBD'}
               </Text>
             </Flex>
-            
+
             {venueName && (
               <Flex align="start" gap="xs" className={classes.infoItem}>
                 <IconMapPin size={20} stroke={1.5} color="white" />
                 <Box>
                   {addressFull && (
-                    <Text className={classes.locationText} color="white">{addressFull}</Text>
+                    <Text className={classes.locationText} color="white">
+                      {addressFull}
+                    </Text>
                   )}
-                  <Text className={classes.venueName} color="white">{venueName}</Text>
+                  <Text className={classes.venueName} color="white">
+                    {venueName}
+                  </Text>
                 </Box>
               </Flex>
             )}
           </Flex>
         </Box>
       </Box>
-      
+
       <Box className={classes.actionsBar}>
         <EventCardActions id={id} eventStatus={status} />
       </Box>
     </Card>
   );
 };
-
-

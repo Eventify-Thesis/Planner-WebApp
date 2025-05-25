@@ -6,14 +6,14 @@ import FilterBar from '@/components/event-dashboard/filter/FilterBar';
 import EventList from '@/components/event-dashboard/EventList/EventList';
 import { EventStatus } from '@/constants/enums/event';
 import { useGetEventList } from '@/queries/useEventQueries';
-import { 
+import {
   Container,
-  Paper, 
-  Pagination, 
-  Select, 
-  Loader, 
-  Center, 
-  Box
+  Paper,
+  Pagination,
+  Select,
+  Loader,
+  Center,
+  Box,
 } from '@mantine/core';
 import { createStyles } from '@mantine/styles';
 
@@ -22,7 +22,7 @@ const useStyles = createStyles((theme: any) => ({
   container: {
     width: '100%',
     height: '100vh',
-    padding: '0'
+    padding: '0',
   },
 
   paper: {
@@ -107,7 +107,7 @@ const EventDashboardPage: React.FC = () => {
   return (
     <div className={classes.container}>
       <PageTitle>{t('eventDashboardPage.title')}</PageTitle>
-      
+
       <Paper className={classes.paper} withBorder>
         <FilterBar
           keyword={keyword}

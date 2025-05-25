@@ -83,7 +83,7 @@ export const AppRouter: React.FC = () => {
         />
 
         <Route
-          path="/events/:eventId/shows/:showId/game-management/:quizId/active"
+          path="/events/:eventId/shows/:showId/game-management/:quizId/active/:code"
           element={<QuizActiveGamePage />}
         />
 
