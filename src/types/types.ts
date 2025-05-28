@@ -3,6 +3,7 @@ export type ConfigKeys =
   | 'VITE_API_URL_CLIENT'
   | 'VITE_STRIPE_PUBLISHABLE_KEY'
   | 'VITE_API_URL_SERVER'
+  | 'VITE_GOOGLE_MAPS_API_KEY'
   | string;
 
 export type IdParam = string | undefined | number;

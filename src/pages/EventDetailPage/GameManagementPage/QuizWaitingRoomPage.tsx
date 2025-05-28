@@ -30,16 +30,12 @@ import {
   IconCopy,
   IconUserPlus,
   IconBrandDiscord,
-  IconAlertCircle,
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { useGetQuizById } from '@/queries/useQuizQueries';
 import { createStyles } from '@mantine/styles';
-import { useMutation } from '@tanstack/react-query';
-import { quizClient, QuizJoinCodeResponse } from '@/api/quiz.client';
 import { useGetJoinCode } from '@/queries/useGetJoinCode';
 import { io, Socket } from 'socket.io-client';
-import { useSocket } from '@/contexts/SocketContext';
 
 const useStyles = createStyles((theme) => ({
   container: {

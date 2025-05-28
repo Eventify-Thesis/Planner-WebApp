@@ -10,11 +10,12 @@ import {
   Box,
   Text,
   Loader,
-  Paper,
 } from '@mantine/core';
 import { IconMapPin } from '@tabler/icons-react';
 import styles from './EventLocationSection.module.css';
-// Temporarily define interfaces until api modules are properly set up
+import { GooglePlacesAutocomplete } from '@/components/common/GooglePlacesAutocomplete/GooglePlacesAutocomplete';
+import { FormSection } from '../components/FormSection';
+
 interface City {
   originId: number;
   name: string;
@@ -38,8 +39,19 @@ interface Ward {
   type: string;
   typeEn: string;
 }
-import { FormSection } from '../components/FormSection';
-import { safeSetFormValue, getFormValue } from '@/utils/formUtils';
+
+interface PlaceDetails {
+  name: string;
+  formattedAddress: string;
+  latitude: number;
+  longitude: number;
+  placeId: string;
+  addressComponents: {
+    long_name: string;
+    short_name: string;
+    types: string[];
+  }[];
+}
 
 interface EventLocationSectionProps {
   eventType: string;
@@ -74,6 +86,135 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
 }) => {
   const { t } = useTranslation();
   const { language } = useLanguage();
+
+  const handlePlaceSelect = async (place: PlaceDetails) => {
+    if (!place.latitude || !place.longitude) return;
+
+    const lat = place.latitude;
+    const lng = place.longitude;
+    const formattedAddress = place.formattedAddress;
+    const placeId = place.placeId;
+
+    // Get address components
+    const addressComponents = place.addressComponents || [];
+    let streetNumber = '';
+    let route = '';
+    let ward = '';
+    let district = '';
+    let city = '';
+
+    // Try to get information from address components first
+    addressComponents.forEach((component) => {
+      const types = component.types;
+      if (types.includes('street_number')) {
+        streetNumber = component.long_name;
+      } else if (types.includes('route')) {
+        route = component.long_name;
+      } else if (types.includes('sublocality_level_1')) {
+        ward = component.long_name;
+      } else if (types.includes('administrative_area_level_2')) {
+        district = component.long_name;
+      } else if (types.includes('administrative_area_level_1')) {
+        city = component.long_name;
+      }
+    });
+
+    // If we don't have ward information from address components, parse from formatted address
+    if (!ward) {
+      const addressParts = formattedAddress
+        .split(', ')
+        .map((part) => part.trim());
+
+      // Vietnamese address format: street, ward, district, city, country
+      // Example: "227 Đ. Nguyễn Văn Cừ, Phường 4, Quận 5, Hồ Chí Minh, Việt Nam"
+      if (addressParts.length >= 4) {
+        // Find ward (Phường) in the address parts
+        const wardPart = addressParts.find((part) => part.startsWith('Phường'));
+        if (wardPart) {
+          ward = wardPart;
+        }
+
+        // If we still don't have city or district, get them from formatted address
+        if (!city) {
+          city = addressParts[addressParts.length - 2];
+        }
+
+        if (!district) {
+          const districtPart = addressParts.find((part) =>
+            part.startsWith('Quận'),
+          );
+          if (districtPart) {
+            district = districtPart;
+          }
+        }
+
+        // If we don't have street info from components, parse from formatted address
+        if (!streetNumber && !route) {
+          const streetParts = addressParts.slice(0, -4);
+          const streetAddress = streetParts.join(', ');
+          const streetMatch = streetAddress.match(/^(\d+)\s+(.+)$/);
+          if (streetMatch) {
+            streetNumber = streetMatch[1];
+            route = streetMatch[2];
+          } else {
+            route = streetAddress;
+          }
+        }
+      }
+    }
+
+    // Find matching city
+    const matchingCity = cities.find(
+      (c) =>
+        c.name.toLowerCase() === city.toLowerCase() ||
+        c.nameEn.toLowerCase() === city.toLowerCase(),
+    );
+
+    if (matchingCity) {
+      setSelectedCity(matchingCity.originId);
+      form.setFieldValue('cityId', matchingCity.originId);
+
+      // Extract district name from "Quận 5" -> "5"
+      const districtName = district.replace(/^Quận\s+/, '').trim();
+
+      // Find matching district
+      const matchingDistrict = districts.find(
+        (d) =>
+          d.name.toLowerCase() === districtName.toLowerCase() ||
+          d.nameEn.toLowerCase() === districtName.toLowerCase(),
+      );
+
+      if (matchingDistrict) {
+        setSelectedDistrict(matchingDistrict.originId);
+        form.setFieldValue('districtId', matchingDistrict.originId);
+
+        // Extract ward name from "Phường 4" -> "4"
+        const wardName = ward.replace(/^Phường\s+/, '').trim();
+
+        // Find matching ward
+        const matchingWard = wards.find(
+          (w) =>
+            w.name.toLowerCase() === wardName.toLowerCase() ||
+            w.nameEn.toLowerCase() === wardName.toLowerCase(),
+        );
+
+        if (matchingWard) {
+          setSelectedWard(matchingWard.originId);
+          form.setFieldValue('wardId', matchingWard.originId);
+        }
+      }
+    }
+
+    // Set street address
+    const streetAddress = [streetNumber, route].filter(Boolean).join(' ');
+    form.setFieldValue('street', streetAddress);
+
+    // Set Google Places data
+    form.setFieldValue('latitude', lat);
+    form.setFieldValue('longitude', lng);
+    form.setFieldValue('formattedAddress', formattedAddress);
+    form.setFieldValue('placeId', placeId);
+  };
 
   return (
     <FormSection
@@ -137,9 +278,14 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
                 {t('event_create.event_location.venue_name')}
                 <span className={styles.requiredMark}>*</span>
               </Text>
-              <TextInput
+              <GooglePlacesAutocomplete
                 placeholder={t('event_create.event_location.venue_name')}
-                {...form.getInputProps('venueName')}
+                apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''}
+                value={form.values.venueName}
+                onPlaceSelect={handlePlaceSelect}
+                onChange={(value: string) => {
+                  form.values.venueName = value;
+                }}
               />
             </Box>
 

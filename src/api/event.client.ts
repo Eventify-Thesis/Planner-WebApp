@@ -38,6 +38,10 @@ export interface CreateDraftEventDto {
   districtId: number;
   wardId: number;
   street: string;
+  latitude?: number;
+  longitude?: number;
+  formattedAddress?: string;
+  placeId?: string;
   categoriesIds: number[];
   eventType: EventType;
 }
@@ -233,7 +237,10 @@ export const eventsClient = {
     }
   },
 
-  listTicketsByShow: async (eventId: IdParam, showId: number): Promise<any[]> => {
+  listTicketsByShow: async (
+    eventId: IdParam,
+    showId: number,
+  ): Promise<any[]> => {
     try {
       const response = await httpApi.get<any>(
         `/planner/events/${eventId}/shows/${showId}/ticket-types`,
@@ -254,7 +261,9 @@ export const eventsClient = {
   },
 
   getEventStats: async (eventId: IdParam) => {
-    const response = await httpApi.get<any>('planner/events/' + eventId + '/stats');
+    const response = await httpApi.get<any>(
+      'planner/events/' + eventId + '/stats',
+    );
     return response.data.data;
   },
 };

@@ -30,6 +30,7 @@ export const DesktopHeader: React.FC<DesktopHeaderProps> = ({ eventName }) => {
         display: 'flex',
         alignItems: 'center',
         height: '100%',
+        backgroundColor: '#313132',
       }}
     >
       {leftSide}

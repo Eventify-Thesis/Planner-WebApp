@@ -64,6 +64,10 @@ const EventInfoForm: React.FC<FormStepProps> = ({ formRef }) => {
       orgName: undefined,
       orgDescription: undefined,
       orgLogoUrl: undefined,
+      latitude: undefined,
+      longitude: undefined,
+      formattedAddress: undefined,
+      placeId: undefined,
     },
   });
 

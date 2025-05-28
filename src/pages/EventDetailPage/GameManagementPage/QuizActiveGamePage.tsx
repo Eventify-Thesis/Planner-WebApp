@@ -32,7 +32,6 @@ import { notifications } from '@mantine/notifications';
 import { useGetQuizById, useGetQuizQuestions } from '@/queries/useQuizQueries';
 import { createStyles } from '@mantine/styles';
 import { modals } from '@mantine/modals';
-import { useSocket } from '@/contexts/SocketContext';
 import { LiveLeaderboard } from '@/components/quiz/LiveLeaderboard';
 import { io, Socket } from 'socket.io-client';
 
