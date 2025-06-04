@@ -176,6 +176,8 @@ export const QuizActiveGamePage: React.FC = () => {
     'disconnected' | 'connecting' | 'connected' | 'reconnecting' | 'error'
   >('disconnected');
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  // Track each participant's answer
+  const [participantAnswers, setParticipantAnswers] = useState<{ [userId: string]: number }>({});
 
   useEffect(() => {
     if (!code || isConnected) return;
@@ -200,58 +202,128 @@ export const QuizActiveGamePage: React.FC = () => {
     };
 
     const handleUpdateGameState = (data: any) => {
-      setCurrentQuestionIndex(data.questionIndex);
-      setCurrentQuestion(data.question);
-      setParticipants(data.participants);
+      console.log("handle update game state", data)
+      setCurrentQuestionIndex(data.currentQuestionIndex);
+      setCurrentQuestion({
+        ...data.question,
+        startTime: data.currentQuestionStartTime
+      });
+    
+      const newParticipants: any[] = [];
+      const newParticipantAnswers: { [userId: string]: number } = {};
+    
+      data.participants.forEach((participant: any) => {
+        if (participant.userId === 'host-user') return;
+        newParticipants.push({
+          userId: participant.userId,
+          username: participant.username,
+          score: participant.score,
+          joinTime: participant.joinTime,
+          questionsAnswered: participant.questionsAnswered,
+          answerQuestionIndex: participant.answerQuestionIndex,
+          selectedOption: participant.selectedOption,
+        });
+        if (participant.answerQuestionIndex === data.currentQuestionIndex && participant.selectedOption != null) {
+          newParticipantAnswers[participant.userId] = participant.selectedOption;
+        }
+      });
+
+      setParticipants(newParticipants);
+      console.log("new participants", newParticipants)
+      setParticipantAnswers(newParticipantAnswers);
+    
+      // Recalculate answers count from scratch
+      const newAnswersCount: { [key: number]: number } = {};
+      Object.values(newParticipantAnswers).forEach((selectedOption) => {
+        newAnswersCount[selectedOption] = (newAnswersCount[selectedOption] || 0) + 1;
+      });
+    
+      setAnswers(newAnswersCount);
+    
+      setResponseCount(Object.keys(newParticipantAnswers).length);
+    
       setTimeRemaining(
         Math.max(
           0,
-          data.timeLimit -
-            Math.floor((Date.now() - data.currentQuestionStartTime) / 1000),
+          data.timeLimit - Math.floor((Date.now() - data.currentQuestionStartTime) / 1000),
         ),
       );
-      setIsTimerRunning(true);
+      console.log("time remaining", timeRemaining);
+      
+      if (timeRemaining > 0) {
+        setIsTimerRunning(true);
+      } else {
+        console.log('Time up');
+        setIsTimerRunning(false);
+        setShowResults(true);
+      }
     };
 
     const handleDisconnect = () => {
       setIsConnected(false);
     };
 
-    const handleUserJoinedQuiz = (data: any) => {
+    const handleUserJoinedQuizForHost = (data: any) => {
       if (data.userId === 'host-user') return;
-
+      console.log("handle user joined quiz for host", data)
       const newParticipant = {
         userId: data.userId,
         username: data.username,
-        joinTime: data.joinTime,
+        score: data.score,
+        joinTime: data.timestamp,
+        questionsAnswered: data.questionsAnswered,
+        answerQuestionIndex: data.answerQuestionIndex,
+        selectedOption: data.selectedOption,
       };
       if (participants.some((p) => p.userId == data.userId)) {
         return;
       }
-
+      if(data.answerQuestionIndex === currentQuestionIndex){
+        setResponseCount(responseCount + 1);
+        setParticipantAnswers((prev) => {
+          const updated = { ...prev };
+          updated[data.userId] = data.selectedOption;
+          return updated;
+        });
+        setAnswers((prev) => {
+          const updated = { ...prev };
+          updated[data.selectedOption] = (updated[data.selectedOption] || 0) + 1;
+          return updated;
+        });
+      }
       setParticipants((prev) => [...prev, newParticipant]);
       setRecentJoins((prev) => [...prev, data.userId]);
     };
 
-    const handleParticipantLeft = (data: any) => {
+    const handleParticipantLeftForHost = (data: any) => {
       setParticipants((prev) => prev.filter((p) => p.userId !== data.userId));
       setRecentLeaves((prev) => [...prev, data.userId]);
+      if(data.answerQuestionIndex === currentQuestionIndex){
+        setResponseCount(responseCount - 1);
+        setParticipantAnswers((prev) => {
+          const updated = { ...prev };
+          delete updated[data.userId];
+          return updated;
+        });
+        setAnswers((prev) => {
+          const updated = { ...prev };
+          updated[data.selectedOption] = updated[data.selectedOption] - 1;
+          return updated;
+        });
+      }
     };
 
     const handleNextQuestion = (data: any) => {
-      console.log('Next question:', data);
       setShowResults(false);
       setAnswers({});
       setCurrentQuestionIndex(data.questionIndex);
-      setCurrentQuestion(data.question);
-      const timeLeft = Math.max(
-        0,
-        data.timeLimit -
-          Math.floor((Date.now() - data.currentQuestionStartTime) / 1000),
-      );
+      setCurrentQuestion({
+        ...data.question,
+        startTime: data.currentQuestionStartTime
+      });
 
-      setTimeRemaining(timeLeft);
-      if (timeLeft > 0) {
+      setTimeRemaining(data.timeLimit);
+      if (data.timeLimit > 0) {
         setIsTimerRunning(true);
       } else {
         setIsTimerRunning(false);
@@ -259,63 +331,120 @@ export const QuizActiveGamePage: React.FC = () => {
       }
     };
 
+    // In handleAnswerSubmitted: incremental update per participant answer change
     const handleAnswerSubmitted = (data: any) => {
-      setResponseCount((prev) => prev + 1);
-      setAnswers((prev) => ({
-        ...prev,
-        [data.selectedOption]: (prev[data.selectedOption] || 0) + 1,
-      }));
+      setParticipantAnswers((prev) => {
+        const prevSelected = prev[data.userId];
+        // If answer didn't change, no update needed
+        if (prevSelected === data.selectedOption) return prev;
+
+        // Clone the mapping and update the answer
+        const updated = { ...prev };
+        updated[data.userId] = data.selectedOption;
+
+        // Recalculate answer counts from updated answers
+        const newAnswersCount: { [key: number]: number } = {};
+        Object.values(updated).forEach((selectedOption) => {
+          // Only count non-null selected options
+          if (selectedOption !== null) {
+            newAnswersCount[selectedOption] = (newAnswersCount[selectedOption] || 0) + 1;
+          }
+        });
+
+        setAnswers(newAnswersCount);
+        setResponseCount(Object.keys(updated).length);
+        return updated;
+      });
     };
 
+    const handleQuizState = (data: any) => {
+      console.log("handle quiz state", data)
+      // Update the component state with the current quiz state
+      if (data.currentQuestionIndex !== undefined) {
+        setCurrentQuestionIndex(data.currentQuestionIndex);
+      }
+      if (data.question) {
+        setCurrentQuestion({
+          ...data.question,
+          startTime: data.currentQuestionStartTime || Date.now()
+        });
+      }
+      if (data.participants) {
+        setParticipants(data.participants);
+      }
+      if (data.timeLimit !== undefined) {
+        setTimeRemaining(data.timeLimit);
+      }
+      setIsTimerRunning(true);
+      setShowResults(data.showResults || false);
+    }
+
+    const handleQuizStarted = (data: any) => {
+      handleUpdateGameState({
+        currentQuestionIndex: data.currentQuestionIndex,
+        question: data.question,
+        timeLimit: data.timeLimit,
+        currentQuestionStartTime: data.currentQuestionStartTime,
+        participants: data.participants || [],
+      });
+    }
+
+    const handleQuizEnded = (data: any) => {
+      if(data.success){
+        setParticipants((data.leaderboard).filter((p)=>p.userId !== 'host-user'));
+      }
+    }
+    
     socketRef.current?.on('connect', handleConnect);
     socketRef.current?.on('disconnect', handleDisconnect);
+    socketRef.current?.on('quizStarted', handleQuizStarted);
     socketRef.current?.on('nextQuestion', handleNextQuestion);
-    socketRef.current?.on('userJoinedQuiz', handleUserJoinedQuiz);
+    socketRef.current?.on('userJoinedQuizForHost', handleUserJoinedQuizForHost);
     socketRef.current?.on('updateGameState', handleUpdateGameState);
-    socketRef.current?.on('participantLeft', handleParticipantLeft);
+    socketRef.current?.on('participantLeftForHost', handleParticipantLeftForHost);
     socketRef.current?.on('answerSubmitted', handleAnswerSubmitted);
-
+    socketRef.current?.on('quizEndedForHost', handleQuizEnded);
     return () => {
       socketRef.current?.off('connect', handleConnect);
       socketRef.current?.off('disconnect', handleDisconnect);
+      socketRef.current?.off('quizStarted', handleQuizStarted);
       socketRef.current?.off('nextQuestion', handleNextQuestion);
-      socketRef.current?.off('userJoinedQuiz', handleUserJoinedQuiz);
+      socketRef.current?.off('userJoinedQuizForHost', handleUserJoinedQuizForHost);
       socketRef.current?.off('updateGameState', handleUpdateGameState);
-      socketRef.current?.off('participantLeft', handleParticipantLeft);
+      socketRef.current?.off('participantLeftForHost', handleParticipantLeftForHost);
       socketRef.current?.off('answerSubmitted', handleAnswerSubmitted);
+      socketRef.current?.off('quizEndedForHost', handleQuizEnded);
     };
   }, [code]);
-
+  
   // Timer effect
   useEffect(() => {
-    let timerId: number | undefined;
-
-    if (isTimerRunning && timeRemaining > 0) {
-      timerId = window.setInterval(() => {
-        setTimeRemaining((prevTime) => {
-          if (prevTime <= 1) {
-            // Timer reached 0, stop and show results
-            socketRef.current?.emit('questionTimeUp', {
-              code,
-              questionIndex: currentQuestionIndex,
-            });
-            setIsTimerRunning(false);
-            setShowResults(true);
-            return 0;
-          }
-          return prevTime - 1;
-        });
-      }, 1000);
+    if (!isTimerRunning || timeRemaining <= 0) {
+      return; // Do nothing if timer is paused or time is up
     }
 
-    return () => {
-      if (timerId) {
-        clearInterval(timerId);
-      }
-    };
-  }, [isTimerRunning, timeRemaining, responseCount, participants.length]);
+    const timerId = window.setInterval(() => {
+      setTimeRemaining((prev) => {
+        if (prev <= 1) {
+          // Time's up
+          socketRef.current?.emit('questionTimeUp', {
+            code,
+            questionIndex: currentQuestionIndex,
+          });
+          setIsTimerRunning(false);
+          setShowResults(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
 
-  const handleNextQuestion = () => {
+    return () => {
+      clearInterval(timerId);
+    };
+  }, [isTimerRunning, timeRemaining, code, currentQuestionIndex]);
+
+  const handleClickNextQuestion = () => {
     // Check if this is the last question
     if (questions && currentQuestionIndex >= questions.length - 1) {
       showEndQuizConfirmation();
@@ -323,6 +452,10 @@ export const QuizActiveGamePage: React.FC = () => {
     }
 
     setIsChangingQuestion(true);
+
+    // Reset participant answers and showResults flag
+    setParticipantAnswers({});
+    setShowResults(false);
 
     // Use WebSocket to notify all clients about the next question
     if (socketRef.current && isConnected) {
@@ -334,14 +467,10 @@ export const QuizActiveGamePage: React.FC = () => {
         loading: true,
         autoClose: false,
       });
-
       // Emit the nextQuestion event
       socketRef.current.emit('nextQuestion', { code });
 
-      // We'll let the server update the state and send back the questionStarted event
-      // The event listener will handle updating the UI
-
-      // Set a timeout to hide the loading notification if we don't get a response
+      // Update notification after server response
       setTimeout(() => {
         notifications.update({
           id: notificationId,
@@ -391,6 +520,8 @@ export const QuizActiveGamePage: React.FC = () => {
 
       // Emit endQuiz event
       socketRef.current?.emit('endQuiz', { code });
+      setIsTimerRunning(false);
+      setShowResults(true);
 
       // Note: The actual navigation will happen in the quizEnded event handler
       // This ensures we wait for the server to process everything before redirecting
@@ -416,7 +547,56 @@ export const QuizActiveGamePage: React.FC = () => {
   };
 
   const handlePauseTimer = () => {
-    setIsTimerRunning(!isTimerRunning);
+    if (socketRef.current && isConnected){
+      if(isTimerRunning){
+        const loadingId = notifications.show({
+          title: 'Pausing Timer',
+          message: 'Pausing timer...',
+          color: 'blue',
+          loading: true,
+          autoClose: false,
+        });
+        socketRef.current.emit('pauseTimer', { code });
+        setTimeout(() => {
+          notifications.update({
+            id: loadingId,
+            title: 'Timer Paused',
+            message: 'The timer has been paused',
+            color: 'green',
+            loading: false,
+            autoClose: 2000,
+          });
+        }, 1000);
+      }
+      else{
+        const loadingId = notifications.show({
+          title: 'Resuming Timer',
+          message: 'Resuming timer...',
+          color: 'blue',
+          loading: true,
+          autoClose: false,
+        });
+        socketRef.current.emit('resumeTimer', { code });
+        setTimeout(() => {
+          notifications.update({
+            id: loadingId,
+            title: 'Timer Resumed',
+            message: 'The timer has been resumed',
+            color: 'green',
+            loading: false,
+            autoClose: 2000,
+          });
+        }, 1000);
+      }
+      
+      setIsTimerRunning(!isTimerRunning);
+    } else {
+      notifications.show({
+        title: 'Connection Error',
+        message: 'Not connected to the game server',
+        color: 'red',
+      });
+    }
   };
 
   const handleShowResults = () => {
@@ -575,7 +755,7 @@ export const QuizActiveGamePage: React.FC = () => {
                 variant="gradient"
                 gradient={{ from: 'indigo', to: 'cyan' }}
                 className={classes.controlButton}
-                onClick={handleNextQuestion}
+                onClick={handleClickNextQuestion}
                 loading={isChangingQuestion}
                 leftSection={<IconPlayerSkipForward size={18} />}
               >
@@ -711,7 +891,7 @@ export const QuizActiveGamePage: React.FC = () => {
               variant="filled"
               color="blue"
               className={classes.controlButton}
-              onClick={handleNextQuestion}
+              onClick={handleClickNextQuestion}
               leftSection={<IconPlayerSkipForward size={18} />}
             >
               Next Question

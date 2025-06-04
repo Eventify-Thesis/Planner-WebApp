@@ -190,10 +190,10 @@ export function LiveLeaderboard({
                           ]
                         ][6]}
                       >
-                        {(participant.username || 'User').substring(0, 2).toUpperCase()}
+                        {(participant?.username || 'User').substring(0, 2).toUpperCase()}
                       </Avatar>
                       <Text fw={500} lineClamp={1}>
-                        {participant.username || `Player ${participant.userId.substring(0, 4)}`}
+                        {participant?.username || `Player ${(participant?.userId || 'user').substring(0, 4)}`}
                       </Text>
                     </div>
                   </Table.Td>

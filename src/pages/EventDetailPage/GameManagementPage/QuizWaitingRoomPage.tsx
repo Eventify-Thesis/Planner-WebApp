@@ -167,14 +167,23 @@ export const QuizWaitingRoomPage: React.FC = () => {
       setParticipants((prev) => [...prev, data]);
     };
 
+    const handleParticipantLeftForHost = (data: any) => {
+      if (data.userId === 'host-user') return;
+      setParticipants((prev)=>(prev.filter(
+        (p) => p.userId !== data.userId,
+      )));
+    };
+
     socketRef.current?.on('connect', handleConnect);
     socketRef.current?.on('disconnect', handleDisconnect);
     socketRef.current?.on('participantJoined', handleParticipantJoined);
+    socketRef.current?.on('participantLeftForHost', handleParticipantLeftForHost);
 
     return () => {
       socketRef.current?.off('connect', handleConnect);
       socketRef.current?.off('disconnect', handleDisconnect);
       socketRef.current?.off('participantJoined', handleParticipantJoined);
+      socketRef.current?.off('participantLeftForHost', handleParticipantLeftForHost);
     };
   }, [joinCode]);
 
