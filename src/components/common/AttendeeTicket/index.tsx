@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { TicketTypeModel } from '@/domain/TicketTypeModel.ts';
 import { AttendeeModel } from '@/domain/OrderModel.ts';
 import { EventModel } from '@/domain/EventModel.ts';
+import { useNavigate } from 'react-router-dom';
 
 interface AttendeeTicketProps {
   event: EventModel;
@@ -25,7 +26,7 @@ export const AttendeeTicket = ({
 }: AttendeeTicketProps) => {
   const { t } = useTranslation();
   const ticketPrice = ticketType.price;
-
+  const navigate = useNavigate();
   return (
     <Card className={classes.attendee}>
       <div className={classes.attendeeInfo}>
@@ -69,11 +70,7 @@ export const AttendeeTicket = ({
               variant={'transparent'}
               size={'sm'}
               onClick={() =>
-                window?.open(
-                  `/ticket/${event.id}/${attendee.shortId}/print`,
-                  '_blank',
-                  'noopener,noreferrer',
-                )
+                navigate(`/ticket/${event.id}/${attendee.shortId}/print`)
               }
               leftSection={<IconPrinter size={18} />}
             >

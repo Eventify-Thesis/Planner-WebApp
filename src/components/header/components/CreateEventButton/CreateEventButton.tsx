@@ -4,10 +4,11 @@ import { useAppSelector } from '@/hooks/reduxHooks';
 import { BASE_COLORS } from '@/styles/themes/constants';
 import { BaseButton as BaseButton } from '@/components/common/BaseButton/BaseButton';
 import { Icon } from '@iconify/react';
+import { useNavigate } from 'react-router-dom';
 
 export const CreateEventButton: React.FC = (props) => {
   const theme = useAppSelector((state) => state.theme.theme);
-
+  const navigate = useNavigate();
   return (
     <Button
       type="default"
@@ -20,7 +21,7 @@ export const CreateEventButton: React.FC = (props) => {
       }
       target="_blank"
       onClick={() => {
-        window.open('/create-event', '_blank');
+        navigate('/create-event');
       }}
       $isDark={theme === 'dark'}
       {...props}

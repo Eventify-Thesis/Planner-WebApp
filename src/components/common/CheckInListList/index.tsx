@@ -21,7 +21,7 @@ import { EditCheckInListModal } from '../../modals/EditCheckInListModal';
 import { useDeleteCheckInList } from '@/mutations/useDeleteCheckInList';
 import { showError, showSuccess } from '@/utils/notifications.tsx';
 import { confirmationDialog } from '@/utils/confirmationDialog.tsx';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { IdParam } from '@/types/types';
 import CheckInListModel from '@/domain/CheckInListModel';
 import { Trans, useTranslation } from 'react-i18next';
@@ -36,6 +36,7 @@ export const CheckInListList = ({
   openCreateModal,
 }: CheckInListListProps) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [editModalOpen, { open: openEditModal, close: closeEditModal }] =
     useDisclosure(false);
   const [selectedCheckInListId, setSelectedCheckInListId] = useState<IdParam>();
@@ -209,9 +210,8 @@ export const CheckInListList = ({
                             label: t`Open Check-In Page`,
                             icon: <IconExternalLink size={14} />,
                             onClick: () => {
-                              window.open(
+                              navigate(
                                 `/events/${list.eventId}/check-in/${list.shortId}`,
-                                '_blank',
                               );
                             },
                           },
