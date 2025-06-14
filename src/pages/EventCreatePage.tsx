@@ -110,6 +110,10 @@ const EventCreatePage: React.FC = () => {
       }
 
       show.ticketTypes.forEach((ticketType) => {
+        if (ticketType.id < 0) {
+          delete ticketType.id;
+        }
+
         if (!ticketType.price) {
           ticketType.price = 0;
         }
