@@ -19,7 +19,6 @@ const EventDashboardPage = React.lazy(
 );
 
 const EventCreatePage = React.lazy(() => import('@/pages/EventCreatePage'));
-const EventEditPage = React.lazy(() => import('@/pages/EventEditPage'));
 const CheckInPage = React.lazy(() => import('@/components/layouts/CheckIn'));
 const QuizActiveGamePage = React.lazy(
   () => import('@/pages/EventDetailPage/GameManagementPage/QuizActiveGamePage'),
@@ -36,7 +35,6 @@ const QuizWaitingRoomPage = React.lazy(
 // );
 
 const AuthLayoutFallback = withLoading(AuthLayout);
-export const HOME_PATH = '/';
 
 export const AppRouter: React.FC = () => {
   const protectedLayout = (
@@ -48,9 +46,8 @@ export const AppRouter: React.FC = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path={HOME_PATH} element={<Navigate to="/events" replace />} />
-
-        <Route path={HOME_PATH} element={protectedLayout}>
+        <Route path="/" element={protectedLayout}>
+          <Route index element={<Navigate to="/events" replace />} />
           <Route path="events" element={<EventDashboardPage />} />
           <Route path="create-event" element={<EventCreatePage />}>
             <Route
@@ -96,6 +93,9 @@ export const AppRouter: React.FC = () => {
           <Route path="login" element={<SignIn signUpUrl="/auth/sign-up" />} />
           <Route path="sign-up" element={<SignUp />} />
         </Route>
+
+        {/* Catch-all route for 404 */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );
