@@ -143,7 +143,7 @@ export const EventIdentitySection: React.FC<EventIdentitySectionProps> = ({
               onDrop={(files) =>
                 handleFileUpload(files, setFileList, 'logo', form)
               }
-              maxSize={2 * 1024 * 1024} // 2MB
+              maxSize={10 * 1024 * 1024} // 2MB
               accept={{ 'image/*': [] }}
               className={classes.uploadContainer}
             >
