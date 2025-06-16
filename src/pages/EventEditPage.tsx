@@ -393,7 +393,7 @@ const EventEditPage: React.FC = () => {
                   size="md"
                   styles={(theme) => ({
                     root: {
-                      padding: 'px 0',
+                      padding: `${rem(8)} 0`,
                       backgroundColor: 'transparent',
                       width: '100%',
                     },
@@ -401,35 +401,117 @@ const EventEditPage: React.FC = () => {
                       alignItems: 'center',
                       display: 'flex',
                       flex: 1,
+                      position: 'relative',
                     },
                     stepLabel: {
                       fontSize: theme.fontSizes.sm,
-                      fontWeight: 600,
-                      marginTop: 6,
-                      color: theme.colors.gray[7],
+                      fontWeight: 700,
+                      marginTop: rem(8),
+                      color: theme.colors.gray[6],
+                      letterSpacing: '0.025em',
+                      textTransform: 'uppercase',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      '&[data-active]': {
+                        color: theme.colors.blue[7],
+                        textShadow: `0 0 8px ${theme.colors.blue[3]}`,
+                      },
+                      '&[data-completed]': {
+                        color: theme.colors.green[7],
+                      },
                     },
                     step: {
                       flex: 1,
-                      borderRadius: '50%',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      '&:hover': {
+                        transform: 'translateY(-1px)',
+                      },
                     },
                     stepIcon: {
-                      borderWidth: 2,
-                      width: 32,
-                      height: 32,
+                      borderWidth: 3,
+                      width: rem(44),
+                      height: rem(44),
                       borderRadius: '50%',
-                      fontSize: theme.fontSizes.sm,
-                      '&[data-completed]': {
-                        backgroundColor: theme.colors.blue[6],
+                      fontSize: theme.fontSizes.md,
+                      fontWeight: 700,
+                      position: 'relative',
+                      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                      background: `linear-gradient(135deg, ${theme.white} 0%, ${theme.colors.gray[1]} 100%)`,
+                      borderColor: theme.colors.gray[4],
+                      color: theme.colors.gray[6],
+                      boxShadow: `
+                        0 4px 12px rgba(0, 0, 0, 0.08),
+                        0 2px 4px rgba(0, 0, 0, 0.04),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.8)
+                      `,
+                      '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        inset: '-2px',
+                        borderRadius: '50%',
+                        background: 'transparent',
+                        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                        zIndex: -1,
+                      },
+                      '&[data-active]': {
+                        background: `linear-gradient(135deg, ${theme.colors.blue[6]} 0%, ${theme.colors.blue[8]} 100%)`,
                         borderColor: theme.colors.blue[6],
                         color: theme.white,
+                        transform: 'scale(1.1)',
+                        boxShadow: `
+                          0 8px 25px rgba(59, 130, 246, 0.35),
+                          0 4px 12px rgba(59, 130, 246, 0.2),
+                          inset 0 1px 0 rgba(255, 255, 255, 0.2)
+                        `,
+                        '&::before': {
+                          background: `conic-gradient(from 0deg, ${theme.colors.blue[4]}, ${theme.colors.blue[6]}, ${theme.colors.blue[4]})`,
+                          animation: 'spin 3s linear infinite',
+                        },
+                      },
+                      '&[data-completed]': {
+                        background: `linear-gradient(135deg, ${theme.colors.green[5]} 0%, ${theme.colors.green[7]} 100%)`,
+                        borderColor: theme.colors.green[5],
+                        color: theme.white,
+                        boxShadow: `
+                          0 6px 20px rgba(34, 197, 94, 0.3),
+                          0 3px 8px rgba(34, 197, 94, 0.15),
+                          inset 0 1px 0 rgba(255, 255, 255, 0.2)
+                        `,
+                      },
+                      '&:hover:not([data-active]):not([data-completed])': {
+                        transform: 'scale(1.05)',
+                        borderColor: theme.colors.blue[4],
+                        boxShadow: `
+                          0 6px 20px rgba(0, 0, 0, 0.12),
+                          0 3px 8px rgba(0, 0, 0, 0.08),
+                          inset 0 1px 0 rgba(255, 255, 255, 0.8)
+                        `,
                       },
                     },
                     separator: {
                       flex: 1,
-                      height: 2,
-                      margin: 0,
-                      minWidth: '20px',
+                      height: rem(3),
+                      margin: `0 ${rem(12)}`,
+                      minWidth: rem(20),
                       maxWidth: 'none',
+                      borderRadius: rem(2),
+                      position: 'relative',
+                      background: `linear-gradient(90deg, ${theme.colors.gray[3]} 0%, ${theme.colors.gray[2]} 50%, ${theme.colors.gray[3]} 100%)`,
+                      overflow: 'hidden',
+                      '&[data-active]': {
+                        background: `linear-gradient(90deg, ${theme.colors.blue[5]} 0%, ${theme.colors.blue[4]} 50%, ${theme.colors.blue[5]} 100%)`,
+                        boxShadow: `0 0 12px ${theme.colors.blue[3]}`,
+                        '&::after': {
+                          content: '""',
+                          position: 'absolute',
+                          top: 0,
+                          left: '-100%',
+                          width: '100%',
+                          height: '100%',
+                          background: `linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.6) 50%, transparent 100%)`,
+                          animation: 'shimmer 2s infinite',
+                        },
+                      },
                     },
                   })}
                   classNames={{ root: 'stepper-root', stepBody: 'step-body' }}
@@ -438,19 +520,43 @@ const EventEditPage: React.FC = () => {
                     <Stepper.Step
                       key={index}
                       label={step.title}
-                      completedIcon={<IconCheck size={18} />}
+                      completedIcon={<IconCheck size={20} stroke={2.5} />}
                     />
                   ))}
                 </Stepper>
               </Box>
 
-              {/* Buttons - Fixed width on the right */}
-              <Flex direction="row" gap="xs" wrap="nowrap" align="center">
+              {/* Buttons - Enhanced with modern styling and proper alignment */}
+              <Flex
+                direction="row"
+                gap="sm"
+                wrap="nowrap"
+                align="center"
+                style={{
+                  marginTop: rem(16), // Add margin-top to align with stepper icons
+                }}
+              >
                 <Button
                   variant="subtle"
                   onClick={handleSave}
                   leftSection={<IconCheck size={16} />}
-                  style={{ fontWeight: 500 }}
+                  style={{
+                    fontWeight: 600,
+                    background: `linear-gradient(135deg, ${theme.colors.gray[0]} 0%, ${theme.colors.gray[1]} 100%)`,
+                    border: `1px solid ${theme.colors.gray[3]}`,
+                    borderRadius: rem(12),
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+                  }}
+                  styles={{
+                    root: {
+                      '&:hover': {
+                        transform: 'translateY(-1px)',
+                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)',
+                        background: `linear-gradient(135deg, ${theme.colors.gray[1]} 0%, ${theme.colors.gray[2]} 100%)`,
+                      },
+                    },
+                  }}
                 >
                   {t('event_create.save')}
                 </Button>
@@ -460,8 +566,22 @@ const EventEditPage: React.FC = () => {
                     variant="outline"
                     color={theme.primaryColor}
                     style={{
-                      fontWeight: 500,
-                      transition: 'all 0.2s ease',
+                      fontWeight: 600,
+                      borderRadius: rem(12),
+                      borderWidth: 2,
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      background: 'rgba(255, 255, 255, 0.8)',
+                      backdropFilter: 'blur(8px)',
+                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+                    }}
+                    styles={{
+                      root: {
+                        '&:hover': {
+                          transform: 'translateY(-1px)',
+                          boxShadow: `0 4px 16px ${theme.colors.blue[2]}`,
+                          background: `rgba(${theme.colors.blue[0]}, 0.9)`,
+                        },
+                      },
                     }}
                     onClick={() => handleStepChange(current - 1)}
                   >
@@ -473,8 +593,36 @@ const EventEditPage: React.FC = () => {
                     color={theme.primaryColor}
                     onClick={handleNext}
                     style={{
-                      fontWeight: 500,
-                      transition: 'all 0.2s ease',
+                      fontWeight: 600,
+                      borderRadius: rem(12),
+                      background: `linear-gradient(135deg, ${theme.colors.blue[6]} 0%, ${theme.colors.blue[8]} 100%)`,
+                      border: 'none',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      boxShadow: `0 4px 16px ${theme.colors.blue[3]}`,
+                      position: 'relative',
+                      overflow: 'hidden',
+                    }}
+                    styles={{
+                      root: {
+                        '&:hover': {
+                          transform: 'translateY(-2px)',
+                          boxShadow: `0 8px 25px ${theme.colors.blue[4]}`,
+                        },
+                        '&::before': {
+                          content: '""',
+                          position: 'absolute',
+                          top: 0,
+                          left: '-100%',
+                          width: '100%',
+                          height: '100%',
+                          background:
+                            'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 50%, transparent 100%)',
+                          transition: 'left 0.5s',
+                        },
+                        '&:hover::before': {
+                          left: '100%',
+                        },
+                      },
                     }}
                   >
                     {t('event_create.continue')}
