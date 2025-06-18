@@ -8,6 +8,8 @@ import { BASE_COLORS, FONT_SIZE, LAYOUT } from '@/styles/themes/constants';
 import { media } from '@/styles/themes/constants';
 import { SiderLogo } from '../../main/sider/SiderLogo';
 import { menuItems } from './menuItems';
+import { useResponsive } from '@/hooks/useResponsive';
+import { Overlay } from '@/components/common/Overlay/Overlay';
 
 const { Sider } = Layout;
 
@@ -20,14 +22,16 @@ const StyledSider = styled(Sider)`
   position: fixed;
   left: 0;
   top: 0;
-  z-index: 100;
+  z-index: 150;
 
   @media only screen and ${media.md} {
     position: fixed;
+    z-index: 150;
   }
 
   @media only screen and ${media.xl} {
     position: relative;
+    z-index: 100;
   }
 `;
 
@@ -79,6 +83,7 @@ export const EventDetailSider: React.FC<EventDetailSiderProps> = ({
   const navigate = useNavigate();
   const { eventId } = useParams();
   const location = useLocation();
+  const { isDesktop, mobileOnly, tabletOnly } = useResponsive();
 
   const handleBackClick = () => {
     navigate('/events');
@@ -93,16 +98,18 @@ export const EventDetailSider: React.FC<EventDetailSiderProps> = ({
     navigate(`/events/${eventId}/${key}`);
   };
 
+  const toggleSider = () => setCollapsed(!isCollapsed);
+
   return (
     <SiderDiv>
       <StyledSider
         trigger={null}
         collapsible
-        collapsed={isCollapsed}
+        collapsed={!isDesktop && isCollapsed}
         width={260}
-        collapsedWidth={80}
+        collapsedWidth={tabletOnly ? 80 : 0}
       >
-        <SiderLogo isSiderCollapsed={isCollapsed} toggleSider={setCollapsed} />
+        <SiderLogo isSiderCollapsed={isCollapsed} toggleSider={toggleSider} />
 
         <BackButton>
           <Button
@@ -132,6 +139,7 @@ export const EventDetailSider: React.FC<EventDetailSiderProps> = ({
           />
         </MenuSection>
       </StyledSider>
+      {mobileOnly && <Overlay onClick={toggleSider} show={!isCollapsed} />}
     </SiderDiv>
   );
 };

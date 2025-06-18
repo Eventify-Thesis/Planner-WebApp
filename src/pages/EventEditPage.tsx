@@ -11,6 +11,8 @@ import dayjs from 'dayjs';
 import { useEventMutations } from '@/queries/useEventQueries';
 import { showError, showSuccess } from '@/utils/notifications';
 import { safeValidateForm } from '@/utils/formUtils';
+import { useSiderState } from '@/components/layouts/event/EventDetailLayout/EventDetailLayout';
+import { useResponsive } from '@/hooks/useResponsive';
 import {
   Box,
   Button,
@@ -45,7 +47,9 @@ const EventEditPage: React.FC = () => {
   const { eventId } = params;
   const { t } = useTranslation();
   const [current, setCurrent] = useState(0);
-  const formRefs = [useRef(), useRef(), useRef(), useRef()];
+  const formRefs = [useRef<any>(), useRef<any>(), useRef<any>(), useRef<any>()];
+  const { siderCollapsed } = useSiderState();
+  const { mobileOnly, tabletOnly, isDesktop } = useResponsive();
 
   const { infoDraftMutation, showMutation, settingMutation, paymentMutation } =
     useEventMutations(eventId);
@@ -361,8 +365,11 @@ const EventEditPage: React.FC = () => {
               top: 0,
               left: 0,
               right: 0,
-              zIndex: 100,
-              padding: `${theme.spacing.sm} ${theme.spacing.md}`,
+              zIndex:
+                mobileOnly || tabletOnly ? (siderCollapsed ? 100 : 140) : 100,
+              padding: mobileOnly
+                ? `${theme.spacing.xs} ${theme.spacing.sm}`
+                : `${theme.spacing.sm} ${theme.spacing.md}`,
               borderRadius: `${theme.radius.lg} ${theme.radius.lg} 0 0`,
               backgroundColor: 'rgba(255, 255, 255, 0.97)',
               boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)',
@@ -370,7 +377,7 @@ const EventEditPage: React.FC = () => {
               borderBottom: `1px solid ${theme.colors.gray[2]}`,
               width: '100%',
               margin: 0,
-              minHeight: rem(80),
+              minHeight: mobileOnly ? rem(60) : rem(80),
             }}
           >
             <Group
@@ -383,14 +390,14 @@ const EventEditPage: React.FC = () => {
               <Box
                 style={{
                   flexGrow: 1,
-                  paddingRight: rem(24),
-                  paddingBottom: rem(10),
+                  paddingRight: mobileOnly ? rem(8) : rem(24),
+                  paddingBottom: mobileOnly ? rem(5) : rem(10),
                 }}
               >
                 <Stepper
                   active={current}
                   onStepClick={handleStepChange}
-                  size="md"
+                  size={mobileOnly ? 'sm' : tabletOnly ? 'md' : 'lg'}
                   styles={(theme) => ({
                     root: {
                       padding: `${rem(8)} 0`,
@@ -404,12 +411,15 @@ const EventEditPage: React.FC = () => {
                       position: 'relative',
                     },
                     stepLabel: {
-                      fontSize: theme.fontSizes.sm,
+                      fontSize: mobileOnly
+                        ? theme.fontSizes.xs
+                        : theme.fontSizes.sm,
                       fontWeight: 700,
-                      marginTop: rem(8),
+                      marginTop: mobileOnly ? rem(4) : rem(8),
                       color: theme.colors.gray[6],
                       letterSpacing: '0.025em',
                       textTransform: 'uppercase',
+                      display: mobileOnly ? 'none' : 'block',
                       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                       '&[data-active]': {
                         color: theme.colors.blue[7],
@@ -428,11 +438,21 @@ const EventEditPage: React.FC = () => {
                       },
                     },
                     stepIcon: {
-                      borderWidth: 3,
-                      width: rem(44),
-                      height: rem(44),
+                      borderWidth: mobileOnly ? 2 : 3,
+                      width: mobileOnly
+                        ? rem(32)
+                        : tabletOnly
+                        ? rem(38)
+                        : rem(44),
+                      height: mobileOnly
+                        ? rem(32)
+                        : tabletOnly
+                        ? rem(38)
+                        : rem(44),
                       borderRadius: '50%',
-                      fontSize: theme.fontSizes.md,
+                      fontSize: mobileOnly
+                        ? theme.fontSizes.sm
+                        : theme.fontSizes.md,
                       fontWeight: 700,
                       position: 'relative',
                       transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -528,18 +548,19 @@ const EventEditPage: React.FC = () => {
 
               {/* Buttons - Enhanced with modern styling and proper alignment */}
               <Flex
-                direction="row"
-                gap="sm"
+                direction={mobileOnly ? 'column' : 'row'}
+                gap={mobileOnly ? 'xs' : 'sm'}
                 wrap="nowrap"
                 align="center"
                 style={{
-                  marginTop: rem(16), // Add margin-top to align with stepper icons
+                  marginTop: mobileOnly ? rem(8) : rem(16),
                 }}
               >
                 <Button
                   variant="subtle"
                   onClick={handleSave}
-                  leftSection={<IconCheck size={16} />}
+                  leftSection={<IconCheck size={mobileOnly ? 14 : 16} />}
+                  size={mobileOnly ? 'sm' : 'md'}
                   style={{
                     fontWeight: 600,
                     background: `linear-gradient(135deg, ${theme.colors.gray[0]} 0%, ${theme.colors.gray[1]} 100%)`,
@@ -547,6 +568,7 @@ const EventEditPage: React.FC = () => {
                     borderRadius: rem(12),
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+                    width: mobileOnly ? '100%' : 'auto',
                   }}
                   styles={{
                     root: {

@@ -340,7 +340,7 @@ export const SortableColumn: React.FC<SortableColumnProps> = ({
                     e.stopPropagation();
                     openAddTask();
                   }}
-                  title="Quick add task"
+                  title="Add task"
                   style={{
                     transition: 'transform 0.2s ease',
                     '&:hover': {
@@ -510,7 +510,7 @@ export const SortableColumn: React.FC<SortableColumnProps> = ({
                 onClick={openAddTask}
                 size="sm"
               >
-                Quick add task
+                Add task
               </Button>
             )
           )}
