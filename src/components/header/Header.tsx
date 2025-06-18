@@ -19,6 +19,10 @@ export const Header: React.FC<HeaderProps> = ({
   return isTablet ? (
     <DesktopHeader eventName={eventName} />
   ) : (
-    <MobileHeader toggleSider={toggleSider} isSiderOpened={isSiderOpened} />
+    <MobileHeader
+      toggleSider={toggleSider}
+      isSiderOpened={isSiderOpened}
+      eventName={eventName}
+    />
   );
 };
