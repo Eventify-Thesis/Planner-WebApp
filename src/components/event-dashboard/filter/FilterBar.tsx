@@ -1,11 +1,17 @@
 import React, { useState } from 'react';
-import * as S from './FilterBar.styles';
 import { useTranslation } from 'react-i18next';
 import { useResponsive } from '@/hooks/useResponsive';
-import { BaseRow } from '@/components/common/BaseRow/BaseRow';
-import { SearchInput } from '@/components/common/inputs/SearchInput/SearchInput';
-import { BaseCol } from '@/components/common/BaseCol/BaseCol';
-import { RadioChangeEvent } from 'antd';
+import {
+  TextInput,
+  ActionIcon,
+  SegmentedControl,
+  Stack,
+  Paper,
+  Flex,
+  rem,
+} from '@mantine/core';
+import { IconSearch } from '@tabler/icons-react';
+import './FilterBar.css';
 
 interface FilterBarProps {
   keyword: string;
@@ -28,91 +34,227 @@ const FilterBar: React.FC<FilterBarProps> = ({
     setLocalKeyword(e.target.value);
   };
 
-  const handleFilterClick = (e: RadioChangeEvent) => {
-    setStatus(e.target.value);
+  const handleSearch = () => {
+    setKeyword(localKeyword);
   };
 
-  const desktopLayout = (
-    <BaseRow align="middle" gutter={[10, 10]} style={{ width: '100%' }}>
-      <BaseCol
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          width: '100%',
-        }}
-      >
-        <S.InputsWrapper>
-          <SearchInput
-            placeholder={t('eventDashboard.inputs.searchText')}
-            enterButton="Search"
-            size="middle"
-            value={localKeyword}
-            onChange={handleSearchChange}
-            onSearch={() => setKeyword(localKeyword)}
-          />
-        </S.InputsWrapper>
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
 
-        <S.RadioGroup value={status} onChange={handleFilterClick}>
-          <S.RadioButton value="UPCOMING">
-            {t('eventDashboard.filter.upcoming')}
-          </S.RadioButton>
-          <S.RadioButton value="PAST">
-            {t('eventDashboard.filter.past')}
-          </S.RadioButton>
-          <S.RadioButton value="PENDING_APPROVAL">
-            {t('eventDashboard.filter.waitingForApproval')}
-          </S.RadioButton>
-          <S.RadioButton value="DRAFT">
-            {t('eventDashboard.filter.draft')}
-          </S.RadioButton>
-        </S.RadioGroup>
-      </BaseCol>
-    </BaseRow>
+  const filterOptions = [
+    { label: t('eventDashboard.filter.upcoming'), value: 'UPCOMING' },
+    { label: t('eventDashboard.filter.past'), value: 'PAST' },
+    {
+      label: t('eventDashboard.filter.waitingForApproval'),
+      value: 'PENDING_APPROVAL',
+    },
+    { label: t('eventDashboard.filter.draft'), value: 'DRAFT' },
+  ];
+
+  const desktopLayout = (
+    <Paper
+      p="lg"
+      radius="xl"
+      shadow="md"
+      style={{
+        background:
+          'linear-gradient(135deg, var(--tk-color-white) 0%, #fafafa 100%)',
+        border: '1px solid var(--tk-color-gray-2)',
+        boxShadow: '0 6px 24px rgba(71, 46, 120, 0.12)',
+      }}
+    >
+      <Flex justify="space-between" align="center" gap="xl" wrap="nowrap">
+        <TextInput
+          placeholder={t('eventDashboard.inputs.searchText')}
+          value={localKeyword}
+          onChange={handleSearchChange}
+          onKeyDown={handleKeyPress}
+          rightSection={
+            <ActionIcon
+              size={32}
+              radius="lg"
+              variant="gradient"
+              gradient={{ from: 'var(--tk-primary)', to: '#5a3d8a', deg: 45 }}
+              onClick={handleSearch}
+              style={{
+                boxShadow: '0 3px 10px rgba(71, 46, 120, 0.4)',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow =
+                  '0 5px 15px rgba(71, 46, 120, 0.5)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0px)';
+                e.currentTarget.style.boxShadow =
+                  '0 3px 10px rgba(71, 46, 120, 0.4)';
+              }}
+            >
+              <IconSearch size={rem(18)} />
+            </ActionIcon>
+          }
+          styles={{
+            root: {
+              flexGrow: 1,
+              maxWidth: rem(420),
+            },
+            input: {
+              borderColor: 'var(--tk-color-gray-2)',
+              backgroundColor: 'var(--tk-color-white)',
+              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)',
+              transition: 'all 0.2s ease',
+              '&:focus': {
+                borderColor: 'var(--tk-primary)',
+                boxShadow: '0 0 0 3px rgba(71, 46, 120, 0.15)',
+                transform: 'translateY(-1px)',
+              },
+            },
+          }}
+          size="md"
+          radius="lg"
+        />
+
+        <SegmentedControl
+          value={status}
+          onChange={setStatus}
+          data={filterOptions}
+          size="md"
+          radius="lg"
+          styles={{
+            root: {
+              backgroundColor: 'rgba(71, 46, 120, 0.08)',
+              padding: rem(6),
+              boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.1)',
+            },
+            control: {
+              border: 'none',
+              fontSize: rem(14),
+              fontWeight: 500,
+              transition: 'all 0.2s ease',
+              '&[data-active]': {
+                backgroundColor: 'var(--tk-primary)',
+                color: 'var(--tk-color-white)',
+                fontWeight: 600,
+                boxShadow: '0 3px 10px rgba(71, 46, 120, 0.4)',
+                transform: 'translateY(-1px)',
+              },
+              '&:not([data-active])': {
+                color: 'var(--tk-text)',
+                backgroundColor: 'var(--tk-color-white)',
+                '&:hover': {
+                  backgroundColor: 'var(--tk-secondary)',
+                  transform: 'translateY(-1px)',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+                },
+              },
+            },
+          }}
+        />
+      </Flex>
+    </Paper>
   );
 
   const mobileAndTabletLayout = (
-    <BaseRow align="middle" gutter={[10, 10]} style={{ width: '100%' }}>
-      <BaseCol span={24}>
-        <S.InputsWrapper>
-          <SearchInput
-            placeholder={t('eventDashboard.inputs.searchText')}
-            enterButton="Search"
-            size="middle"
-            value={localKeyword}
-            onChange={handleSearchChange}
-            onSearch={() => setKeyword(localKeyword)}
-          />
-        </S.InputsWrapper>
-      </BaseCol>
-      <BaseCol span={24}>
-        <S.RadioGroup
+    <Paper
+      p="lg"
+      radius="xl"
+      shadow="md"
+      style={{
+        background:
+          'linear-gradient(135deg, var(--tk-color-white) 0%, #fafafa 100%)',
+        border: '1px solid var(--tk-color-gray-2)',
+        boxShadow: '0 6px 24px rgba(71, 46, 120, 0.12)',
+      }}
+    >
+      <Stack gap="lg">
+        <TextInput
+          placeholder={t('eventDashboard.inputs.searchText')}
+          value={localKeyword}
+          onChange={handleSearchChange}
+          onKeyDown={handleKeyPress}
+          rightSection={
+            <ActionIcon
+              size={30}
+              radius="lg"
+              variant="gradient"
+              gradient={{ from: 'var(--tk-primary)', to: '#5a3d8a', deg: 45 }}
+              onClick={handleSearch}
+              style={{
+                boxShadow: '0 3px 10px rgba(71, 46, 120, 0.4)',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <IconSearch size={rem(16)} />
+            </ActionIcon>
+          }
+          styles={{
+            input: {
+              borderColor: 'var(--tk-color-gray-2)',
+              backgroundColor: 'var(--tk-color-white)',
+              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)',
+              transition: 'all 0.2s ease',
+              '&:focus': {
+                borderColor: 'var(--tk-primary)',
+                boxShadow: '0 0 0 3px rgba(71, 46, 120, 0.15)',
+                transform: 'translateY(-1px)',
+              },
+            },
+          }}
+          size="md"
+          radius="lg"
+        />
+
+        <SegmentedControl
           value={status}
-          onChange={handleFilterClick}
-          defaultValue={status}
-        >
-          <S.RadioButton value="UPCOMING">
-            {t('eventDashboard.filter.upcoming')}
-          </S.RadioButton>
-          <S.RadioButton value="PAST">
-            {t('eventDashboard.filter.past')}
-          </S.RadioButton>
-          <S.RadioButton value="PENDING_APPROVAL">
-            {t('eventDashboard.filter.waitingForApproval')}
-          </S.RadioButton>
-          <S.RadioButton value="DRAFT">
-            {t('eventDashboard.filter.draft')}
-          </S.RadioButton>
-        </S.RadioGroup>
-      </BaseCol>
-    </BaseRow>
+          onChange={setStatus}
+          data={filterOptions}
+          fullWidth
+          size={isTablet ? 'md' : 'sm'}
+          radius="lg"
+          orientation={isTablet ? 'horizontal' : 'vertical'}
+          styles={{
+            root: {
+              backgroundColor: 'rgba(71, 46, 120, 0.08)',
+              padding: rem(6),
+              boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.1)',
+            },
+            control: {
+              border: 'none',
+              fontSize: isTablet ? rem(14) : rem(12),
+              height: isTablet ? rem(38) : rem(34),
+              minHeight: isTablet ? rem(38) : rem(34),
+              padding: isTablet
+                ? `${rem(8)} ${rem(16)}`
+                : `${rem(6)} ${rem(10)}`,
+              transition: 'all 0.2s ease',
+              '&[data-active]': {
+                backgroundColor: 'var(--tk-primary)',
+                color: 'var(--tk-color-white)',
+                fontWeight: 600,
+                boxShadow: '0 3px 10px rgba(71, 46, 120, 0.4)',
+                transform: 'translateY(-1px)',
+              },
+              '&:not([data-active])': {
+                color: 'var(--tk-text)',
+                backgroundColor: 'var(--tk-color-white)',
+                '&:hover': {
+                  backgroundColor: 'var(--tk-secondary)',
+                  transform: 'translateY(-1px)',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+                },
+              },
+            },
+          }}
+        />
+      </Stack>
+    </Paper>
   );
 
-  if (isDesktop) {
-    return desktopLayout;
-  } else {
-    return mobileAndTabletLayout;
-  }
+  return isDesktop ? desktopLayout : mobileAndTabletLayout;
 };
 
 export default FilterBar;
