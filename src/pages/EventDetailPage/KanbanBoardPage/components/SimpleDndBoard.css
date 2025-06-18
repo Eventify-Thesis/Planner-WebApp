@@ -4,79 +4,275 @@
   flex-direction: column;
   padding: 16px;
   height: 100%;
-  background: #f5f6f8;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: calc(100vh - 120px);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
 }
 
 .kanban-toolbar {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   display: flex;
-  gap: 12px;
+  gap: 16px;
   align-items: center;
   width: 100%;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .search-input-wrapper {
   position: relative;
   flex: 1;
-  max-width: 300px;
+  max-width: 350px;
 }
 
 .filter-wrapper {
   position: relative;
-  width: 180px;
+  width: 200px;
 }
 
 .board-columns-wrapper {
   display: flex;
   overflow-x: auto;
-  padding-bottom: 8px;
+  padding-bottom: 12px;
+  padding-top: 8px;
+  flex: 1;
 }
 
 .kanban-columns-container {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   align-items: flex-start;
+  min-width: 100%;
+  padding: 0 8px;
 }
 
 .add-column-button {
   margin: 8px;
-  min-width: 120px;
+  min-width: 140px;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
-/* Animation for drag overlays */
-@keyframes task-drag-start {
-  0% {
-    transform: scale(1);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+.filtered-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 8px;
+  flex-shrink: 0;
+}
+
+/* Mobile Responsive Design */
+@media (max-width: 768px) {
+  .kanban-board {
+    padding: 12px;
+    border-radius: 8px;
   }
-  100% {
-    transform: scale(1.05);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+
+  .kanban-toolbar {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+    margin-bottom: 16px;
+  }
+
+  .search-input-wrapper {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .filter-wrapper {
+    width: 100%;
+  }
+
+  .kanban-columns-container {
+    gap: 12px;
+    padding: 0 4px;
+  }
+
+  .add-column-button {
+    min-width: 120px;
   }
 }
 
+/* Tablet Responsive Design */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .kanban-board {
+    padding: 14px;
+  }
+
+  .kanban-toolbar {
+    padding: 14px;
+  }
+
+  .search-input-wrapper {
+    max-width: 280px;
+  }
+
+  .filter-wrapper {
+    width: 180px;
+  }
+
+  .kanban-columns-container {
+    gap: 14px;
+  }
+}
+
+/* Improved drag overlay styling */
 .task-drag-overlay {
-  animation: task-drag-start 0.2s forwards;
+  position: relative;
+  transition: all 0.2s ease;
+  will-change: transform;
+  pointer-events: none;
+  user-select: none;
+}
+
+.task-drag-overlay * {
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+/* Smooth drag transitions */
+.task-drag-overlay .mantine-Paper-root {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Ensure consistent sizing during drag */
+.task-drag-overlay .mantine-Paper-root {
+  min-height: unset !important;
+  max-height: unset !important;
+  width: 100% !important;
+}
+
+/* Improved column highlight when dragging over */
+.kanban-column-highlighted {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+  border: 2px dashed rgba(59, 130, 246, 0.5) !important;
+  border-radius: 12px !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Prevent text selection during drag */
+.kanban-board * {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Allow text selection in inputs and textareas */
+.kanban-board input,
+.kanban-board textarea,
+.kanban-board [contenteditable] {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+/* Smooth column transitions */
+.kanban-column {
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 /* Scrollbar styling */
-.kanban-board::-webkit-scrollbar {
+.board-columns-wrapper::-webkit-scrollbar {
   height: 8px;
 }
 
-.kanban-board::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 4px;
+.board-columns-wrapper::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
 }
 
-.kanban-board::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
+.board-columns-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: content-box;
 }
 
-.kanban-board::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
+.board-columns-wrapper::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+  background-clip: content-box;
+}
+
+/* Enhanced animations */
+.kanban-board * {
+  box-sizing: border-box;
+}
+
+.kanban-toolbar > * {
+  transition: all 0.2s ease;
+}
+
+.kanban-toolbar > *:hover {
+  transform: translateY(-1px);
+}
+
+/* Loading state improvements */
+.kanban-board .mantine-Skeleton-root {
+  border-radius: 12px !important;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0.1) 100%
+  ) !important;
+  background-size: 200% 100% !important;
+  animation: skeleton-loading 1.5s ease-in-out infinite !important;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Mobile-specific improvements */
+@media (max-width: 480px) {
+  .kanban-board {
+    padding: 8px;
+    margin: 8px;
+  }
+
+  .kanban-toolbar {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .kanban-columns-container {
+    gap: 8px;
+    padding: 0 2px;
+  }
+
+  .add-column-button {
+    min-width: 100px;
+    margin: 4px;
+  }
+
+  .filtered-info {
+    margin: 4px;
+  }
+
+  .filtered-info > div {
+    padding: 12px !important;
+    min-width: 160px !important;
+    font-size: 13px !important;
+  }
+}
+
+.mantine-InputWrapper-root,
+.mantine-Switch-root {
+  margin-bottom: 0 !important;
 }

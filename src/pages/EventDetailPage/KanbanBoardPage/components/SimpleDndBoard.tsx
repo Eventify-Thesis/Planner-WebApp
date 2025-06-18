@@ -22,9 +22,18 @@ import {
   ActionIcon,
   Select,
   Input,
+  Text,
+  Badge,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconPlus, IconSearch, IconFilter, IconX } from '@tabler/icons-react';
+import {
+  IconPlus,
+  IconSearch,
+  IconFilter,
+  IconX,
+  IconTrash,
+  IconAlertTriangle,
+} from '@tabler/icons-react';
 
 import {
   KanbanTask as IKanbanTask,
@@ -111,24 +120,41 @@ export const SimpleDndBoard: React.FC<SimpleDndBoardProps> = () => {
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [activeColumnId, setActiveColumnId] = useState<number | null>(null);
 
+  // Delete task modal state
+  const [
+    isDeleteModalOpen,
+    { open: openDeleteModal, close: closeDeleteModal },
+  ] = useDisclosure(false);
+  const [taskToDelete, setTaskToDelete] = useState<IKanbanTask | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   // Drag and drop state
   const [isDraggingOver, setIsDraggingOver] = useState<number | null>(null);
 
+  // Debug effect to monitor modal state
+  React.useEffect(() => {
+    console.log('Delete modal state changed:', {
+      isDeleteModalOpen,
+      taskToDelete: taskToDelete?.id,
+      isDeleting,
+    });
+  }, [isDeleteModalOpen, taskToDelete, isDeleting]);
+
   // No longer need to sync with server data - the context handles this
 
-  // Configure sensors
+  // Configure sensors for better drag control
   const sensors = useSensors(
     useSensor(MouseSensor, {
-      // Require the mouse to move by 5 pixels before activating
+      // Require the mouse to move by 8 pixels before activating
       activationConstraint: {
-        distance: 5,
+        distance: 8,
       },
     }),
     useSensor(TouchSensor, {
-      // Press delay of 250ms, with 5px tolerance
+      // Press delay of 200ms, with 8px tolerance for better mobile experience
       activationConstraint: {
-        delay: 250,
-        tolerance: 5,
+        delay: 200,
+        tolerance: 8,
       },
     }),
   );
@@ -138,8 +164,12 @@ export const SimpleDndBoard: React.FC<SimpleDndBoardProps> = () => {
     return assignments.filter((assignment) => assignment.taskId === taskId);
   };
 
-  // Use the column tasks with search filtering
+  // Use the column tasks with search filtering and column filtering
   const getFilteredTasksByColumn = (columnId: number) => {
+    // If column filter is active and this column doesn't match, return empty array
+    if (filterColumn && filterColumn !== columnId.toString()) {
+      return [];
+    }
     return getTasksByColumn(columnId, searchQuery);
   };
 
@@ -411,16 +441,46 @@ export const SimpleDndBoard: React.FC<SimpleDndBoardProps> = () => {
     });
   };
 
-  // Handle task deletion
+  // Handle task deletion - open confirmation modal
   const handleDeleteTask = async (taskId: number) => {
-    if (window.confirm('Are you sure you want to delete this task?')) {
-      try {
-        await onTaskDelete(taskId);
-      } catch (error) {
-        console.error('Error deleting task:', error);
-        alert('Failed to delete task. Please try again.');
-      }
+    const task = tasks.find((t) => t.id === taskId);
+    if (task) {
+      setTaskToDelete(task);
+      openDeleteModal();
     }
+  };
+
+  // Confirm task deletion
+  const confirmDeleteTask = async () => {
+    if (!taskToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      console.log('Deleting task:', taskToDelete.id);
+      await onTaskDelete(taskToDelete.id);
+      console.log('Task deleted successfully');
+
+      // Use setTimeout to ensure state updates don't conflict
+      setTimeout(() => {
+        setTaskToDelete(null);
+        closeDeleteModal();
+        setIsDeleting(false);
+        console.log('Modal closed and state cleared');
+      }, 100);
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      // Show error message to user
+      alert('Failed to delete task. Please try again.');
+      setIsDeleting(false);
+      // Keep modal open for retry
+    }
+  };
+
+  // Cancel task deletion
+  const cancelDeleteTask = () => {
+    closeDeleteModal();
+    setTaskToDelete(null);
+    setIsDeleting(false);
   };
 
   // Handle task status change (column change)
@@ -484,65 +544,88 @@ export const SimpleDndBoard: React.FC<SimpleDndBoardProps> = () => {
       onDragEnd={handleDragEnd}
     >
       <div className="kanban-board">
-        {/* Search and filter toolbar */}
+        {/* Enhanced Search and filter toolbar */}
         <div className="kanban-toolbar">
           <div className="search-input-wrapper">
-            <IconSearch
-              size={16}
-              style={{
-                position: 'absolute',
-                top: '10px',
-                left: '10px',
-                color: theme.colors.gray[6],
-                zIndex: 1,
-              }}
-            />
-            <Input
-              placeholder="Search tasks..."
+            <TextInput
+              placeholder="Search tasks by title or description..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.currentTarget.value)}
-              styles={{ input: { paddingLeft: '36px' } }}
+              leftSection={<IconSearch size={18} />}
               rightSection={
                 searchQuery ? (
                   <ActionIcon
                     size="sm"
                     onClick={() => setSearchQuery('')}
                     variant="subtle"
+                    color="gray"
                   >
-                    <IconX size={14} />
+                    <IconX size={16} />
                   </ActionIcon>
                 ) : null
               }
               ref={searchInputRef}
+              styles={{
+                input: {
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  border: '2px solid transparent',
+                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                  transition: 'all 0.2s ease',
+                  '&:focus': {
+                    borderColor: theme.colors.blue[5],
+                    backgroundColor: '#ffffff',
+                    boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)',
+                  },
+                },
+              }}
             />
           </div>
 
           <div className="filter-wrapper">
-            <IconFilter
-              size={16}
-              style={{
-                position: 'absolute',
-                top: '10px',
-                left: '10px',
-                zIndex: 1,
-                color: theme.colors.gray[6],
-              }}
-            />
             <Select
               placeholder="Filter by column"
               value={filterColumn}
               onChange={setFilterColumn}
               clearable
+              leftSection={<IconFilter size={18} />}
               data={[
-                { value: '', label: 'All Columns' },
                 ...columns.map((col) => ({
                   value: col.id.toString(),
                   label: col.name,
                 })),
               ]}
-              styles={{ input: { paddingLeft: '36px' } }}
+              styles={{
+                input: {
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  border: '2px solid transparent',
+                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                  transition: 'all 0.2s ease',
+                  '&:focus': {
+                    borderColor: theme.colors.violet[5],
+                    backgroundColor: '#ffffff',
+                    boxShadow: '0 0 0 3px rgba(139, 92, 246, 0.1)',
+                  },
+                },
+              }}
             />
           </div>
+
+          {(searchQuery || filterColumn) && (
+            <Button
+              variant="subtle"
+              color="gray"
+              size="sm"
+              onClick={() => {
+                setSearchQuery('');
+                setFilterColumn(null);
+              }}
+              leftSection={<IconX size={16} />}
+            >
+              Clear Filters
+            </Button>
+          )}
         </div>
 
         <div className="board-columns-wrapper">
@@ -550,12 +633,19 @@ export const SimpleDndBoard: React.FC<SimpleDndBoardProps> = () => {
             {columns.map((column) => {
               const columnTasks = getFilteredTasksByColumn(column.id);
               const isHighlighted = isDraggingOver === column.id;
+              const shouldShowColumn =
+                !filterColumn || filterColumn === column.id.toString();
 
               // Create available columns data for dropdown
               const availableColumns = columns.map((col) => ({
                 value: col.id.toString(),
                 label: col.name,
               }));
+
+              // Don't render column if it's filtered out
+              if (!shouldShowColumn) {
+                return null;
+              }
 
               return (
                 <SortableColumn
@@ -591,26 +681,92 @@ export const SimpleDndBoard: React.FC<SimpleDndBoardProps> = () => {
               );
             })}
 
+            {/* Show filtered columns info */}
+            {filterColumn && (
+              <div className="filtered-info">
+                <div
+                  style={{
+                    padding: '16px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    borderRadius: '8px',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    textAlign: 'center',
+                    minWidth: '200px',
+                    color: 'white',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                  }}
+                >
+                  Showing only:{' '}
+                  <strong>
+                    {
+                      columns.find((col) => col.id.toString() === filterColumn)
+                        ?.name
+                    }
+                  </strong>
+                  <br />
+                  <div
+                    style={{ fontSize: '12px', opacity: 0.8, marginTop: '4px' }}
+                  >
+                    {columns.length - 1} other columns hidden
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Add column button */}
-            <div className="add-column-button">
-              <Button
-                leftSection={<IconPlus size={16} />}
-                variant="outline"
-                onClick={openAddColumnModal}
-                color="blue"
-                size="sm"
-              >
-                Add Column
-              </Button>
-            </div>
+            {!filterColumn && (
+              <div className="add-column-button">
+                <Button
+                  leftSection={<IconPlus size={18} />}
+                  variant="gradient"
+                  gradient={{ from: 'blue', to: 'cyan', deg: 45 }}
+                  onClick={openAddColumnModal}
+                  size="md"
+                  style={{
+                    boxShadow: '0 4px 15px rgba(59, 130, 246, 0.3)',
+                    transition: 'all 0.2s ease',
+                  }}
+                  styles={{
+                    root: {
+                      '&:hover': {
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 6px 20px rgba(59, 130, 246, 0.4)',
+                      },
+                    },
+                  }}
+                >
+                  Add Column
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Drag overlay for visual feedback */}
-      <DragOverlay adjustScale style={{ transformOrigin: '0 0 ' }}>
+      <DragOverlay
+        adjustScale={false}
+        style={{
+          transformOrigin: 'center center',
+          zIndex: 9999,
+        }}
+      >
         {activeTask && (
-          <div className="task-drag-overlay">
+          <div
+            className="task-drag-overlay"
+            style={{
+              transform: 'rotate(3deg)',
+              opacity: 0.95,
+              cursor: 'grabbing',
+              maxWidth: '280px',
+              minWidth: '280px',
+              boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
+              borderRadius: '12px',
+              overflow: 'hidden',
+            }}
+          >
             <SortableTask
               task={activeTask}
               assignments={getAssignmentsByTask(activeTask.id)}
@@ -632,12 +788,29 @@ export const SimpleDndBoard: React.FC<SimpleDndBoardProps> = () => {
         />
       )}
 
-      {/* Add Column Modal */}
+      {/* Enhanced Add Column Modal */}
       <Modal
         opened={isAddColumnModalOpen}
         onClose={closeAddColumnModal}
         title="Add New Column"
         size="sm"
+        centered
+        styles={{
+          title: {
+            fontSize: '18px',
+            fontWeight: 600,
+            color: theme.colors.gray[8],
+          },
+          content: {
+            borderRadius: '12px',
+            border: '1px solid rgba(0, 0, 0, 0.1)',
+          },
+          header: {
+            borderBottom: `1px solid ${theme.colors.gray[2]}`,
+            paddingBottom: '16px',
+            marginBottom: '20px',
+          },
+        }}
       >
         <Box
           component="form"
@@ -648,28 +821,76 @@ export const SimpleDndBoard: React.FC<SimpleDndBoardProps> = () => {
         >
           <TextInput
             label="Column Name"
-            placeholder="Enter column name"
+            placeholder="e.g., To Do, In Progress, Done"
             value={newColumnName}
             onChange={(e) => setNewColumnName(e.target.value)}
             required
-            mb="md"
+            mb="xl"
             autoFocus
+            styles={{
+              label: {
+                fontSize: '14px',
+                fontWeight: 600,
+                marginBottom: '8px',
+                color: theme.colors.gray[7],
+              },
+              input: {
+                border: `2px solid ${theme.colors.gray[3]}`,
+                borderRadius: '8px',
+                fontSize: '14px',
+                padding: '12px',
+                transition: 'all 0.2s ease',
+                '&:focus': {
+                  borderColor: theme.colors.blue[5],
+                  boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)',
+                },
+              },
+            }}
           />
-          <Group justify="flex-end">
-            <Button variant="outline" onClick={closeAddColumnModal}>
+          <Group justify="flex-end" gap="sm">
+            <Button
+              variant="subtle"
+              onClick={closeAddColumnModal}
+              color="gray"
+              size="md"
+            >
               Cancel
             </Button>
-            <Button type="submit">Add Column</Button>
+            <Button
+              type="submit"
+              variant="gradient"
+              gradient={{ from: 'blue', to: 'cyan', deg: 45 }}
+              size="md"
+            >
+              Add Column
+            </Button>
           </Group>
         </Box>
       </Modal>
 
-      {/* Add Task Modal */}
+      {/* Enhanced Add Task Modal */}
       <Modal
         opened={isAddTaskModalOpen}
         onClose={closeAddTaskModal}
         title="Add New Task"
         size="sm"
+        centered
+        styles={{
+          title: {
+            fontSize: '18px',
+            fontWeight: 600,
+            color: theme.colors.gray[8],
+          },
+          content: {
+            borderRadius: '12px',
+            border: '1px solid rgba(0, 0, 0, 0.1)',
+          },
+          header: {
+            borderBottom: `1px solid ${theme.colors.gray[2]}`,
+            paddingBottom: '16px',
+            marginBottom: '20px',
+          },
+        }}
       >
         <Box
           component="form"
@@ -680,21 +901,275 @@ export const SimpleDndBoard: React.FC<SimpleDndBoardProps> = () => {
         >
           <TextInput
             label="Task Title"
-            placeholder="Enter task title"
+            placeholder="What needs to be done?"
             value={newTaskTitle}
             onChange={(e) => setNewTaskTitle(e.target.value)}
             required
-            mb="md"
+            mb="xl"
             autoFocus
+            styles={{
+              label: {
+                fontSize: '14px',
+                fontWeight: 600,
+                marginBottom: '8px',
+                color: theme.colors.gray[7],
+              },
+              input: {
+                border: `2px solid ${theme.colors.gray[3]}`,
+                borderRadius: '8px',
+                fontSize: '14px',
+                padding: '12px',
+                transition: 'all 0.2s ease',
+                '&:focus': {
+                  borderColor: theme.colors.green[5],
+                  boxShadow: '0 0 0 3px rgba(34, 197, 94, 0.1)',
+                },
+              },
+            }}
           />
-          <Group justify="flex-end">
-            <Button variant="outline" onClick={closeAddTaskModal}>
+          <Group justify="flex-end" gap="sm">
+            <Button
+              variant="subtle"
+              onClick={closeAddTaskModal}
+              color="gray"
+              size="md"
+            >
               Cancel
             </Button>
-            <Button type="submit">Add Task</Button>
+            <Button
+              type="submit"
+              variant="gradient"
+              gradient={{ from: 'green', to: 'teal', deg: 45 }}
+              size="md"
+            >
+              Add Task
+            </Button>
           </Group>
         </Box>
       </Modal>
+
+      {/* Enhanced Delete Task Confirmation Modal */}
+      {taskToDelete && (
+        <Modal
+          opened={isDeleteModalOpen}
+          onClose={cancelDeleteTask}
+          title=""
+          size="md"
+          centered
+          withCloseButton={false}
+          padding={0}
+          styles={{
+            content: {
+              borderRadius: '16px',
+              overflow: 'hidden',
+              border: '1px solid rgba(0, 0, 0, 0.1)',
+            },
+          }}
+        >
+          <div
+            style={{
+              background: 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)',
+              padding: '24px',
+              textAlign: 'center',
+            }}
+          >
+            <div
+              style={{
+                width: '64px',
+                height: '64px',
+                borderRadius: '50%',
+                background: 'rgba(239, 68, 68, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 16px',
+                border: '2px solid rgba(239, 68, 68, 0.2)',
+              }}
+            >
+              <IconAlertTriangle size={32} color="#ef4444" />
+            </div>
+
+            <div
+              style={{
+                fontSize: '20px',
+                fontWeight: 700,
+                color: theme.colors.red[7],
+                marginBottom: '8px',
+              }}
+            >
+              Delete Task
+            </div>
+
+            <div
+              style={{
+                fontSize: '16px',
+                fontWeight: 500,
+                color: theme.colors.red[6],
+                marginBottom: '4px',
+              }}
+            >
+              Are you sure you want to delete this task?
+            </div>
+          </div>
+
+          <div style={{ padding: '24px' }}>
+            {/* Task preview */}
+            <div
+              style={{
+                background: theme.colors.gray[1],
+                borderRadius: '12px',
+                padding: '16px',
+                marginBottom: '24px',
+                border: `2px solid ${theme.colors.gray[3]}`,
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '12px',
+                }}
+              >
+                <div
+                  style={{
+                    width: '4px',
+                    height: '40px',
+                    backgroundColor: theme.colors.red[5],
+                    borderRadius: '2px',
+                    flexShrink: 0,
+                  }}
+                />
+                <div style={{ flex: 1 }}>
+                  <div
+                    style={{
+                      fontSize: '16px',
+                      fontWeight: 600,
+                      color: theme.colors.dark[7],
+                      marginBottom: '8px',
+                      lineHeight: 1.4,
+                      wordBreak: 'break-word',
+                    }}
+                  >
+                    {taskToDelete.title}
+                  </div>
+
+                  {taskToDelete.description && (
+                    <div
+                      style={{
+                        fontSize: '14px',
+                        color: theme.colors.gray[6],
+                        lineHeight: 1.5,
+                        maxHeight: '60px',
+                        overflow: 'hidden',
+                        wordBreak: 'break-word',
+                      }}
+                    >
+                      {taskToDelete.description
+                        .replace(/<[^>]*>/g, '')
+                        .substring(0, 100)}
+                      ...
+                    </div>
+                  )}
+
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      marginTop: '8px',
+                    }}
+                  >
+                    <div
+                      style={{ fontSize: '12px', color: theme.colors.gray[6] }}
+                    >
+                      Column:{' '}
+                      <strong>
+                        {
+                          columns.find(
+                            (col) => col.id === taskToDelete.columnId,
+                          )?.name
+                        }
+                      </strong>
+                    </div>
+
+                    {taskToDelete.priority && (
+                      <Badge
+                        size="xs"
+                        color={
+                          taskToDelete.priority === 'highest'
+                            ? 'red'
+                            : taskToDelete.priority === 'high'
+                            ? 'orange'
+                            : taskToDelete.priority === 'medium'
+                            ? 'blue'
+                            : taskToDelete.priority === 'low'
+                            ? 'green'
+                            : 'gray'
+                        }
+                        variant="light"
+                      >
+                        {taskToDelete.priority}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div
+              style={{
+                background: theme.colors.yellow[0],
+                border: `1px solid ${theme.colors.yellow[3]}`,
+                borderRadius: '8px',
+                padding: '12px',
+                marginBottom: '24px',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '14px',
+                  color: theme.colors.yellow[8],
+                  fontWeight: 500,
+                }}
+              >
+                ⚠️ This action cannot be undone. The task will be permanently
+                deleted.
+              </div>
+            </div>
+
+            <Group justify="flex-end" gap="sm">
+              <Button
+                variant="subtle"
+                color="gray"
+                size="md"
+                onClick={cancelDeleteTask}
+                disabled={isDeleting}
+                style={{ minWidth: '100px' }}
+              >
+                Cancel
+              </Button>
+
+              <Button
+                color="red"
+                size="md"
+                onClick={confirmDeleteTask}
+                loading={isDeleting}
+                leftSection={<IconTrash size={18} />}
+                style={{ minWidth: '120px' }}
+                styles={{
+                  root: {
+                    '&:hover': {
+                      backgroundColor: theme.colors.red[7],
+                    },
+                  },
+                }}
+              >
+                {isDeleting ? 'Deleting...' : 'Delete Task'}
+              </Button>
+            </Group>
+          </div>
+        </Modal>
+      )}
     </DndContext>
   );
 };

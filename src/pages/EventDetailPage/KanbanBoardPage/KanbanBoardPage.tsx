@@ -34,18 +34,37 @@ const KanbanBoardContent: React.FC = () => {
   return (
     <div
       style={{
-        padding: '24px',
+        padding: '20px',
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
       }}
     >
       <PageBody>
         <PageTitle>Kanban Board</PageTitle>
         {!isLoading && !boardExists && (
-          <Button
-            onClick={createBoard}
-            leftSection={<IconLayoutKanban size={16} />}
-          >
-            Create Kanban Board
-          </Button>
+          <div style={{ marginBottom: '24px' }}>
+            <Button
+              onClick={createBoard}
+              leftSection={<IconLayoutKanban size={18} />}
+              variant="gradient"
+              gradient={{ from: 'blue', to: 'purple', deg: 45 }}
+              size="lg"
+              style={{
+                boxShadow: '0 4px 15px rgba(59, 130, 246, 0.3)',
+                transition: 'all 0.2s ease',
+              }}
+              styles={{
+                root: {
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 6px 20px rgba(59, 130, 246, 0.4)',
+                  },
+                },
+              }}
+            >
+              Create Kanban Board
+            </Button>
+          </div>
         )}
 
         {isLoading ? (

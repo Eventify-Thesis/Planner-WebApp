@@ -201,10 +201,7 @@ export const SortableTask: React.FC<SortableTaskProps> = ({
 
   const handleDeleteClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
-    if (
-      onDelete &&
-      window.confirm('Are you sure you want to delete this task?')
-    ) {
+    if (onDelete) {
       onDelete(task.id);
     }
   };
