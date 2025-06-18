@@ -14,6 +14,7 @@ import RequireAuth from '@/components/router/RequireAuth';
 import { withLoading } from '@/hocs/withLoading.hoc';
 import { SignIn, SignUp } from '@clerk/clerk-react';
 import { NotFound } from '../common/NotFound/NotFound';
+import ScrollToTop from '../common/ScrollToTop';
 const EventDashboardPage = React.lazy(
   () => import('@/pages/EventDashboardPage'),
 );
@@ -45,6 +46,7 @@ export const AppRouter: React.FC = () => {
 
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={protectedLayout}>
           <Route index element={<Navigate to="/events" replace />} />

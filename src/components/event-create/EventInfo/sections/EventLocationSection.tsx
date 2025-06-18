@@ -281,11 +281,11 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
               <GooglePlacesAutocomplete
                 placeholder={t('event_create.event_location.venue_name')}
                 apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''}
-                value={form.values.venueName}
-                onPlaceSelect={handlePlaceSelect}
-                onChange={(value: string) => {
+                value={form.values.formattedAddress}
+                onChange={(value) => {
                   form.values.venueName = value;
                 }}
+                onPlaceSelect={handlePlaceSelect}
               />
             </Box>
 

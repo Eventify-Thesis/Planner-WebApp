@@ -60,6 +60,10 @@ const useStyles = createStyles((theme) => ({
     border: `1px solid ${theme.colors.gray[3]}`,
     transition: 'all 0.2s ease',
     cursor: 'pointer',
+    height: 200, // Fixed height to ensure both options are the same size
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
     '&:hover': {
       backgroundColor: theme.colors.blue[0],
       transform: 'translateY(-2px)',

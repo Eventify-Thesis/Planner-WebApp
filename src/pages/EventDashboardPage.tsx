@@ -106,7 +106,7 @@ const EventDashboardPage: React.FC = () => {
 
   return (
     <div className={classes.container}>
-      <PageTitle>{t('eventDashboardPage.title')}</PageTitle>
+      <PageTitle>Dashboard</PageTitle>
 
       <Paper className={classes.paper} withBorder>
         <FilterBar
