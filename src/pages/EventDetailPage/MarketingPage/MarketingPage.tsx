@@ -13,6 +13,14 @@ import {
   Box,
   Tabs,
   Paper,
+  Title,
+  Badge,
+  Center,
+  ThemeIcon,
+  Divider,
+  ActionIcon,
+  CopyButton,
+  Tooltip,
 } from '@mantine/core';
 import { DatePicker } from 'antd';
 import dayjs from 'dayjs';
@@ -25,7 +33,14 @@ import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
 import Image from '@tiptap/extension-image';
 
-import { IconBrandFacebook, IconWand } from '@tabler/icons-react';
+import {
+  IconBrandFacebook,
+  IconWand,
+  IconCheck,
+  IconX,
+  IconExternalLink,
+  IconCopy,
+} from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { useGetEventDetail } from '@/queries/useGetEventDetail';
 import { useGeneratePost } from '@/mutations/useGeneratePost';
@@ -86,6 +101,11 @@ const MarketingPage: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isError, setIsError] = useState(false);
   const [generatedContent, setGeneratedContent] = useState<string>('');
+  const [isPosting, setIsPosting] = useState(false);
+  const [postResult, setPostResult] = useState<{
+    link: string;
+    success: boolean;
+  } | null>(null);
 
   const form = useForm<MarketingForm>({
     initialValues: {
@@ -144,6 +164,8 @@ const MarketingPage: React.FC = () => {
       return;
     }
 
+    setIsPosting(true);
+
     try {
       if (
         !selectedPage ||
@@ -155,6 +177,7 @@ const MarketingPage: React.FC = () => {
           message: 'Please fill in all required fields',
           color: 'red',
         });
+        setIsPosting(false);
         return;
       }
 
@@ -166,7 +189,7 @@ const MarketingPage: React.FC = () => {
         .filter((url): url is string => url !== null);
 
       const variables: SchedulePostVariables = {
-        eventId,
+        eventId: eventId!,
         data: {
           pageId: selectedPage,
           content: convert(editor.getHTML(), {
@@ -184,7 +207,18 @@ const MarketingPage: React.FC = () => {
         },
       };
 
-      await schedulePost.mutateAsync(variables);
+      const result = await schedulePost.mutateAsync(variables);
+
+      console.log(result);
+
+      // Show success modal with post link
+      const isSuccess = result?.data?.success === true;
+      const postId = result?.data?.data?.id;
+
+      setPostResult({
+        link: postId ? `https://www.facebook.com/${postId}` : '#',
+        success: isSuccess,
+      });
 
       notifications.show({
         title: 'Success',
@@ -192,11 +226,17 @@ const MarketingPage: React.FC = () => {
         color: 'green',
       });
     } catch (error) {
+      setPostResult({
+        link: '',
+        success: false,
+      });
       notifications.show({
         title: 'Error',
         message: 'Failed to schedule post',
         color: 'red',
       });
+    } finally {
+      setIsPosting(false);
     }
   };
 
@@ -227,16 +267,23 @@ const MarketingPage: React.FC = () => {
             </Tabs.Panel>
 
             <Tabs.Panel value="create" pt="md">
-              <Card withBorder>
-                <Stack gap="md">
-                  <Group justify="space-between">
-                    <Text size="lg" fw={500}>
-                      Generate Facebook Post
-                    </Text>
+              <Card withBorder shadow="sm" radius="md">
+                <Stack gap="lg">
+                  <Group justify="space-between" align="flex-start">
+                    <Stack gap="xs">
+                      <Title order={4} c="blue">
+                        🤖 AI Post Generator
+                      </Title>
+                      <Text size="sm" c="dimmed">
+                        Let AI create engaging Facebook posts for your event
+                      </Text>
+                    </Stack>
                     <Button
                       leftSection={<IconWand size={16} />}
                       onClick={handleGeneratePost}
                       loading={generatePost.isPending}
+                      variant="gradient"
+                      gradient={{ from: 'blue', to: 'cyan' }}
                     >
                       Generate Post
                     </Button>
@@ -289,26 +336,53 @@ const MarketingPage: React.FC = () => {
                 </Stack>
               </Card>
 
-              <Card withBorder mt="md">
-                <Stack gap="md">
-                  <Text size="lg" fw={500}>
-                    Schedule Post
-                  </Text>
-                  {!facebookPages?.data?.result?.length ? (
-                    <Button
-                      leftSection={<IconBrandFacebook size={16} />}
-                      onClick={() => {
-                        window.location.href = `${
-                          import.meta.env.VITE_API_BASE_URL
-                        }/event/auth/facebook?state=${eventId}&userId=${
-                          user.id
-                        }`;
-                      }}
-                      variant="filled"
-                      color="blue"
-                    >
-                      Connect with Facebook
-                    </Button>
+              <Card withBorder mt="md" shadow="sm" radius="md">
+                <Stack gap="lg">
+                  <Stack gap="xs">
+                    <Title order={4} c="green">
+                      📅 Schedule & Publish
+                    </Title>
+                    <Text size="sm" c="dimmed">
+                      Connect to Facebook and schedule or publish your post
+                    </Text>
+                  </Stack>
+                  {!facebookPages?.data?.result?.length && user?.id ? (
+                    <Paper withBorder p="lg" radius="md" bg="blue.0">
+                      <Stack gap="md" align="center">
+                        <ThemeIcon
+                          size={50}
+                          radius="xl"
+                          color="blue"
+                          variant="light"
+                        >
+                          <IconBrandFacebook size={28} />
+                        </ThemeIcon>
+                        <Stack gap="xs" align="center">
+                          <Text fw={500} ta="center">
+                            Connect Your Facebook Account
+                          </Text>
+                          <Text size="sm" c="dimmed" ta="center">
+                            Connect to Facebook to schedule and publish posts to
+                            your pages
+                          </Text>
+                        </Stack>
+                        <Button
+                          leftSection={<IconBrandFacebook size={16} />}
+                          onClick={() => {
+                            window.location.href = `${
+                              import.meta.env.VITE_API_BASE_URL
+                            }/event/auth/facebook?state=${eventId}&userId=${
+                              user?.id
+                            }`;
+                          }}
+                          variant="gradient"
+                          gradient={{ from: 'blue', to: 'indigo' }}
+                          size="md"
+                        >
+                          Connect with Facebook
+                        </Button>
+                      </Stack>
+                    </Paper>
                   ) : (
                     <>
                       <Group justify="space-between">
@@ -381,14 +455,20 @@ const MarketingPage: React.FC = () => {
                         onClick={handleSchedulePost}
                         variant="light"
                         color="blue"
+                        loading={isPosting}
                         disabled={
                           !selectedPage ||
                           !editor?.getHTML() ||
                           (form.values.isScheduled &&
-                            !form.values.scheduledTime)
+                            !form.values.scheduledTime) ||
+                          isPosting
                         }
                       >
-                        {form.values.isScheduled ? 'Schedule Post' : 'Post Now'}
+                        {isPosting
+                          ? 'Posting...'
+                          : form.values.isScheduled
+                          ? 'Schedule Post'
+                          : 'Post Now'}
                       </Button>
                     </>
                   )}
@@ -513,6 +593,109 @@ const MarketingPage: React.FC = () => {
                   </Box>
                 </Stack>
               )}
+            </Stack>
+          </Modal>
+
+          {/* Post Success Modal */}
+          <Modal
+            opened={postResult !== null}
+            onClose={() => setPostResult(null)}
+            title=""
+            size="md"
+            centered
+            padding="xl"
+          >
+            <Stack gap="lg" align="center">
+              {postResult?.success ? (
+                <>
+                  <ThemeIcon
+                    size={60}
+                    radius="xl"
+                    color="green"
+                    variant="light"
+                  >
+                    <IconCheck size={30} />
+                  </ThemeIcon>
+
+                  <Stack gap="xs" align="center">
+                    <Title order={3} ta="center" c="green">
+                      Post {form.values.isScheduled ? 'Scheduled' : 'Published'}{' '}
+                      Successfully!
+                    </Title>
+                    <Text size="sm" ta="center" c="dimmed">
+                      Your Facebook post has been{' '}
+                      {form.values.isScheduled ? 'scheduled' : 'published'}{' '}
+                      successfully
+                    </Text>
+                  </Stack>
+
+                  {postResult.link && postResult.link !== '#' && (
+                    <Paper withBorder p="md" w="100%" radius="md">
+                      <Stack gap="xs">
+                        <Group justify="space-between" align="center">
+                          <Text size="sm" fw={500} c="dimmed">
+                            Post Link
+                          </Text>
+                          <CopyButton value={postResult.link}>
+                            {({ copied, copy }) => (
+                              <Tooltip label={copied ? 'Copied!' : 'Copy link'}>
+                                <ActionIcon
+                                  variant="subtle"
+                                  onClick={copy}
+                                  color={copied ? 'green' : 'gray'}
+                                >
+                                  <IconCopy size={16} />
+                                </ActionIcon>
+                              </Tooltip>
+                            )}
+                          </CopyButton>
+                        </Group>
+                        <Button
+                          component="a"
+                          href={postResult.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          variant="light"
+                          color="blue"
+                          fullWidth
+                          leftSection={<IconBrandFacebook size={18} />}
+                          rightSection={<IconExternalLink size={16} />}
+                        >
+                          View on Facebook
+                        </Button>
+                      </Stack>
+                    </Paper>
+                  )}
+                </>
+              ) : (
+                <>
+                  <ThemeIcon size={60} radius="xl" color="red" variant="light">
+                    <IconX size={30} />
+                  </ThemeIcon>
+
+                  <Stack gap="xs" align="center">
+                    <Title order={3} ta="center" c="red">
+                      Post Failed
+                    </Title>
+                    <Text size="sm" ta="center" c="dimmed">
+                      There was an error publishing your post. Please try again.
+                    </Text>
+                  </Stack>
+                </>
+              )}
+
+              <Divider w="100%" />
+
+              <Group justify="center" w="100%">
+                <Button
+                  variant="filled"
+                  onClick={() => setPostResult(null)}
+                  size="md"
+                  style={{ minWidth: 120 }}
+                >
+                  {postResult?.success ? 'Done' : 'Close'}
+                </Button>
+              </Group>
             </Stack>
           </Modal>
         </Stack>

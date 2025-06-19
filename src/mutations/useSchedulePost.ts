@@ -9,9 +9,10 @@ interface SchedulePostVariables {
 }
 
 export const useSchedulePost = () => {
-  return useMutation<void, AxiosError, SchedulePostVariables>({
+  return useMutation<any, AxiosError, SchedulePostVariables>({
     mutationFn: async ({ eventId, data }) => {
-      await marketingClient.schedulePost(eventId, data);
+      const response = await marketingClient.schedulePost(eventId, data);
+      return response.data;
     },
   });
 };
