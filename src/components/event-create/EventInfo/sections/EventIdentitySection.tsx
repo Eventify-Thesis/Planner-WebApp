@@ -110,8 +110,8 @@ export const EventIdentitySection: React.FC<EventIdentitySectionProps> = ({
     >
       <Grid gutter="xl" mb="lg">
         <Grid.Col span={{ base: 12, md: 3 }}>
-          <Group justify="space-between" mb="xs">
-            <Text fw={600} size="sm" c="dark">
+          <Box mb="xs">
+            <Text fw={600} size="sm" c="dark" mb={4}>
               {t('event_create.event_identity.logo')}
               <Text span c="red" ml={4}>
                 *
@@ -120,7 +120,7 @@ export const EventIdentitySection: React.FC<EventIdentitySectionProps> = ({
             <Text size="xs" c="dimmed">
               (720:958 format recommended)
             </Text>
-          </Group>
+          </Box>
           {fileList['logo']?.length > 0 ? (
             <Box className={classes.previewContainer}>
               <Image
@@ -146,6 +146,7 @@ export const EventIdentitySection: React.FC<EventIdentitySectionProps> = ({
               maxSize={10 * 1024 * 1024} // 2MB
               accept={{ 'image/*': [] }}
               className={classes.uploadContainer}
+              style={{ minHeight: '160px' }}
             >
               <Box className={classes.uploadContent}>
                 <Box className={classes.uploadIcon}>
@@ -169,8 +170,8 @@ export const EventIdentitySection: React.FC<EventIdentitySectionProps> = ({
         </Grid.Col>
 
         <Grid.Col span={{ base: 12, md: 9 }}>
-          <Group justify="space-between" mb="xs">
-            <Text fw={600} size="sm" c="dark">
+          <Box mb="xs">
+            <Text fw={600} size="sm" c="dark" mb={4}>
               {t('event_create.event_identity.banner')}
               <Text span c="red" ml={4}>
                 *
@@ -179,7 +180,7 @@ export const EventIdentitySection: React.FC<EventIdentitySectionProps> = ({
             <Text size="xs" c="dimmed">
               (1280:720 format recommended)
             </Text>
-          </Group>
+          </Box>
           {fileList['banner']?.length > 0 ? (
             <Box className={classes.previewContainer}>
               <Image
@@ -205,6 +206,7 @@ export const EventIdentitySection: React.FC<EventIdentitySectionProps> = ({
               maxSize={3 * 1024 * 1024} // 3MB
               accept={{ 'image/*': [] }}
               className={classes.uploadContainer}
+              style={{ minHeight: '160px' }}
             >
               <Box className={classes.uploadContent}>
                 <Box className={classes.uploadIcon}>
