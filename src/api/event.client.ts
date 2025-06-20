@@ -260,9 +260,17 @@ export const eventsClient = {
     }
   },
 
-  getEventStats: async (eventId: IdParam) => {
+  getEventStats: async (
+    eventId: IdParam,
+    options?: { startDate?: string; endDate?: string },
+  ) => {
+    const params: any = {};
+    if (options?.startDate) params.startDate = options.startDate;
+    if (options?.endDate) params.endDate = options.endDate;
+
     const response = await httpApi.get<any>(
       'planner/events/' + eventId + '/stats',
+      { params },
     );
     return response.data.data;
   },

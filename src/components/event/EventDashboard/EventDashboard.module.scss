@@ -1,22 +1,143 @@
+.dashboardContainer {
+  padding: 20px;
+  background: #f8f9fa;
+  min-height: 100vh;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 20px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+
+  @media (max-width: 768px) {
+    justify-content: center;
+  }
+}
+
+.datePicker {
+  min-width: 280px;
+
+  @media (max-width: 768px) {
+    min-width: 100%;
+  }
+
+  // Ant Design RangePicker styling
+  :global(.ant-picker) {
+    border-radius: 8px;
+    border: 1px solid #d9d9d9;
+    padding: 8px 12px;
+    height: 40px;
+
+    &:hover {
+      border-color: #4096ff;
+    }
+
+    &:focus-within {
+      border-color: #4096ff;
+      box-shadow: 0 0 0 2px rgba(64, 150, 255, 0.1);
+    }
+  }
+
+  :global(.ant-picker-input) {
+    > input {
+      font-size: 14px;
+    }
+  }
+
+  :global(.ant-picker-suffix) {
+    color: #666;
+  }
+}
+
 .chartCard {
-  margin-top: 20px;
+  margin-top: 0;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9ecef;
+  background: white;
+
+  .chartCardHeader {
+    margin-bottom: 24px;
+  }
 
   .chartCardTitle {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
 
-    h2 {
-      margin: 0;
+    @media (max-width: 768px) {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+
+  .chartStats {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+
+    @media (max-width: 768px) {
+      gap: 16px;
+    }
+  }
+
+  .statItem {
+    text-align: center;
+    padding: 12px 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    min-width: 120px;
+
+    @media (max-width: 768px) {
+      min-width: 100px;
+      padding: 8px 12px;
     }
   }
 
   .dateRange {
-    color: #bdbdbd;
+    color: #6c757d;
+    font-size: 0.875rem;
   }
 
   h2:first-child {
     margin-top: 0;
+  }
+}
+
+// Responsive chart container
+.chartCard {
+  .recharts-wrapper {
+    @media (max-width: 768px) {
+      height: 280px !important;
+    }
+  }
+}
+
+// Animation for smooth transitions
+.chartCard {
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   }
 }
