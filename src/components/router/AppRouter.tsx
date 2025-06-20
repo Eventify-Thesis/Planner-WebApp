@@ -15,6 +15,8 @@ import { withLoading } from '@/hocs/withLoading.hoc';
 import { SignIn, SignUp } from '@clerk/clerk-react';
 import { NotFound } from '../common/NotFound/NotFound';
 import ScrollToTop from '../common/ScrollToTop';
+import { GlobalErrorHandler } from '../common/GlobalErrorHandler/GlobalErrorHandler';
+import { ErrorBoundary } from '../common/ErrorBoundary/ErrorBoundary';
 const EventDashboardPage = React.lazy(
   () => import('@/pages/EventDashboardPage'),
 );
@@ -46,59 +48,65 @@ export const AppRouter: React.FC = () => {
 
   return (
     <BrowserRouter>
+      <GlobalErrorHandler />
       <ScrollToTop />
-      <Routes>
-        <Route path="/" element={protectedLayout}>
-          <Route index element={<Navigate to="/events" replace />} />
-          <Route path="events" element={<EventDashboardPage />} />
-          <Route path="create-event" element={<EventCreatePage />}>
-            <Route
-              index
-              element={<Navigate to="/create-event?step=info" replace />}
-            />
-            <Route path=":eventId" element={<EventCreatePage />} />
-          </Route>
-
-          <Route path="export-file" element={<NotFound />} />
-          <Route path="legal-document" element={<NotFound />} />
-        </Route>
-
-        {/* Event Detail Routes */}
-        {eventDetailRoutes.map((route) => (
-          <Route key={route.path} path={route.path} element={route.element}>
-            {route.children?.map((childRoute) => (
+      <ErrorBoundary>
+        <Routes>
+          <Route path="/" element={protectedLayout}>
+            <Route index element={<Navigate to="/events" replace />} />
+            <Route path="events" element={<EventDashboardPage />} />
+            <Route path="create-event" element={<EventCreatePage />}>
               <Route
-                key={childRoute.path}
-                path={childRoute.path}
-                element={childRoute.element}
+                index
+                element={<Navigate to="/create-event?step=info" replace />}
               />
-            ))}
+              <Route path=":eventId" element={<EventCreatePage />} />
+            </Route>
+
+            <Route path="export-file" element={<NotFound />} />
+            <Route path="legal-document" element={<NotFound />} />
           </Route>
-        ))}
 
-        <Route
-          path="/events/:eventId/check-in/:checkInListShortId"
-          element={<CheckInPage />}
-        />
+          {/* Event Detail Routes */}
+          {eventDetailRoutes.map((route) => (
+            <Route key={route.path} path={route.path} element={route.element}>
+              {route.children?.map((childRoute) => (
+                <Route
+                  key={childRoute.path}
+                  path={childRoute.path}
+                  element={childRoute.element}
+                />
+              ))}
+            </Route>
+          ))}
 
-        <Route
-          path="/events/:eventId/shows/:showId/game-management/:quizId/active/:code"
-          element={<QuizActiveGamePage />}
-        />
+          <Route
+            path="/events/:eventId/check-in/:checkInListShortId"
+            element={<CheckInPage />}
+          />
 
-        <Route
-          path="/events/:eventId/shows/:showId/game-management/:quizId/play/waiting-room"
-          element={<QuizWaitingRoomPage />}
-        />
+          <Route
+            path="/events/:eventId/shows/:showId/game-management/:quizId/active/:code"
+            element={<QuizActiveGamePage />}
+          />
 
-        <Route path="/auth" element={<AuthLayoutFallback />}>
-          <Route path="login" element={<SignIn signUpUrl="/auth/sign-up" />} />
-          <Route path="sign-up" element={<SignUp />} />
-        </Route>
+          <Route
+            path="/events/:eventId/shows/:showId/game-management/:quizId/play/waiting-room"
+            element={<QuizWaitingRoomPage />}
+          />
 
-        {/* Catch-all route for 404 */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+          <Route path="/auth" element={<AuthLayoutFallback />}>
+            <Route
+              path="login"
+              element={<SignIn signUpUrl="/auth/sign-up" />}
+            />
+            <Route path="sign-up" element={<SignUp />} />
+          </Route>
+
+          {/* Catch-all route for 404 */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </ErrorBoundary>
     </BrowserRouter>
   );
 };

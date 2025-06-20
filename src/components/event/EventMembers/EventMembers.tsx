@@ -56,8 +56,9 @@ const EventMembers = () => {
   const [pageSize, setPageSize] = useState(10);
   const [editingMember, setEditingMember] = useState<MemberModel | null>(null);
   const [searchParams, setSearchParams] = useFilterQueryParamSync();
-  const [modalOpened, { open: openModal, close: closeModal }] = useDisclosure(false);
-  
+  const [modalOpened, { open: openModal, close: closeModal }] =
+    useDisclosure(false);
+
   // Initialize form with Mantine useForm
   const form = useForm({
     initialValues: {
@@ -65,8 +66,12 @@ const EventMembers = () => {
       role: '',
     },
     validate: {
-      email: (value) => (!value ? t('members.form.emailRequired') : 
-        !/^\S+@\S+$/.test(value) ? t('members.form.emailInvalid') : null),
+      email: (value) =>
+        !value
+          ? t('members.form.emailRequired')
+          : !/^\S+@\S+$/.test(value)
+          ? t('members.form.emailInvalid')
+          : null,
       role: (value) => (!value ? t('members.form.roleRequired') : null),
     },
   });
@@ -220,28 +225,30 @@ const EventMembers = () => {
   const renderMemberInfo = (member: MemberModel) => (
     <Stack gap={0}>
       <Text fw={500}>{`${member.firstName} ${member.lastName}`}</Text>
-      <Text size="sm" c="dimmed">{member.email}</Text>
+      <Text size="sm" c="dimmed">
+        {member.email}
+      </Text>
     </Stack>
   );
-  
+
   const renderRole = (role: EventRole) => (
     <Badge color="blue" variant="light">
       {t(`members.role.${role}`)}
     </Badge>
   );
-  
+
   const renderActions = (member: MemberModel) => (
     <Group justify="center" gap="xs">
-      <ActionIcon 
-        variant="light" 
-        color="blue" 
+      <ActionIcon
+        variant="light"
+        color="blue"
         onClick={() => showEditModal(member)}
       >
         <IconEdit style={{ width: rem(16), height: rem(16) }} />
       </ActionIcon>
-      <ActionIcon 
-        variant="light" 
-        color="red" 
+      <ActionIcon
+        variant="light"
+        color="red"
         onClick={() => handleDelete(member.userId)}
       >
         <IconTrash style={{ width: rem(16), height: rem(16) }} />
@@ -250,7 +257,10 @@ const EventMembers = () => {
   );
 
   // Helper function to check if a role has a specific permission
-  const hasPermission = (role: string, permission: EventPermission): boolean => {
+  const hasPermission = (
+    role: string,
+    permission: EventPermission,
+  ): boolean => {
     // Safely cast the role string to EventRole enum
     const roleEnum = role as unknown as EventRole;
     return EVENT_ROLE_PERMISSIONS[roleEnum].includes(permission);
@@ -260,7 +270,7 @@ const EventMembers = () => {
     <Box p={24}>
       <PageBody>
         <PageTitle>Members</PageTitle>
-        
+
         <ToolBar
           searchComponent={() => (
             <SearchBarWrapper
@@ -279,16 +289,18 @@ const EventMembers = () => {
             {t('members.addMember')}
           </Button>
         </ToolBar>
-        
+
         <Paper shadow="xs" radius="md" p="md" withBorder>
           <LoadingOverlay visible={isLoading} overlayProps={{ blur: 2 }} />
-          
+
           <Table highlightOnHover withTableBorder>
             <Table.Thead>
               <Table.Tr>
                 <Table.Th>{t('members.table.member')}</Table.Th>
                 <Table.Th>{t('members.table.role')}</Table.Th>
-                <Table.Th style={{ textAlign: 'center' }}>{t('members.table.actions')}</Table.Th>
+                <Table.Th style={{ textAlign: 'center' }}>
+                  {t('members.table.actions')}
+                </Table.Th>
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
@@ -296,7 +308,9 @@ const EventMembers = () => {
                 <Table.Tr>
                   <Table.Td colSpan={3}>
                     <Center p="xl">
-                      <Text c="dimmed" fs="italic">{t('common.noResults')}</Text>
+                      <Text c="dimmed" fs="italic">
+                        {t('common.noResults')}
+                      </Text>
                     </Center>
                   </Table.Td>
                 </Table.Tr>
@@ -311,10 +325,10 @@ const EventMembers = () => {
               )}
             </Table.Tbody>
           </Table>
-          
+
           {totalDocs > pageSize && (
             <Flex justify="center" mt="md">
-              <Pagination 
+              <Pagination
                 value={page}
                 onChange={handlePageChange}
                 total={Math.ceil(totalDocs / pageSize)}
@@ -328,7 +342,9 @@ const EventMembers = () => {
           onClose={closeModal}
           title={
             <Text fw={600} size="lg">
-              {editingMember ? t('members.modal.editTitle') : t('members.modal.addTitle')}
+              {editingMember
+                ? t('members.modal.editTitle')
+                : t('members.modal.addTitle')}
             </Text>
           }
           size="xl"
@@ -344,42 +360,44 @@ const EventMembers = () => {
                   {...form.getInputProps('email')}
                 />
               )}
-              
+
               <Select
                 required
                 label={t('members.form.role')}
                 placeholder="Select a role"
-                data={
-                  Object.entries(EVENT_ROLE_LABELS)
-                    .filter(([value]) => {
-                      const roleHierarchy = {
-                        [EventRole.OWNER]: 5,
-                        [EventRole.ADMIN]: 4,
-                        [EventRole.MANAGER]: 3,
-                        [EventRole.ENTRY_STAFF]: 2,
-                        [EventRole.VENDOR]: 1,
-                      };
-                      
-                      // Convert string to EventRole enum for comparison
-                      const valueRole = value as unknown as EventRole;
-                      const currentRole = eventBrief?.role as unknown as EventRole || EventRole.VENDOR;
-                      
-                      return roleHierarchy[valueRole] < roleHierarchy[currentRole];
-                    })
-                    .map(([value]) => ({
-                      value,
-                      label: t(`members.role.${value}`),
-                    }))
-                }
+                data={Object.entries(EVENT_ROLE_LABELS)
+                  .filter(([value]) => {
+                    const roleHierarchy = {
+                      [EventRole.OWNER]: 5,
+                      [EventRole.ADMIN]: 4,
+                      [EventRole.MANAGER]: 3,
+                      [EventRole.ENTRY_STAFF]: 2,
+                      [EventRole.VENDOR]: 1,
+                    };
+
+                    // Convert string to EventRole enum for comparison
+                    const valueRole = value as unknown as EventRole;
+                    const currentRole =
+                      (eventBrief?.role as unknown as EventRole) ||
+                      EventRole.VENDOR;
+
+                    return (
+                      roleHierarchy[valueRole] < roleHierarchy[currentRole]
+                    );
+                  })
+                  .map(([value]) => ({
+                    value,
+                    label: t(`members.role.${value}`),
+                  }))}
                 {...form.getInputProps('role')}
               />
 
-              <Divider 
-                label={<Text fw={500}>{t('members.permissions.title')}</Text>} 
+              <Divider
+                label={<Text fw={500}>{t('members.permissions.title')}</Text>}
                 labelPosition="center"
                 my="md"
               />
-              
+
               <ScrollArea h={300}>
                 <Table withTableBorder>
                   <Table.Thead>
@@ -395,33 +413,48 @@ const EventMembers = () => {
                     </Table.Tr>
                   </Table.Thead>
                   <Table.Tbody>
-                    {Object.entries(EVENT_PERMISSION_LABELS).map(([permission]) => (
-                      <Table.Tr key={permission}>
-                        <Table.Td style={{ whiteSpace: 'nowrap' }}>
-                          {t(`event.${permission.replace('org:event:', '')}`)}
-                        </Table.Td>
-                        {Object.keys(EVENT_ROLE_LABELS).map((role) => (
-                          <Table.Td key={role} style={{ textAlign: 'center' }}>
-                            {hasPermission(role, permission as EventPermission) ? (
-                              <Center>
-                                <IconCheck style={{ color: 'var(--mantine-color-green-6)' }} />
-                              </Center>
-                            ) : null}
+                    {Object.entries(EVENT_PERMISSION_LABELS).map(
+                      ([permission]) => (
+                        <Table.Tr key={permission}>
+                          <Table.Td style={{ whiteSpace: 'nowrap' }}>
+                            {t(`event.${permission.replace('org:event:', '')}`)}
                           </Table.Td>
-                        ))}
-                      </Table.Tr>
-                    ))}
+                          {Object.keys(EVENT_ROLE_LABELS).map((role) => (
+                            <Table.Td
+                              key={role}
+                              style={{ textAlign: 'center' }}
+                            >
+                              {hasPermission(
+                                role,
+                                permission as EventPermission,
+                              ) ? (
+                                <Center>
+                                  <IconCheck
+                                    style={{
+                                      color: 'var(--mantine-color-green-6)',
+                                    }}
+                                  />
+                                </Center>
+                              ) : null}
+                            </Table.Td>
+                          ))}
+                        </Table.Tr>
+                      ),
+                    )}
                   </Table.Tbody>
                 </Table>
               </ScrollArea>
-              
+
               <Flex justify="flex-end" gap="md" mt="md">
                 <Button variant="outline" onClick={closeModal}>
                   {t('common.cancel')}
                 </Button>
-                <Button 
-                  type="submit" 
-                  loading={addMemberMutation.isPending || updateMemberRoleMutation.isPending}
+                <Button
+                  type="submit"
+                  loading={
+                    addMemberMutation.isPending ||
+                    updateMemberRoleMutation.isPending
+                  }
                 >
                   {t('common.save')}
                 </Button>

@@ -155,6 +155,8 @@
     "emailError": "Please input users name or delete this field",
     "notValidEmail": "Please input a valid email address!",
     "error": "Lỗi",
+    "unauthorized": "Phiên làm việc của bạn đã hết hạn. Vui lòng đăng nhập lại.",
+    "forbidden": "Bạn không có quyền thực hiện hành động này.",
     "feed": "Cấp dữ liệu",
     "firstName": "Tên",
     "forgotPass": "Quên mật khẩu",

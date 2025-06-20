@@ -70,6 +70,8 @@
     "emailError": "Please input users name or delete this field",
     "notValidEmail": "Please input a valid email address!",
     "error": "Error",
+    "unauthorized": "Your session has expired. Please log in again.",
+    "forbidden": "You do not have permission to perform this action.",
     "feed": "Feed",
     "firstName": "First Name",
     "forgotPass": "Forgot Password",
