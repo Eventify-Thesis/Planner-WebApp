@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@clerk/clerk-react';
 import { Modal, Stack, Text, Button, Center } from '@mantine/core';
 import { IconLock, IconAlertTriangle } from '@tabler/icons-react';
 import { showError } from '@/utils/notifications';
 import { setGlobalErrorHandler } from '@/api/http.api';
+import { getToken } from '@/services/tokenManager';
 
 export const GlobalErrorHandler: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { isSignedIn, isLoaded } = useAuth();
   const [permissionError, setPermissionError] = useState(false);
   const [tokenExpiredError, setTokenExpiredError] = useState(false);
 
@@ -16,8 +19,15 @@ export const GlobalErrorHandler: React.FC = () => {
     const handleGlobalError = (status: number, messageKey: string) => {
       switch (status) {
         case 401:
-          // Token expired - show modal and redirect to login
-          setTokenExpiredError(true);
+          // Only show "session expired" modal if user is actually signed in and has a token
+          // This prevents the modal from showing during initial load when user isn't authenticated yet
+          const currentToken = getToken();
+          const shouldShowModal = isLoaded && isSignedIn && currentToken;
+
+          if (shouldShowModal) {
+            setTokenExpiredError(true);
+          }
+          // Ignore 401 errors when user is not properly authenticated yet
           break;
 
         case 403:
@@ -37,7 +47,7 @@ export const GlobalErrorHandler: React.FC = () => {
     return () => {
       setGlobalErrorHandler(() => {});
     };
-  }, [t]);
+  }, [t, isSignedIn, isLoaded]);
 
   const handleTokenExpiredClose = () => {
     setTokenExpiredError(false);

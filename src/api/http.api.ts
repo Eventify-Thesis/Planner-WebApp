@@ -2,7 +2,6 @@ import axios from 'axios';
 import { AxiosError } from 'axios';
 import { ApiError } from '@/api/ApiError';
 import { getToken } from '@/services/tokenManager';
-import { isTokenExpired } from '@/services/tokenManager';
 
 // Global error handler for HTTP errors
 let globalErrorHandler: ((status: number, message: string) => void) | null =
@@ -22,9 +21,9 @@ export const httpApi = axios.create({
 
 httpApi.interceptors.request.use((config) => {
   const token = getToken();
-  // Check if token is expired
-  if (token && !isTokenExpired(token)) {
-    // Set Authorization header properly for Axios v1+
+
+  // Always send the token if we have one
+  if (token) {
     config.headers.set('Authorization', `Bearer ${token}`);
   }
 
