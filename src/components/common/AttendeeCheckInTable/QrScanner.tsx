@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import QrScanner from 'qr-scanner';
-import { useDebouncedValue } from '@mantine/hooks';
 import classes from './QrScanner.module.scss';
 import {
   IconBulb,
@@ -13,7 +12,6 @@ import {
 import { Anchor, Button, Menu } from '@mantine/core';
 import { showError } from '../../../utils/notifications.tsx';
 import { Trans, useTranslation } from 'react-i18next';
-import { AttendeeModel } from '@/domain/OrderModel.ts';
 
 interface QRScannerComponentProps {
   onCheckOut?: (
@@ -29,156 +27,81 @@ interface QRScannerComponentProps {
   onClose: () => void;
 }
 
+type ScanState = 'idle' | 'processing' | 'success' | 'error';
+
 export const QRScannerComponent = ({
-  attendees,
   onCheckIn,
   onCheckOut,
+  onClose,
 }: QRScannerComponentProps): React.ReactElement => {
   const { t } = useTranslation();
+
+  // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
   const qrScannerRef = useRef<QrScanner | null>(null);
-  const isProcessingRef = useRef(false);
-  const [permissionGranted, setPermissionGranted] = useState(false);
-  const [permissionDenied, setPermissionDenied] = useState(false);
-  const [isCheckingIn, setIsCheckingIn] = useState(false);
-  const [isFlashAvailable, setIsFlashAvailable] = useState(false);
-  const [isFlashOn, setIsFlashOn] = useState(false);
-  const [cameraList, setCameraList] = useState<QrScanner.Camera[]>();
-  const [processedAttendeeIds, setProcessedAttendeeIds] = useState<string[]>(
-    [],
-  );
-  const latestProcessedAttendeeIdsRef = useRef<string[]>([]);
+  const scanCooldownRef = useRef<Set<string>>(new Set());
+  const isInitializingRef = useRef(false);
 
-  const [currentAttendeeId, setCurrentAttendeeId] = useState<string | null>(
-    null,
-  );
-  const [debouncedAttendeeId] = useDebouncedValue(currentAttendeeId, 100);
-  const [isScanFailed, setIsScanFailed] = useState(false);
-  const [isScanSucceeded, setIsScanSucceeded] = useState(false);
-  const [isCheckOutMode, setIsCheckOutMode] = useState(false);
-
-  const scanSuccessAudioRef = useRef<HTMLAudioElement | null>(null);
-  const scanErrorAudioRef = useRef<HTMLAudioElement | null>(null);
-  const scanInProgressAudioRef = useRef<HTMLAudioElement | null>(null);
-
-  const [isSoundOn, setIsSoundOn] = useState(() => {
-    const storedIsSoundOn = localStorage.getItem('qrScannerSoundOn');
-    return storedIsSoundOn === null ? true : JSON.parse(storedIsSoundOn);
+  // Audio refs
+  const audioRefs = useRef({
+    success: new Audio('/sounds/scan-success.wav'),
+    error: new Audio('/sounds/scan-error.wav'),
+    processing: new Audio('/sounds/scan-in-progress.wav'),
   });
 
-  useEffect(() => {
-    localStorage.setItem('qrScannerSoundOn', JSON.stringify(isSoundOn));
-  }, [isSoundOn]);
+  // State
+  const [permissionState, setPermissionState] = useState<
+    'granted' | 'denied' | 'pending'
+  >('pending');
+  const [scanState, setScanState] = useState<ScanState>('idle');
+  const [isCheckOutMode, setIsCheckOutMode] = useState(false);
+  const [isFlashOn, setIsFlashOn] = useState(false);
+  const [isFlashAvailable, setIsFlashAvailable] = useState(false);
+  const [cameras, setCameras] = useState<QrScanner.Camera[]>([]);
+  const [isSoundOn, setIsSoundOn] = useState(() => {
+    const stored = localStorage.getItem('qrScannerSoundOn');
+    return stored === null ? true : JSON.parse(stored);
+  });
 
-  // Remove processed IDs after a delay to allow rescanning
-  const removeProcessedId = (id: string) => {
-    setTimeout(() => {
-      setProcessedAttendeeIds((prev) => prev.filter((prevId) => prevId !== id));
-    }, 2000); // Allow rescanning after 2 seconds
-  };
-
-  useEffect(() => {
-    latestProcessedAttendeeIdsRef.current = processedAttendeeIds;
-  }, [processedAttendeeIds]);
-
-  const startScanner = async () => {
-    try {
-      await navigator.mediaDevices.getUserMedia({ video: true });
-      setPermissionGranted(true);
-      if (videoRef.current) {
-        qrScannerRef.current = new QrScanner(
-          videoRef.current,
-          (result) => {
-            if (!isProcessingRef.current) {
-              setCurrentAttendeeId(result.data);
-            }
-          },
-          {
-            maxScansPerSecond: 3,
-            highlightScanRegion: true,
-          },
-        );
-        qrScannerRef.current.start();
+  // Play audio helper
+  const playAudio = useCallback(
+    (type: keyof typeof audioRefs.current) => {
+      if (isSoundOn) {
+        audioRefs.current[type].play().catch(() => {});
       }
-    } catch (error) {
-      setPermissionDenied(true);
-      console.error(error);
-    }
-  };
+    },
+    [isSoundOn],
+  );
 
-  // Reset scan state after animation completes
-  useEffect(() => {
-    if (isScanSucceeded || isScanFailed) {
-      const timer = setTimeout(() => {
-        setCurrentAttendeeId(null);
-        setIsScanSucceeded(false);
-        setIsScanFailed(false);
-        setIsCheckingIn(false);
-        isProcessingRef.current = false;
-      }, 1000); // Animation cooldown time
-      return () => clearTimeout(timer);
-    }
-  }, [isScanSucceeded, isScanFailed]);
-
-  useEffect(() => {
-    const processAttendeeId = async () => {
-      // Clear scan states when no attendee ID
-      if (!debouncedAttendeeId) {
-        setIsCheckingIn(false);
-        setIsScanSucceeded(false);
-        setIsScanFailed(false);
+  // Handle scan result
+  const handleScanResult = useCallback(
+    async (data: string) => {
+      // Prevent processing during cooldown or if already processing
+      if (scanCooldownRef.current.has(data) || scanState === 'processing') {
         return;
       }
 
-      // Don't process if already handling a scan
-      if (
-        isProcessingRef.current ||
-        isScanSucceeded ||
-        isScanFailed ||
-        isCheckingIn
-      ) {
-        return;
-      }
+      // Add to cooldown
+      scanCooldownRef.current.add(data);
+      setTimeout(() => {
+        scanCooldownRef.current.delete(data);
+      }, 2000);
 
-      // Don't process if this ID was recently processed
-      if (latestProcessedAttendeeIdsRef.current.includes(debouncedAttendeeId)) {
-        return;
-      }
-
-      isProcessingRef.current = true;
-      console.log('Processing scan:', {
-        attendeeId: debouncedAttendeeId,
-        mode: isCheckOutMode ? 'checkout' : 'checkin',
-      });
-
-      setIsCheckingIn(true);
+      setScanState('processing');
+      playAudio('processing');
 
       try {
-        if (isSoundOn && scanInProgressAudioRef.current) {
-          await scanInProgressAudioRef.current.play().catch(() => {});
-        }
-
-        // Call the appropriate handler based on mode
         const handler = isCheckOutMode ? onCheckOut : onCheckIn;
+
         if (!handler) {
           throw new Error(t`Operation not supported`);
         }
 
         await new Promise<void>((resolve, reject) => {
           handler(
-            debouncedAttendeeId,
+            data,
             (success) => {
               if (success) {
-                setIsScanSucceeded(true);
-                if (isSoundOn && scanSuccessAudioRef.current) {
-                  scanSuccessAudioRef.current.play().catch(() => {});
-                }
-                // Add to processed IDs to prevent duplicate scans
-                setProcessedAttendeeIds((prev) => [
-                  ...prev,
-                  debouncedAttendeeId,
-                ]);
-                removeProcessedId(debouncedAttendeeId);
                 resolve();
               } else {
                 reject(new Error(t`Operation failed`));
@@ -189,126 +112,162 @@ export const QRScannerComponent = ({
             },
           );
         });
+
+        setScanState('success');
+        playAudio('success');
+
+        // Reset state after success animation
+        setTimeout(() => {
+          setScanState('idle');
+        }, 1000);
       } catch (error) {
         console.error('Scan processing error:', error);
-        setIsScanFailed(true);
-        if (isSoundOn && scanErrorAudioRef.current) {
-          scanErrorAudioRef.current.play().catch(() => {});
-        }
-      } finally {
-        setIsCheckingIn(false);
-        isProcessingRef.current = false;
+        setScanState('error');
+        playAudio('error');
+
+        // Reset state after error animation
+        setTimeout(() => {
+          setScanState('idle');
+        }, 1000);
       }
-    };
+    },
+    [scanState, isCheckOutMode, onCheckIn, onCheckOut, playAudio, t],
+  );
 
-    processAttendeeId();
-  }, [
-    debouncedAttendeeId,
-    attendees,
-    isCheckOutMode,
-    isSoundOn,
-    onCheckIn,
-    onCheckOut,
-    t,
-  ]);
+  // Initialize scanner
+  const initializeScanner = useCallback(async () => {
+    if (isInitializingRef.current || !videoRef.current) {
+      return;
+    }
 
-  const stopScanner = () => {
+    isInitializingRef.current = true;
+
+    try {
+      // Request camera permission
+      await navigator.mediaDevices.getUserMedia({ video: true });
+      setPermissionState('granted');
+
+      // Clean up existing scanner
+      if (qrScannerRef.current) {
+        qrScannerRef.current.destroy();
+      }
+
+      // Create new scanner
+      qrScannerRef.current = new QrScanner(
+        videoRef.current,
+        (result) => handleScanResult(result.data),
+        {
+          maxScansPerSecond: 2,
+          highlightScanRegion: true,
+          highlightCodeOutline: true,
+        },
+      );
+
+      await qrScannerRef.current.start();
+
+      // Check flash availability
+      const hasFlash = await qrScannerRef.current.hasFlash();
+      setIsFlashAvailable(hasFlash);
+
+      // Get available cameras
+      const availableCameras = await QrScanner.listCameras(true);
+      setCameras(availableCameras);
+    } catch (error) {
+      console.error('Scanner initialization failed:', error);
+      setPermissionState('denied');
+    } finally {
+      isInitializingRef.current = false;
+    }
+  }, [handleScanResult]);
+
+  // Cleanup scanner
+  const cleanupScanner = useCallback(() => {
     if (qrScannerRef.current) {
-      qrScannerRef.current.stop();
       qrScannerRef.current.destroy();
       qrScannerRef.current = null;
     }
-  };
+    isInitializingRef.current = false;
+  }, []);
 
-  const handleClose = () => {
-    stopScanner();
-    onClose();
-  };
-
-  const handleFlashToggle = () => {
-    if (!isFlashAvailable) {
+  // Toggle flash
+  const toggleFlash = useCallback(async () => {
+    if (!qrScannerRef.current || !isFlashAvailable) {
       showError(t`Flash is not available on this device`);
       return;
     }
-    if (qrScannerRef.current) {
+
+    try {
       if (isFlashOn) {
-        qrScannerRef.current.turnFlashOff();
+        await qrScannerRef.current.turnFlashOff();
       } else {
-        qrScannerRef.current.turnFlashOn();
+        await qrScannerRef.current.turnFlashOn();
       }
       setIsFlashOn(!isFlashOn);
+    } catch (error) {
+      console.error('Flash toggle failed:', error);
+      showError(t`Failed to toggle flash`);
     }
-  };
+  }, [isFlashOn, isFlashAvailable, t]);
 
-  const resetScannerState = () => {
-    setCurrentAttendeeId(null);
-    setIsScanSucceeded(false);
-    setIsScanFailed(false);
-    setIsCheckingIn(false);
-    isProcessingRef.current = false;
-  };
+  // Switch camera
+  const switchCamera = useCallback(
+    (camera: QrScanner.Camera) => async () => {
+      if (!qrScannerRef.current) return;
 
-  const handleModeToggle = () => {
-    // Reset all states when changing modes
-    setIsCheckOutMode(!isCheckOutMode);
-    resetScannerState();
-    // Re-initialize scanner
-    if (qrScannerRef.current) {
-      qrScannerRef.current.stop();
-      qrScannerRef.current.destroy();
-      qrScannerRef.current = null;
-      startScanner();
-    }
-  };
-
-  const handleSoundToggle = () => {
-    setIsSoundOn(!isSoundOn);
-  };
-
-  const requestPermission = async () => {
-    setPermissionDenied(false);
-    await startScanner();
-  };
-
-  const updateFlashAvailability = async () => {
-    if (qrScannerRef.current) {
-      const hasFlash = await qrScannerRef.current.hasFlash();
-      setIsFlashAvailable(hasFlash);
-    }
-  };
-
-  useEffect(() => {
-    const initializeScanner = async () => {
       try {
-        await startScanner();
-        await updateFlashAvailability();
-        const cameras = await QrScanner.listCameras(true);
-        setCameraList(cameras);
+        await qrScannerRef.current.setCamera(camera.id);
+        // Recheck flash availability after camera switch
+        const hasFlash = await qrScannerRef.current.hasFlash();
+        setIsFlashAvailable(hasFlash);
+        if (!hasFlash) {
+          setIsFlashOn(false);
+        }
       } catch (error) {
-        console.error('Failed to initialize scanner:', error);
+        console.error('Camera switch failed:', error);
+        showError(t`Failed to switch camera`);
       }
-    };
+    },
+    [t],
+  );
 
-    initializeScanner();
-
-    return () => {
-      if (qrScannerRef.current) {
-        qrScannerRef.current.stop();
-        qrScannerRef.current.destroy();
-        qrScannerRef.current = null;
-      }
-    };
+  // Toggle mode
+  const toggleMode = useCallback(() => {
+    setIsCheckOutMode((prev) => !prev);
+    setScanState('idle');
+    scanCooldownRef.current.clear();
   }, []);
 
-  const handleCameraSelection = (camera: QrScanner.Camera) => () => {
-    return qrScannerRef.current
-      ?.setCamera(camera.id)
-      .then(() => updateFlashAvailability().catch(console.error));
-  };
+  // Toggle sound
+  const toggleSound = useCallback(() => {
+    setIsSoundOn((prev: boolean) => {
+      const newValue = !prev;
+      localStorage.setItem('qrScannerSoundOn', JSON.stringify(newValue));
+      return newValue;
+    });
+  }, []);
 
-  return (
-    <div className={classes.videoContainer}>
-      {permissionDenied && (
+  // Request permission
+  const requestPermission = useCallback(() => {
+    setPermissionState('pending');
+    initializeScanner();
+  }, [initializeScanner]);
+
+  // Close scanner
+  const handleClose = useCallback(() => {
+    cleanupScanner();
+    onClose();
+  }, [cleanupScanner, onClose]);
+
+  // Initialize on mount and when mode changes
+  useEffect(() => {
+    initializeScanner();
+    return cleanupScanner;
+  }, [initializeScanner]);
+
+  // Render permission denied state
+  if (permissionState === 'denied') {
+    return (
+      <div className={classes.videoContainer}>
         <div className={classes.permissionMessage}>
           <Trans>
             Camera permission was denied.{' '}
@@ -324,7 +283,6 @@ export const QRScannerComponent = ({
             </Anchor>{' '}
             access to your camera in your browser settings.
           </Trans>
-
           <div>
             <Button
               color={'green'}
@@ -336,12 +294,17 @@ export const QRScannerComponent = ({
             </Button>
           </div>
         </div>
-      )}
+      </div>
+    );
+  }
 
-      <video className={classes.video} ref={videoRef}></video>
+  return (
+    <div className={classes.videoContainer}>
+      <video className={classes.video} ref={videoRef} />
 
+      {/* Flash Toggle */}
       <Button
-        onClick={handleFlashToggle}
+        onClick={toggleFlash}
         variant={'transparent'}
         className={classes.flashToggle}
       >
@@ -350,25 +313,32 @@ export const QRScannerComponent = ({
           <IconBulb color={isFlashOn ? 'yellow' : '#ffffff95'} size={30} />
         )}
       </Button>
+
+      {/* Sound Toggle */}
       <Button
-        onClick={handleSoundToggle}
+        onClick={toggleSound}
         variant={'transparent'}
         className={classes.soundToggle}
       >
-        {isSoundOn && <IconVolume color={'#ffffff95'} size={30} />}
-        {!isSoundOn && <IconVolumeOff color={'#ffffff95'} size={30} />}
+        {isSoundOn ? (
+          <IconVolume color={'#ffffff95'} size={30} />
+        ) : (
+          <IconVolumeOff color={'#ffffff95'} size={30} />
+        )}
       </Button>
+
+      {/* Mode Toggle */}
       <Button
-        onClick={handleModeToggle}
+        onClick={toggleMode}
         variant={'filled'}
         className={classes.modeToggle}
         color={isCheckOutMode ? 'red' : 'green'}
+        disabled={scanState === 'processing'}
       >
         {isCheckOutMode ? t`Check Out Mode` : t`Check In Mode`}
       </Button>
-      <audio ref={scanSuccessAudioRef} src="/sounds/scan-success.wav" />
-      <audio ref={scanErrorAudioRef} src="/sounds/scan-error.wav" />
-      <audio ref={scanInProgressAudioRef} src="/sounds/scan-in-progress.wav" />
+
+      {/* Close Button */}
       <Button
         onClick={handleClose}
         variant={'transparent'}
@@ -376,6 +346,8 @@ export const QRScannerComponent = ({
       >
         <IconX color={'#ffffff95'} size={30} />
       </Button>
+
+      {/* Camera Switch */}
       <Button variant={'transparent'} className={classes.switchCameraButton}>
         <Menu shadow="md" width={200}>
           <Menu.Target>
@@ -383,19 +355,21 @@ export const QRScannerComponent = ({
           </Menu.Target>
           <Menu.Dropdown>
             <Menu.Label>{t`Select Camera`}</Menu.Label>
-            {cameraList?.map((camera, index) => (
-              <Menu.Item key={index} onClick={handleCameraSelection(camera)}>
+            {cameras.map((camera, index) => (
+              <Menu.Item key={index} onClick={switchCamera(camera)}>
                 {camera.label}
               </Menu.Item>
             ))}
           </Menu.Dropdown>
         </Menu>
       </Button>
+
+      {/* Scanner Overlay */}
       <div
         className={`${classes.scannerOverlay} ${
-          isScanSucceeded ? classes.success : ''
-        } ${isScanFailed ? classes.failure : ''} ${
-          isCheckingIn ? classes.checkingIn : ''
+          scanState === 'success' ? classes.success : ''
+        } ${scanState === 'error' ? classes.failure : ''} ${
+          scanState === 'processing' ? classes.checkingIn : ''
         } ${isCheckOutMode ? classes.checkOut : classes.checkIn}`}
       >
         <div className={classes.modeIndicator}>
