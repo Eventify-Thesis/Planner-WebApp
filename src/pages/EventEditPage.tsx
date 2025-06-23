@@ -213,6 +213,8 @@ const EventEditPage: React.FC = () => {
         throw new Error(t('event_create.at_least_one_ticket_type'));
       }
 
+      console.log(show.ticketTypes);
+
       show.ticketTypes.forEach((ticketType) => {
         if (ticketType.id < 0) {
           delete ticketType.id;

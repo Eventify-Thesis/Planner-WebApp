@@ -89,6 +89,26 @@ export const TicketModal: React.FC<TicketModalProps> = ({
     }
   };
 
+  const handleFreeChange = (checked: boolean) => {
+    setIsFree(checked);
+    if (checked) {
+      // Reset price to 0 when free is checked
+      form.setFieldsValue({ price: 0 });
+      form.setFieldsValue({ isFree: true });
+    }
+  };
+
+  const handlePriceChange = (value: number | null) => {
+    // If user manually enters a price > 0, uncheck the free checkbox
+    if (value && value > 0) {
+      setIsFree(false);
+      form.setFieldsValue({ isFree: false });
+    } else if (value === 0) {
+      setIsFree(true);
+      form.setFieldsValue({ isFree: true });
+    }
+  };
+
   return (
     <Modal
       opened={visible}
@@ -154,6 +174,7 @@ export const TicketModal: React.FC<TicketModalProps> = ({
                   min={0}
                   style={{ width: '120px' }}
                   step={1}
+                  onChange={handlePriceChange}
                   formatter={(value) => {
                     const number = Number(value);
                     return !isNaN(number)
@@ -163,23 +184,17 @@ export const TicketModal: React.FC<TicketModalProps> = ({
                       : '';
                   }}
                   parser={(value) => {
-                    if (!value) return 0;
+                    if (!value) return 0 as any;
                     const parsed = value.replace(/[₫.,\s]/g, ''); // remove currency, commas, dots, and spaces
                     const num = parseInt(parsed, 10);
-                    return isNaN(num) ? 0 : num;
+                    return (isNaN(num) ? 0 : num) as any;
                   }}
                 />
               </Form.Item>
 
               <Checkbox
                 checked={isFree}
-                onChange={(e) => {
-                  const checked = e.currentTarget.checked;
-                  setIsFree(checked);
-                  if (checked) {
-                    safeSetFormValue(form.current, 'price', 0);
-                  }
-                }}
+                onChange={(e) => handleFreeChange(e.currentTarget.checked)}
                 label={t('show_and_ticket.ticket_modal.free')}
               />
             </Box>
