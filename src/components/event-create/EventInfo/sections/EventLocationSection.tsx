@@ -15,6 +15,7 @@ import { IconMapPin } from '@tabler/icons-react';
 import styles from './EventLocationSection.module.css';
 import { GooglePlacesAutocomplete } from '@/components/common/GooglePlacesAutocomplete/GooglePlacesAutocomplete';
 import { FormSection } from '../components/FormSection';
+import { useGetWardsByCity } from '@/queries/useLocationQueries';
 
 interface City {
   originId: number;
@@ -87,6 +88,74 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
   const { t } = useTranslation();
   const { language } = useLanguage();
 
+  // Use new query for Vietnam 2025 restructuring - get wards directly from cities
+  const { data: wardsByCity = [], isLoading: isWardsByCityLoading } =
+    useGetWardsByCity(selectedCity);
+
+  // Store ward info for matching after wards are loaded
+  const [pendingWardMatch, setPendingWardMatch] = React.useState<string | null>(
+    null,
+  );
+
+  // Effect to match ward when wards data becomes available
+  React.useEffect(() => {
+    if (pendingWardMatch && wardsByCity.length > 0 && !isWardsByCityLoading) {
+      // Try multiple ward name variations
+      const wardVariations = [
+        pendingWardMatch, // Full name as is (e.g., "Phường 9")
+        pendingWardMatch.replace(/^(Phường|Ward|Xã|Thị trấn)\s+/i, '').trim(), // Remove prefixes (e.g., "9")
+        pendingWardMatch.replace(/\s+(Ward|Phường|Xã|Thị trấn)$/i, '').trim(), // Remove suffixes
+        // Add number padding for better matching (e.g., "9" -> "09")
+        pendingWardMatch.replace(
+          /^(Phường|Ward|Xã|Thị trấn)\s+(\d)$/i,
+          (match, prefix, num) => num.padStart(2, '0'),
+        ),
+      ];
+
+      const matchingWard = wardsByCity.find((w) => {
+        const isMatch = wardVariations.some((variation) => {
+          const wardName = w.name.toLowerCase();
+          const wardNameEn = w.nameEn.toLowerCase();
+          const variationLower = variation.toLowerCase();
+
+          return (
+            wardName === variationLower ||
+            wardNameEn === variationLower ||
+            wardName.includes(variationLower) ||
+            wardNameEn.includes(variationLower) ||
+            variationLower.includes(wardName) ||
+            variationLower.includes(wardNameEn) ||
+            // Try matching just the numbers for cases like "Phường 9" vs "9"
+            (() => {
+              const wardMatch = wardName.match(/\d+/);
+              const variationMatch = variationLower.match(/\d+/);
+              return (
+                wardMatch &&
+                variationMatch &&
+                wardMatch[0] === variationMatch[0]
+              );
+            })()
+          );
+        });
+
+        return isMatch;
+      });
+
+      if (matchingWard) {
+        setSelectedWard(matchingWard.originId);
+        form.setFieldValue('wardId', matchingWard.originId);
+      }
+
+      setPendingWardMatch(null); // Clear pending match
+    }
+  }, [
+    wardsByCity,
+    pendingWardMatch,
+    isWardsByCityLoading,
+    setSelectedWard,
+    form,
+  ]);
+
   const handlePlaceSelect = async (place: PlaceDetails) => {
     if (!place.latitude || !place.longitude) return;
 
@@ -119,46 +188,46 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
       }
     });
 
-    // If we don't have ward information from address components, parse from formatted address
-    if (!ward) {
-      const addressParts = formattedAddress
-        .split(', ')
-        .map((part) => part.trim());
+    // Parse additional information from formatted address
+    const addressParts = formattedAddress
+      .split(', ')
+      .map((part) => part.trim());
 
-      // Vietnamese address format: street, ward, district, city, country
-      // Example: "227 Đ. Nguyễn Văn Cừ, Phường 4, Quận 5, Hồ Chí Minh, Việt Nam"
-      if (addressParts.length >= 4) {
-        // Find ward (Phường) in the address parts
-        const wardPart = addressParts.find((part) => part.startsWith('Phường'));
-        if (wardPart) {
-          ward = wardPart;
+    // Vietnamese address format: street, ward, district, city, country
+    // Example: "221 Đ. Lý Thường Kiệt, Phường 9, Quận 11, Hồ Chí Minh, Việt Nam"
+    if (addressParts.length >= 4) {
+      // Find ward (Phường) in the address parts - this is often missing from address_components
+      const wardPart = addressParts.find((part) =>
+        part.match(/^(Phường|Xã|Thị trấn)\s+/i),
+      );
+      if (wardPart && !ward) {
+        ward = wardPart;
+      }
+
+      // If we still don't have city or district, get them from formatted address
+      if (!city) {
+        city = addressParts[addressParts.length - 2]; // Second last is usually city
+      }
+
+      if (!district) {
+        const districtPart = addressParts.find((part) =>
+          part.match(/^(Quận|Huyện|Thành phố|Thị xã)\s+/i),
+        );
+        if (districtPart) {
+          district = districtPart;
         }
+      }
 
-        // If we still don't have city or district, get them from formatted address
-        if (!city) {
-          city = addressParts[addressParts.length - 2];
-        }
-
-        if (!district) {
-          const districtPart = addressParts.find((part) =>
-            part.startsWith('Quận'),
-          );
-          if (districtPart) {
-            district = districtPart;
-          }
-        }
-
-        // If we don't have street info from components, parse from formatted address
-        if (!streetNumber && !route) {
-          const streetParts = addressParts.slice(0, -4);
-          const streetAddress = streetParts.join(', ');
-          const streetMatch = streetAddress.match(/^(\d+)\s+(.+)$/);
-          if (streetMatch) {
-            streetNumber = streetMatch[1];
-            route = streetMatch[2];
-          } else {
-            route = streetAddress;
-          }
+      // If we don't have street info from components, parse from formatted address
+      if (!streetNumber && !route) {
+        // First part should be the street address
+        const streetPart = addressParts[0];
+        const streetMatch = streetPart.match(/^(\d+)\s+(.+)$/);
+        if (streetMatch) {
+          streetNumber = streetMatch[1];
+          route = streetMatch[2];
+        } else {
+          route = streetPart;
         }
       }
     }
@@ -166,42 +235,19 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
     // Find matching city
     const matchingCity = cities.find(
       (c) =>
-        c.name.toLowerCase() === city.toLowerCase() ||
-        c.nameEn.toLowerCase() === city.toLowerCase(),
+        c.name.toLowerCase().includes(city.toLowerCase()) ||
+        c.nameEn.toLowerCase().includes(city.toLowerCase()) ||
+        city.toLowerCase().includes(c.name.toLowerCase()) ||
+        city.toLowerCase().includes(c.nameEn.toLowerCase()),
     );
 
     if (matchingCity) {
       setSelectedCity(matchingCity.originId);
       form.setFieldValue('cityId', matchingCity.originId);
 
-      // Extract district name from "Quận 5" -> "5"
-      const districtName = district.replace(/^Quận\s+/, '').trim();
-
-      // Find matching district
-      const matchingDistrict = districts.find(
-        (d) =>
-          d.name.toLowerCase() === districtName.toLowerCase() ||
-          d.nameEn.toLowerCase() === districtName.toLowerCase(),
-      );
-
-      if (matchingDistrict) {
-        setSelectedDistrict(matchingDistrict.originId);
-        form.setFieldValue('districtId', matchingDistrict.originId);
-
-        // Extract ward name from "Phường 4" -> "4"
-        const wardName = ward.replace(/^Phường\s+/, '').trim();
-
-        // Find matching ward
-        const matchingWard = wards.find(
-          (w) =>
-            w.name.toLowerCase() === wardName.toLowerCase() ||
-            w.nameEn.toLowerCase() === wardName.toLowerCase(),
-        );
-
-        if (matchingWard) {
-          setSelectedWard(matchingWard.originId);
-          form.setFieldValue('wardId', matchingWard.originId);
-        }
+      // Store ward for later matching when wards data becomes available
+      if (ward) {
+        setPendingWardMatch(ward);
       }
     }
 
@@ -213,6 +259,8 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
     form.setFieldValue('latitude', lat);
     form.setFieldValue('longitude', lng);
     form.setFieldValue('formattedAddress', formattedAddress);
+    // Set venue name to the place name (e.g., "Sân vận động Phú Thọ"), not the formatted address
+    form.setFieldValue('venueName', place.name);
     form.setFieldValue('placeId', placeId);
   };
 
@@ -244,11 +292,6 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
                 value: EventType.ONLINE,
               },
             ]}
-            onChange={(value) => {
-              if (value) {
-                form.values.eventType = value;
-              }
-            }}
             size="sm"
             color="blue"
             radius="md"
@@ -281,16 +324,20 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
               <GooglePlacesAutocomplete
                 placeholder={t('event_create.event_location.venue_name')}
                 apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''}
-                value={form.values.formattedAddress}
+                value={form.values.venueName || ''}
                 onChange={(value) => {
-                  form.values.venueName = value;
+                  form.setFieldValue('venueName', value);
+                  // Clear formatted address if user is typing manually
+                  if (!value) {
+                    form.setFieldValue('formattedAddress', '');
+                  }
                 }}
                 onPlaceSelect={handlePlaceSelect}
               />
             </Box>
 
             <Grid gutter="md" className={styles.addressGrid}>
-              <Grid.Col span={{ base: 12, md: 4 }}>
+              <Grid.Col span={{ base: 12, md: 6 }}>
                 <Box className={styles.inputContainer}>
                   <Text className={styles.fieldLabel}>
                     {t('event_create.event_location.city')}
@@ -321,52 +368,7 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
                 </Box>
               </Grid.Col>
 
-              <Grid.Col span={{ base: 12, md: 4 }}>
-                <Box className={styles.inputContainer}>
-                  <Text className={styles.fieldLabel}>
-                    {t('event_create.event_location.district')}
-                    <span className={styles.requiredMark}>*</span>
-                  </Text>
-                  <Select
-                    placeholder={
-                      isDistrictsLoading
-                        ? t('event_create.event_location.loading')
-                        : t('event_create.event_location.district_placeholder')
-                    }
-                    data={districts.map((district) => ({
-                      label:
-                        language === 'en'
-                          ? `${district.typeEn} ${district.nameEn}`
-                          : `${district.type} ${district.name}`,
-                      value: district.originId.toString(),
-                    }))}
-                    {...form.getInputProps('districtId')}
-                    disabled={
-                      form.values.cityId === undefined || isDistrictsLoading
-                    }
-                    onChange={(value) => {
-                      if (value) {
-                        const districtId = parseInt(value, 10);
-                        setSelectedDistrict(districtId);
-                        form.values.districtId = districtId;
-                      }
-                    }}
-                    value={selectedDistrict?.toString()}
-                    searchable
-                    clearable
-                    rightSection={
-                      isDistrictsLoading ? (
-                        <Box style={{ display: 'flex', alignItems: 'center' }}>
-                          <Loader size="xs" mr={5} />
-                          <Text className={styles.loadingText}>Loading</Text>
-                        </Box>
-                      ) : null
-                    }
-                  />
-                </Box>
-              </Grid.Col>
-
-              <Grid.Col span={{ base: 12, md: 4 }}>
+              <Grid.Col span={{ base: 12, md: 6 }}>
                 <Box className={styles.inputContainer}>
                   <Text className={styles.fieldLabel}>
                     {t('event_create.event_location.ward')}
@@ -374,15 +376,15 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
                   </Text>
                   <Select
                     placeholder={
-                      isWardsLoading
+                      isWardsByCityLoading
                         ? t('event_create.event_location.loading')
                         : t('event_create.event_location.ward_placeholder')
                     }
                     disabled={
-                      form.values.districtId === undefined || isWardsLoading
+                      form.values.cityId === undefined || isWardsByCityLoading
                     }
                     rightSection={
-                      isWardsLoading ? (
+                      isWardsByCityLoading ? (
                         <Box style={{ display: 'flex', alignItems: 'center' }}>
                           <Loader size="xs" mr={5} />
                           <Text className={styles.loadingText}>Loading</Text>
@@ -390,11 +392,8 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
                       ) : null
                     }
                     {...form.getInputProps('wardId')}
-                    data={wards.map((ward) => ({
-                      label:
-                        language === 'en'
-                          ? `${ward.typeEn} ${ward.nameEn}`
-                          : `${ward.type} ${ward.name}`,
+                    data={wardsByCity.map((ward) => ({
+                      label: language === 'en' ? ward.nameEn : ward.name,
                       value: ward.originId.toString(),
                     }))}
                     value={selectedWard?.toString()}

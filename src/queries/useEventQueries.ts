@@ -3,6 +3,7 @@ import { eventsClient } from '@/api/event.client';
 import { AxiosError } from 'axios';
 import { IdParam } from '@/types/types';
 import { EventListAllResponse } from '@/dto/event-doc.dto';
+import { SHOW_QUERY_KEYS } from './useShowQueries';
 
 export const EVENT_QUERY_KEYS = {
   list: 'eventList',
@@ -68,8 +69,12 @@ export const useEventMutations = (eventId?: IdParam) => {
       return await eventsClient.updateShow(eventId, data);
     },
     onSuccess: () => {
+      // Invalidate both query keys to ensure cache consistency
       queryClient.invalidateQueries({
         queryKey: [EVENT_QUERY_KEYS.show, eventId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [SHOW_QUERY_KEYS.list, eventId], // This matches SHOW_QUERY_KEYS.list
       });
     },
   });

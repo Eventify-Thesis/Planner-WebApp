@@ -34,4 +34,14 @@ export const locationClient = {
       throw new Error(e);
     }
   },
+
+  // New method for Vietnam 2025 restructuring - get wards directly from cities
+  getWardsByCity: async (cityId: number): Promise<Ward[]> => {
+    try {
+      const response = await httpApi.get(`/locations/cities/${cityId}/wards`);
+      return response.data.data.result;
+    } catch (e: any) {
+      throw new Error(e);
+    }
+  },
 };

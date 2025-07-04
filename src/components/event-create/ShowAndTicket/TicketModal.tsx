@@ -304,11 +304,9 @@ export const TicketModal: React.FC<TicketModalProps> = ({
                 showTime
                 style={{ width: '100%' }}
                 disabledDate={(current) => {
-                  if (!showStartTime || !showEndTime) return false;
-                  return (
-                    current < dayjs(showStartTime) ||
-                    current > dayjs(showEndTime)
-                  );
+                  if (!showStartTime) return false;
+                  // Ticket sale start time should be before show start time
+                  return current >= dayjs(showStartTime);
                 }}
                 popupStyle={{ zIndex: 1500 }}
               />
@@ -329,11 +327,9 @@ export const TicketModal: React.FC<TicketModalProps> = ({
                 showTime
                 style={{ width: '100%' }}
                 disabledDate={(current) => {
-                  if (!showStartTime || !showEndTime) return false;
-                  return (
-                    current < dayjs(showStartTime) ||
-                    current > dayjs(showEndTime)
-                  );
+                  if (!showStartTime) return false;
+                  // Ticket sale end time should be before show start time
+                  return current >= dayjs(showStartTime);
                 }}
                 popupStyle={{ zIndex: 1500 }}
               />

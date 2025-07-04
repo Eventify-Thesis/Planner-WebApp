@@ -94,16 +94,17 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
   useEffect(() => {
     if (showsData) {
       // Convert API date strings to Dayjs objects
-
-      const formattedShows = showsData.map((show) => ({
+      const formattedShows = showsData.map((show: any) => ({
         ...show,
         startTime: show.startTime ? dayjs(show.startTime) : '',
         endTime: show.endTime ? dayjs(show.endTime) : '',
         ticketTypes: Array.isArray(show.ticketTypes) ? show.ticketTypes : [],
       }));
 
-      if (formattedShows.length > 0) setShows(formattedShows);
-      else
+      // Set shows state - this will be the single source of truth
+      if (formattedShows.length > 0) {
+        setShows(formattedShows);
+      } else {
         setShows([
           {
             eventId: Number(eventId) || 0,
@@ -113,48 +114,16 @@ export const ShowAndTicketForm: React.FC<{ formRef: any }> = ({ formRef }) => {
             ticketTypes: [],
           },
         ]);
-
-      if (formRef.current) {
-        safeSetFormValues(formRef, {
-          shows: formattedShows,
-        });
       }
     }
-  }, [showsData, formRef]);
-
-  // Initialize form with existing data if available
-  useEffect(() => {
-    const existingValues = formRef.current?.values;
-    if (existingValues?.shows) {
-      setShows(
-        existingValues.shows.map((show: ShowModel) => ({
-          ...show,
-          ticketTypes: show.ticketTypes || [],
-        })),
-      );
-    } else {
-      formRef.current?.setFieldsValue({
-        shows: shows,
-      });
-    }
-  }, []);
+  }, [showsData, eventId]);
 
   // Keep form values synced with state
   useEffect(() => {
-    const currentValues = formRef.current?.values;
-    const updatedValues = {
-      ...currentValues,
-      shows: shows.map((show) => ({
-        ...show,
-        startTime: show.startTime ? dayjs(show.startTime) : '',
-        endTime: show.endTime ? dayjs(show.endTime) : '',
-        ticketTypes: Array.isArray(show.ticketTypes)
-          ? [...show.ticketTypes]
-          : [],
-      })),
-    };
-    safeSetFormValues(formRef, updatedValues);
-  }, [shows]);
+    if (formRef.current && shows.length > 0) {
+      safeSetFormValues(formRef, { shows });
+    }
+  }, [shows, formRef]);
 
   const handleDeleteShow = (index: number) => {
     const newShows = [...shows];

@@ -6,6 +6,7 @@ export const LOCATION_QUERY_KEYS = {
   cities: 'cities',
   districts: 'districts',
   wards: 'wards',
+  wardsByCity: 'wardsByCity',
 };
 
 export const useGetCities = (regionId: number = 1) => {
@@ -36,5 +37,17 @@ export const useGetWards = (districtId: number | null) => {
       return await locationClient.getWards(districtId);
     },
     enabled: !!districtId,
+  });
+};
+
+// New query hook for Vietnam 2025 restructuring - get wards directly from cities
+export const useGetWardsByCity = (cityId: number | null) => {
+  return useQuery<Ward[]>({
+    queryKey: [LOCATION_QUERY_KEYS.wardsByCity, cityId],
+    queryFn: async () => {
+      if (!cityId) return [];
+      return await locationClient.getWardsByCity(cityId);
+    },
+    enabled: !!cityId,
   });
 };

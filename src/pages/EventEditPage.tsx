@@ -197,7 +197,7 @@ const EventEditPage: React.FC = () => {
 
   const validateShows = (shows: any[]) => {
     if (!shows || shows.length === 0) {
-      throw new Error(t('event_create.at_least_one_show'));
+      throw new Error(t('event_create.at_least_one_show_required'));
     }
 
     shows.forEach((show, index) => {

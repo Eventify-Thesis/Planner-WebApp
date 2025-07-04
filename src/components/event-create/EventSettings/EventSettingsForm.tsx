@@ -81,7 +81,7 @@ const styles = {
   customTextInput: {
     flex: 1,
     height: 40,
-    marginBottom: 40,
+    marginBottom: 30,
   },
   textInputWithLeftAddon: {
     borderTopLeftRadius: 0,

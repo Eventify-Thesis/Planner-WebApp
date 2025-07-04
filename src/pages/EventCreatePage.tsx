@@ -93,7 +93,7 @@ const EventCreatePage: React.FC = () => {
 
   const validateShows = (shows: any[]) => {
     if (!shows || shows.length === 0) {
-      throw new Error(t('event_create.at_least_one_show'));
+      throw new Error(t('event_create.at_least_one_show_required'));
     }
 
     shows.forEach((show, index) => {
@@ -247,6 +247,7 @@ const EventCreatePage: React.FC = () => {
         });
       }
 
+      showSuccess(t('event_create.event_info_saved_successfully'));
       return event;
     } catch (error) {
       throw error;

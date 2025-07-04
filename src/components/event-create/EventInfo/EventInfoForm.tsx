@@ -32,6 +32,7 @@ import {
   useGetCities,
   useGetDistricts,
   useGetWards,
+  useGetWardsByCity,
 } from '@/queries/useLocationQueries';
 import { useGetCategories } from '@/queries/useCategoryQueries';
 import { useGetEventDetail } from '@/queries/useGetEventDetail';
@@ -102,7 +103,7 @@ const EventInfoForm: React.FC<FormStepProps> = ({ formRef }) => {
   const { data: districts = [], isLoading: isDistrictsLoading } =
     useGetDistricts(selectedCity);
   const { data: wards = [], isLoading: isWardsLoading } =
-    useGetWards(selectedDistrict);
+    useGetWardsByCity(selectedCity);
   const { data: categories = [], isLoading: isCategoriesLoading } =
     useGetCategories();
   const { data: eventDetail, isLoading: isEventLoading } =
