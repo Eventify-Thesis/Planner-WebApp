@@ -13,11 +13,16 @@ import {
   Paper,
   SegmentedControl,
   TextInput,
+  ActionIcon,
+  Tooltip,
 } from '@mantine/core';
 import { useParams } from 'react-router-dom';
 import dayjs from 'dayjs';
 import { useGetFacebookPages } from '@/queries/useGetFacebookPages';
-import { useGetFacebookPosts } from '@/queries/useGetFacebookPosts';
+import {
+  useGetFacebookPosts,
+  FacebookPost,
+} from '@/queries/useGetFacebookPosts';
 import { useCheckFacebookAuth } from '@/queries/useCheckFacebookAuth';
 import { useDisconnectFacebook } from '@/mutations/useDisconnectFacebook';
 import { useUser } from '@clerk/clerk-react';
@@ -26,6 +31,8 @@ import {
   IconSearch,
   IconSortAscending,
   IconSortDescending,
+  IconExternalLink,
+  IconEye,
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 
@@ -38,13 +45,15 @@ interface PostPreview {
   shares: number;
 }
 
+type SortableField = 'date' | 'likes' | 'comments' | 'shares';
+
 export const FacebookPostsTable: React.FC = () => {
   const { eventId } = useParams();
   const { user } = useUser();
   const [selectedPage, setSelectedPage] = React.useState<string | null>(null);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [sortOrder, setSortOrder] = React.useState<'asc' | 'desc'>('desc');
-  const [sortBy, setSortBy] = React.useState('date');
+  const [sortBy, setSortBy] = React.useState<SortableField>('date');
   const [previewPost, setPreviewPost] = React.useState<PostPreview | null>(
     null,
   );
@@ -54,7 +63,19 @@ export const FacebookPostsTable: React.FC = () => {
   const { data: posts, isLoading } = useGetFacebookPosts(eventId, selectedPage);
   const disconnectMutation = useDisconnectFacebook();
 
-  console.log(posts);
+  const generateFacebookPostUrl = (pageId: string, postId: string): string => {
+    // Facebook post URLs typically follow: https://www.facebook.com/{pageId}/posts/{postId}
+    // However, postId from Facebook API might be in format {pageId}_{postUniqueId}
+    // So we need to extract the unique part if it includes pageId
+    const postUniqueId = postId.includes('_') ? postId.split('_')[1] : postId;
+    return `https://www.facebook.com/${pageId}/posts/${postUniqueId}`;
+  };
+
+  const handleViewPost = (post: FacebookPost) => {
+    const postUrl = generateFacebookPostUrl(post.pageId, post.postId);
+    window.open(postUrl, '_blank');
+  };
+
   if (!user) {
     return (
       <Card withBorder>
@@ -94,6 +115,24 @@ export const FacebookPostsTable: React.FC = () => {
     );
   }
 
+  const getSortValue = (
+    post: FacebookPost,
+    sortField: SortableField,
+  ): number => {
+    switch (sortField) {
+      case 'date':
+        return new Date(post.scheduledAt).getTime();
+      case 'likes':
+        return post.likes;
+      case 'comments':
+        return post.comments;
+      case 'shares':
+        return post.shares;
+      default:
+        return 0;
+    }
+  };
+
   return (
     <Card withBorder>
       <Stack gap="md">
@@ -101,42 +140,44 @@ export const FacebookPostsTable: React.FC = () => {
           <Text size="lg" fw={500}>
             Facebook Post Statistics
           </Text>
-          <Button
-            variant="subtle"
-            color="red"
-            leftSection={<IconBrandFacebook size={16} />}
-            onClick={async () => {
-              try {
-                await disconnectMutation.mutateAsync(user?.id || '');
-                notifications.show({
-                  title: 'Success',
-                  message: 'Disconnected from Facebook',
-                  color: 'green',
-                });
-              } catch (error) {
-                notifications.show({
-                  title: 'Error',
-                  message: 'Failed to disconnect from Facebook',
-                  color: 'red',
-                });
+          <Group gap="sm">
+            <Button
+              variant="subtle"
+              color="red"
+              leftSection={<IconBrandFacebook size={16} />}
+              onClick={async () => {
+                try {
+                  await disconnectMutation.mutateAsync(user?.id || '');
+                  notifications.show({
+                    title: 'Success',
+                    message: 'Disconnected from Facebook',
+                    color: 'green',
+                  });
+                } catch (error) {
+                  notifications.show({
+                    title: 'Error',
+                    message: 'Failed to disconnect from Facebook',
+                    color: 'red',
+                  });
+                }
+              }}
+              loading={disconnectMutation.isPending}
+            >
+              Disconnect Facebook
+            </Button>
+            <Select
+              placeholder="Select Facebook Page"
+              data={
+                facebookPages?.data?.result?.map((page) => ({
+                  value: page.id,
+                  label: page.name,
+                })) || []
               }
-            }}
-            loading={disconnectMutation.isPending}
-          >
-            Disconnect Facebook
-          </Button>
-          <Select
-            placeholder="Select Facebook Page"
-            data={
-              facebookPages?.data?.result?.map((page) => ({
-                value: page.id,
-                label: page.name,
-              })) || []
-            }
-            value={selectedPage}
-            onChange={setSelectedPage}
-            style={{ width: 250 }}
-          />
+              value={selectedPage}
+              onChange={setSelectedPage}
+              style={{ width: 250 }}
+            />
+          </Group>
         </Group>
 
         <Group gap="sm">
@@ -145,11 +186,11 @@ export const FacebookPostsTable: React.FC = () => {
             leftSection={<IconSearch size={16} />}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.currentTarget.value)}
-            style={{ flex: 1, marginTop: 20 }}
+            style={{ flex: 1 }}
           />
           <SegmentedControl
             value={sortBy}
-            onChange={setSortBy}
+            onChange={(value) => setSortBy(value as SortableField)}
             data={[
               { label: 'Date', value: 'date' },
               { label: 'Likes', value: 'likes' },
@@ -173,13 +214,14 @@ export const FacebookPostsTable: React.FC = () => {
         </Group>
 
         {posts && posts.length > 0 && (
-          <Table>
+          <Table striped highlightOnHover>
             <Table.Thead>
               <Table.Tr>
                 <Table.Th>Post Preview</Table.Th>
                 <Table.Th>Scheduled For</Table.Th>
                 <Table.Th>Engagement</Table.Th>
                 <Table.Th>Status</Table.Th>
+                <Table.Th>Actions</Table.Th>
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
@@ -188,23 +230,14 @@ export const FacebookPostsTable: React.FC = () => {
                   post.message.toLowerCase().includes(searchTerm.toLowerCase()),
                 )
                 .sort((a, b) => {
-                  if (sortBy === 'date') {
-                    return sortOrder === 'asc'
-                      ? new Date(a.scheduledAt).getTime() -
-                          new Date(b.scheduledAt).getTime()
-                      : new Date(b.scheduledAt).getTime() -
-                          new Date(a.scheduledAt).getTime();
-                  }
+                  const aValue = getSortValue(a, sortBy);
+                  const bValue = getSortValue(b, sortBy);
                   return sortOrder === 'asc'
-                    ? a[sortBy] - b[sortBy]
-                    : b[sortBy] - a[sortBy];
+                    ? aValue - bValue
+                    : bValue - aValue;
                 })
                 .map((post) => (
-                  <Table.Tr
-                    key={post.id}
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => setPreviewPost(post)}
-                  >
+                  <Table.Tr key={post.id}>
                     <Table.Td style={{ maxWidth: '300px' }}>
                       <Stack gap="xs">
                         <Text size="sm" lineClamp={3}>
@@ -223,40 +256,77 @@ export const FacebookPostsTable: React.FC = () => {
                               />
                             ))}
                             {post.imageUrls.length > 3 && (
-                              <Badge>+{post.imageUrls.length - 3} more</Badge>
+                              <Badge variant="light" color="blue">
+                                +{post.imageUrls.length - 3} more
+                              </Badge>
                             )}
                           </Group>
                         )}
                       </Stack>
                     </Table.Td>
                     <Table.Td>
-                      {dayjs(post.scheduledAt).format('MMM D, YYYY h:mm A')}
+                      <Text size="sm" fw={500}>
+                        {dayjs(post.scheduledAt).format('MMM D, YYYY')}
+                      </Text>
+                      <Text size="xs" c="dimmed">
+                        {dayjs(post.scheduledAt).format('h:mm A')}
+                      </Text>
                     </Table.Td>
                     <Table.Td>
-                      <Stack gap={4}>
-                        <Text size="sm">👍 {post.likes} likes</Text>
-                        <Text size="sm">💬 {post.comments} comments</Text>
-                        <Text size="sm">🔄 {post.shares} shares</Text>
+                      <Stack gap={2}>
+                        <Text size="sm" c="blue">
+                          👍 {post.likes} likes
+                        </Text>
+                        <Text size="sm" c="green">
+                          💬 {post.comments} comments
+                        </Text>
+                        <Text size="sm" c="orange">
+                          🔄 {post.shares} shares
+                        </Text>
                       </Stack>
                     </Table.Td>
                     <Table.Td>
                       <Badge
+                        size="sm"
                         color={
                           dayjs(post.scheduledAt).isAfter(dayjs())
                             ? 'yellow'
                             : 'green'
                         }
+                        variant="light"
                       >
                         {dayjs(post.scheduledAt).isAfter(dayjs())
                           ? 'Scheduled'
                           : 'Published'}
                       </Badge>
                     </Table.Td>
+                    <Table.Td>
+                      <Group gap="xs">
+                        <Tooltip label="View post preview">
+                          <ActionIcon
+                            variant="light"
+                            color="blue"
+                            onClick={() => setPreviewPost(post)}
+                          >
+                            <IconEye size={16} />
+                          </ActionIcon>
+                        </Tooltip>
+                        <Tooltip label="View on Facebook">
+                          <ActionIcon
+                            variant="light"
+                            color="blue"
+                            onClick={() => handleViewPost(post)}
+                          >
+                            <IconExternalLink size={16} />
+                          </ActionIcon>
+                        </Tooltip>
+                      </Group>
+                    </Table.Td>
                   </Table.Tr>
                 ))}
               {!isLoading && (!posts || posts.length === 0) && (
                 <Table.Tr>
-                  <Table.Td colSpan={4}>
+                  <Table.Td colSpan={5}>
                     <Text ta="center" c="dimmed">
                       {selectedPage
                         ? 'No posts found for this page'
@@ -273,12 +343,19 @@ export const FacebookPostsTable: React.FC = () => {
           opened={!!previewPost}
           onClose={() => setPreviewPost(null)}
           size="xl"
-          title="Post Preview"
+          title={
+            <Group>
+              <IconBrandFacebook size={20} color="#1877F2" />
+              <Text fw={500}>Post Preview</Text>
+            </Group>
+          }
         >
           {previewPost && (
-            <Paper p="md">
+            <Paper p="md" withBorder>
               <Stack gap="md">
-                <Text size="lg">{previewPost.message}</Text>
+                <Text size="lg" style={{ lineHeight: 1.6 }}>
+                  {previewPost.message}
+                </Text>
                 {previewPost.imageUrls?.length > 0 && (
                   <Group gap="md">
                     {previewPost.imageUrls.map((url, index) => (
@@ -288,21 +365,30 @@ export const FacebookPostsTable: React.FC = () => {
                         radius="md"
                         fit="cover"
                         h={200}
+                        style={{ flex: 1 }}
                       />
                     ))}
                   </Group>
                 )}
-                <Group gap="xl">
-                  <Text>
+                <Group justify="space-between" mt="md">
+                  <Text size="sm" c="dimmed">
                     Scheduled for:{' '}
-                    {dayjs(previewPost.scheduledAt).format(
-                      'MMM D, YYYY h:mm A',
-                    )}
+                    <Text component="span" fw={500}>
+                      {dayjs(previewPost.scheduledAt).format(
+                        'MMM D, YYYY h:mm A',
+                      )}
+                    </Text>
                   </Text>
-                  <Group gap="lg">
-                    <Text>👍 {previewPost.likes} likes</Text>
-                    <Text>💬 {previewPost.comments} comments</Text>
-                    <Text>🔄 {previewPost.shares} shares</Text>
+                  <Group gap="xl">
+                    <Text size="sm" c="blue">
+                      👍 {previewPost.likes} likes
+                    </Text>
+                    <Text size="sm" c="green">
+                      💬 {previewPost.comments} comments
+                    </Text>
+                    <Text size="sm" c="orange">
+                      🔄 {previewPost.shares} shares
+                    </Text>
                   </Group>
                 </Group>
               </Stack>

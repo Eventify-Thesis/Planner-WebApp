@@ -89,9 +89,12 @@ const useStyles = createStyles((theme: any) => ({
     height: '100px !important',
     borderRadius: '5px !important',
     objectFit: 'cover !important',
+    objectPosition: 'center !important',
     border: `2px solid rgb(66, 235, 100) !important`,
     boxShadow: '0 3px 8px rgba(0, 0, 0, 0.15)',
     transition: 'transform 0.3s ease-in-out',
+    flexShrink: 0, // Prevent image from shrinking
+    display: 'block !important',
 
     '&:hover': {
       transform: 'scale(1.02)',
@@ -99,7 +102,37 @@ const useStyles = createStyles((theme: any) => ({
 
     [`@media (max-width: ${theme.breakpoints.sm}px)`]: {
       width: '160px !important',
-      height: '100px !important',
+      height: '80px !important',
+    },
+  },
+  imageWrapper: {
+    width: '200px',
+    height: '100px',
+    borderRadius: '5px',
+    overflow: 'hidden',
+    border: `2px solid rgb(66, 235, 100)`,
+    boxShadow: '0 3px 8px rgba(0, 0, 0, 0.15)',
+    transition: 'transform 0.3s ease-in-out',
+    flexShrink: 0,
+    display: 'block',
+    position: 'relative',
+    backgroundColor: theme.colors.dark[6],
+
+    '&:hover': {
+      transform: 'scale(1.02)',
+    },
+
+    [`@media (max-width: ${theme.breakpoints.sm}px)`]: {
+      width: '160px',
+      height: '80px',
+    },
+
+    '& img': {
+      width: '100%',
+      height: '100%',
+      objectFit: 'cover',
+      objectPosition: 'center',
+      display: 'block',
     },
   },
   details: {
@@ -263,6 +296,12 @@ export const EventCard = ({
   const locale = language === 'en' ? 'en' : 'vi';
   const eventUrl = `${import.meta.env.VITE_USER_BASE_URL}/${url}-${id}`;
 
+  // Handle image fallback
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const target = e.currentTarget;
+    target.src = 'https://placehold.co/200x100?text=Event+Image';
+  };
+
   // Calculate duration in days
   const getDuration = () => {
     if (!startTime || !endTime) return 'N/A';
@@ -350,17 +389,13 @@ export const EventCard = ({
         {getStatusText()}
       </Text>
       <Box className={classes.cardContent}>
-        <Image
-          src={eventBannerUrl}
-          alt={eventName}
-          className={classes.image}
-          fallbackSrc="https://placehold.co/600x400?text=Event+Image"
-          style={{
-            width: '200px',
-            height: '100px',
-            border: '1px solid rgb(66, 235, 100)',
-          }}
-        />
+        <Box className={classes.imageWrapper}>
+          <img
+            src={eventBannerUrl}
+            alt={eventName}
+            onError={handleImageError}
+          />
+        </Box>
         <Box className={classes.details}>
           <Anchor
             href={eventUrl}
