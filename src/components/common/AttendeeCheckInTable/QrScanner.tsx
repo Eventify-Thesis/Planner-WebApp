@@ -152,6 +152,9 @@ export const QRScannerComponent = ({
         qrScannerRef.current.destroy();
       }
 
+      // Wait for video element to be ready
+      await new Promise(resolve => setTimeout(resolve, 200));
+
       // Create new scanner
       qrScannerRef.current = new QrScanner(
         videoRef.current,
@@ -172,9 +175,17 @@ export const QRScannerComponent = ({
       // Get available cameras
       const availableCameras = await QrScanner.listCameras(true);
       setCameras(availableCameras);
+      
+      // Auto-select first camera if available
+      if (availableCameras.length > 0) {
+        await qrScannerRef.current.setCamera(availableCameras[0].id);
+      }
     } catch (error) {
       console.error('Scanner initialization failed:', error);
-      setPermissionState('denied');
+      // Don't set denied state for AbortError - it's usually recoverable
+      if (error.name !== 'AbortError') {
+        setPermissionState('denied');
+      }
     } finally {
       isInitializingRef.current = false;
     }
@@ -258,11 +269,18 @@ export const QRScannerComponent = ({
     onClose();
   }, [cleanupScanner, onClose]);
 
-  // Initialize on mount and when mode changes
+  // Initialize on mount with delay for modal rendering
   useEffect(() => {
-    initializeScanner();
-    return cleanupScanner;
-  }, [initializeScanner]);
+    const timer = setTimeout(() => {
+      initializeScanner();
+    }, 300);
+    
+    return () => {
+      clearTimeout(timer);
+      cleanupScanner();
+    };
+  }, [initializeScanner, cleanupScanner]);
+
 
   // Render permission denied state
   if (permissionState === 'denied') {
@@ -300,7 +318,12 @@ export const QRScannerComponent = ({
 
   return (
     <div className={classes.videoContainer}>
-      <video className={classes.video} ref={videoRef} />
+      <video 
+        className={classes.video} 
+        ref={videoRef}
+        playsInline
+        muted
+      />
 
       {/* Flash Toggle */}
       <Button

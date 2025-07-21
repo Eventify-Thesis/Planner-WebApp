@@ -18,10 +18,10 @@ export const checkInClient = {
         const response = await httpApi.post<any>(`planner/events/${eventId}/check-in/${checkInListShortId}/check-ins`, {
             "attendee_public_ids": [attendeePublicId],
         });
-        return response.data.data;
+        return response.data;
     },
-    deleteCheckIn: async (eventId: IdParam, checkInListShortId: IdParam, checkInShortId: IdParam) => {
-        const response = await httpApi.delete<any>(`planner/events/${eventId}/check-in/${checkInListShortId}/check-ins/${checkInShortId}`);
+    deleteCheckIn: async (eventId: IdParam, checkInListShortId: IdParam, attendeePublicId: IdParam) => {
+        const response = await httpApi.delete<any>(`planner/events/${eventId}/check-in/${checkInListShortId}/check-ins/${attendeePublicId}`);
         return response.data;
     },
 };

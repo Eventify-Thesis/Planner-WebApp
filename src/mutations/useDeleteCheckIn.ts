@@ -7,21 +7,25 @@ export const useDeleteCheckIn = ({ eventId, pagination }: { eventId: IdParam, pa
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ checkInListShortId, checkInShortId }: { checkInListShortId: IdParam, checkInShortId: IdParam }) =>
-            checkInClient.deleteCheckIn(eventId, checkInListShortId, checkInShortId),
+        mutationFn: ({ checkInListShortId, attendeePublicId }: { checkInListShortId: IdParam, attendeePublicId: IdParam }) =>
+            checkInClient.deleteCheckIn(eventId, checkInListShortId, attendeePublicId),
 
-        onSettled: (_, error, { checkInListShortId, checkInShortId }) => {
+        onSettled: (data, error, { checkInListShortId, attendeePublicId }) => {
             if (error) {
                 return;
             }
 
             // Find the attendee in the cache and remove the check-in status
             queryClient.setQueryData([GET_CHECK_IN_LIST_ATTENDEES_PUBLIC_QUERY_KEY, checkInListShortId, pagination], (oldData: any) => {
-                const newAttendees = oldData?.items?.map((attendee: any) => {
-                    if (attendee.checkIn?.shortId === checkInShortId) {
+                if (!oldData || !oldData.items) {
+                    return oldData;
+                }
+                
+                const newAttendees = oldData.items.map((attendee: any) => {
+                    if (attendee.publicId === attendeePublicId) {
                         return {
                             ...attendee,
-                            checkIn: undefined,
+                            checkIn: null,
                         };
                     }
                     return attendee;
@@ -31,6 +35,11 @@ export const useDeleteCheckIn = ({ eventId, pagination }: { eventId: IdParam, pa
                     ...oldData,
                     items: newAttendees,
                 };
+            });
+            
+            // Also invalidate queries to ensure UI updates
+            queryClient.invalidateQueries({ 
+                queryKey: [GET_CHECK_IN_LIST_ATTENDEES_PUBLIC_QUERY_KEY, checkInListShortId] 
             });
         }
     });

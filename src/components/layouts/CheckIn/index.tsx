@@ -61,12 +61,14 @@ const CheckIn = () => {
     pagination: queryFilters,
   });
 
+  console.log(attendeesQuery);
+
   const handleCheckInToggle = (attendee: AttendeeModel) => {
     if (attendee.checkIn) {
       deleteCheckInMutation.mutate(
         {
           checkInListShortId: checkInListShortId,
-          checkInShortId: attendee.checkIn.shortId,
+          attendeePublicId: attendee.publicId,
         },
         {
           onSuccess: () => {
@@ -178,7 +180,7 @@ const CheckIn = () => {
     deleteCheckInMutation.mutate(
       {
         checkInListShortId: checkInListShortId,
-        checkInShortId: attendeePublicId,
+        attendeePublicId: attendeePublicId,
       },
       {
         onSuccess: () => {

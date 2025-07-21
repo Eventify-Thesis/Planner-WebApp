@@ -8,7 +8,7 @@ export const useGetCheckInListAttendees = (eventId: IdParam, checkInListShortId:
     return useQuery<any>({
         queryKey: [GET_CHECK_IN_LIST_ATTENDEES_PUBLIC_QUERY_KEY, checkInListShortId, pagination],
         queryFn: async () => {
-            const { data } = await checkInClient.getCheckInListAttendees(eventId, checkInListShortId, pagination);
+            const {data} =  await checkInClient.getCheckInListAttendees(eventId, checkInListShortId, pagination);
             return data;
         },
         enabled: enabled,
