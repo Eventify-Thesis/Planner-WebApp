@@ -38,7 +38,7 @@ httpApi.interceptors.response.use(undefined, (error: AxiosError) => {
   // Handle authentication errors (401) - redirect to login
   if (status === 401) {
     if (globalErrorHandler) {
-      globalErrorHandler(401, 'unauthorized');
+      // globalErrorHandler(401, 'unauthorized');
     }
     return Promise.reject(error);
   }
@@ -46,7 +46,7 @@ httpApi.interceptors.response.use(undefined, (error: AxiosError) => {
   // Handle authorization errors (403) - show permission denied message
   if (status === 403) {
     if (globalErrorHandler) {
-      globalErrorHandler(403, 'forbidden');
+      // globalErrorHandler(403, 'forbidden');
     }
     throw new ApiError<ApiErrorData>(
       'Insufficient permissions',

@@ -350,8 +350,8 @@ export const EventLocationSection: React.FC<EventLocationSectionProps> = ({
                     data={cities.map((city) => ({
                       label:
                         language === 'en'
-                          ? `${city.typeEn} ${city.nameEn}`
-                          : `${city.type} ${city.name}`,
+                          ? `${city.nameEn}`
+                          : `${city.name}`,
                       value: city.originId.toString(),
                     }))}
                     onChange={(value) => {
