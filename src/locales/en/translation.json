@@ -19,6 +19,13 @@
     "warning": "Warning text",
     "warningDescription": "This is a warning notice about copywriting."
   },
+  "eventSelectTicketPage": {
+    "title": "Get Your Tickets! 🎟️",
+    "description": "Select the section and quantity of tickets you want to purchase.",
+    "section": "Section",
+    "quantity": "Quantity",
+    "select": "Select"
+  },
   "common": {
     "manage": "Manage",
     "danger_zone": "Danger Zone",
