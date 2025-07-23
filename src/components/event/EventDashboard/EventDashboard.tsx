@@ -74,9 +74,9 @@ const EventDashboard: React.FC = () => {
   };
 
   const quickRangeButtons = [
-    { label: t`Last 7 days`, days: 7 },
-    { label: t`Last 30 days`, days: 30 },
-    { label: t`Last 90 days`, days: 90 },
+    { label: t('event_dashboard.date_range.last_7_days'), days: 7 },
+    { label: t('event_dashboard.date_range.last_30_days'), days: 30 },
+    { label: t('event_dashboard.date_range.last_90_days'), days: 90 },
   ];
 
   const setQuickRange = (days: number) => {
@@ -95,7 +95,7 @@ const EventDashboard: React.FC = () => {
 
           <Group gap="md" className={classes.controls}>
             <DatePicker.RangePicker
-              placeholder={[t`Start date`, t`End date`]}
+              placeholder={[t('event_dashboard.date_range.start_date'), t('event_dashboard.date_range.end_date')]}
               value={dateRange}
               onChange={handleDateRangeChange}
               className={classes.datePicker}
@@ -123,7 +123,7 @@ const EventDashboard: React.FC = () => {
               onClick={handleRefresh}
               loading={isLoading}
             >
-              {t`Refresh`}
+              {t('event_dashboard.refresh')}
             </Button>
           </Group>
         </div>
@@ -139,7 +139,7 @@ const EventDashboard: React.FC = () => {
                 <div className={classes.chartCardTitle}>
                   <Group gap="sm">
                     <IconTrendingUp size={20} />
-                    <Text size="lg" fw={600}>{t`Ticket Sales Overview`}</Text>
+                    <Text size="lg" fw={600}>{t('event_dashboard.ticket_sales.title')}</Text>
                   </Group>
                   <Badge variant="light" color="blue">
                     {formattedDateRange}
@@ -148,13 +148,13 @@ const EventDashboard: React.FC = () => {
 
                 <Group gap="lg" className={classes.chartStats}>
                   <div className={classes.statItem}>
-                    <Text size="sm" c="dimmed">{t`Total Orders`}</Text>
+                    <Text size="sm" c="dimmed">{t('event_dashboard.ticket_sales.total_orders')}</Text>
                     <Text size="xl" fw={700} c="green">
                       {eventStats.totalOrders}
                     </Text>
                   </div>
                   <div className={classes.statItem}>
-                    <Text size="sm" c="dimmed">{t`Tickets Sold`}</Text>
+                    <Text size="sm" c="dimmed">{t('event_dashboard.ticket_sales.tickets_sold')}</Text>
                     <Text size="xl" fw={700} c="blue">
                       {eventStats.totalTicketsSold}
                     </Text>
@@ -188,7 +188,7 @@ const EventDashboard: React.FC = () => {
                   <Line
                     type="monotone"
                     dataKey="ordersCreated"
-                    name={t`Orders Created`}
+                    name={t('event_dashboard.ticket_sales.orders_created')}
                     stroke="#2E7D32"
                     strokeWidth={3}
                     dot={{ r: 5, fill: '#2E7D32' }}
@@ -197,7 +197,7 @@ const EventDashboard: React.FC = () => {
                   <Line
                     type="monotone"
                     dataKey="ticketsSold"
-                    name={t`Tickets Sold`}
+                    name={t('event_dashboard.ticket_sales.tickets_sold')}
                     stroke="#1976D2"
                     strokeWidth={3}
                     dot={{ r: 5, fill: '#1976D2' }}
@@ -212,7 +212,7 @@ const EventDashboard: React.FC = () => {
                 <div className={classes.chartCardTitle}>
                   <Group gap="sm">
                     <IconTrendingUp size={20} />
-                    <Text size="lg" fw={600}>{t`Revenue Analytics`}</Text>
+                    <Text size="lg" fw={600}>{t('event_dashboard.revenue_analytics.title')}</Text>
                   </Group>
                   <Badge variant="light" color="green">
                     {formattedDateRange}
@@ -221,19 +221,19 @@ const EventDashboard: React.FC = () => {
 
                 <Group gap="lg" className={classes.chartStats}>
                   <div className={classes.statItem}>
-                    <Text size="sm" c="dimmed">{t`Gross Sales`}</Text>
+                    <Text size="sm" c="dimmed">{t('event_dashboard.revenue_analytics.gross_sales')}</Text>
                     <Text size="xl" fw={700} c="red">
                       {formatCurrency(eventStats.totalGrossSales, 'VND')}
                     </Text>
                   </div>
                   <div className={classes.statItem}>
-                    <Text size="sm" c="dimmed">{t`Net Sales`}</Text>
+                    <Text size="sm" c="dimmed">{t('event_dashboard.revenue_analytics.net_sales')}</Text>
                     <Text size="xl" fw={700} c="blue">
                       {formatCurrency(eventStats.totalNetSales, 'VND')}
                     </Text>
                   </div>
                   <div className={classes.statItem}>
-                    <Text size="sm" c="dimmed">{t`Total Discount`}</Text>
+                    <Text size="sm" c="dimmed">{t('event_dashboard.revenue_analytics.total_discount')}</Text>
                     <Text size="xl" fw={700} c="orange">
                       {formatCurrency(eventStats.totalDiscount, 'VND')}
                     </Text>
@@ -275,7 +275,7 @@ const EventDashboard: React.FC = () => {
                   <Line
                     type="monotone"
                     dataKey="totalSalesGross"
-                    name={t`Gross Sales`}
+                    name={t('event_dashboard.revenue_analytics.gross_sales')}
                     stroke="#D32F2F"
                     strokeWidth={3}
                     dot={{ r: 5, fill: '#D32F2F' }}
@@ -284,7 +284,7 @@ const EventDashboard: React.FC = () => {
                   <Line
                     type="monotone"
                     dataKey="totalSalesNet"
-                    name={t`Net Sales`}
+                    name={t('event_dashboard.revenue_analytics.net_sales')}
                     stroke="#1976D2"
                     strokeWidth={3}
                     dot={{ r: 5, fill: '#1976D2' }}
@@ -293,7 +293,7 @@ const EventDashboard: React.FC = () => {
                   <Line
                     type="monotone"
                     dataKey="totalDiscount"
-                    name={t`Total Discount`}
+                    name={t('event_dashboard.revenue_analytics.total_discount')}
                     stroke="#FFA000"
                     strokeWidth={3}
                     dot={{ r: 5, fill: '#FFA000' }}

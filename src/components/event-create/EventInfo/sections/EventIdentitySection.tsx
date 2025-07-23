@@ -103,10 +103,8 @@ export const EventIdentitySection: React.FC<EventIdentitySectionProps> = ({
       title={t('event_create.event_identity.title')}
       icon={<IconId size={22} />}
       colorAccent="accent1"
-      subtitle={
-        "Define your event's visual identity with logos and banners that represent your brand."
-      }
-      badge="Branding"
+      subtitle={t('event_create.event_identity.description')}
+      badge={t('event_create.event_identity.title')}
     >
       <Grid gutter="xl" mb="lg">
         <Grid.Col span={{ base: 12, md: 3 }}>
@@ -118,7 +116,7 @@ export const EventIdentitySection: React.FC<EventIdentitySectionProps> = ({
               </Text>
             </Text>
             <Text size="xs" c="dimmed">
-              (720:958 format recommended)
+              {t('event_create.event_identity.logo_format_hint')}
             </Text>
           </Box>
           {fileList['logo']?.length > 0 ? (
@@ -156,12 +154,12 @@ export const EventIdentitySection: React.FC<EventIdentitySectionProps> = ({
                   {t('event_create.event_identity.upload_logo')}
                 </Text>
                 <Text size="xs" c="dimmed" ta="center" lh={1.5}>
-                  Click or drag an image here
+                  {t('event_create.event_identity.dropzone_instructions')}
                   <br />
-                  PNG, JPG up to 2MB
+                  {t('event_create.event_identity.dropzone_formats', { size: 2 })}
                   <br />
                   <Text span c="blue.6" fw={500} size="xs">
-                    Recommended size: 400×400px
+                    {t('event_create.event_identity.recommended_size', { dimensions: '400×400px' })}
                   </Text>
                 </Text>
               </Box>
@@ -178,7 +176,7 @@ export const EventIdentitySection: React.FC<EventIdentitySectionProps> = ({
               </Text>
             </Text>
             <Text size="xs" c="dimmed">
-              (1280:720 format recommended)
+              {t('event_create.event_identity.banner_format_hint')}
             </Text>
           </Box>
           {fileList['banner']?.length > 0 ? (
@@ -216,12 +214,12 @@ export const EventIdentitySection: React.FC<EventIdentitySectionProps> = ({
                   {t('event_create.event_identity.upload_banner')}
                 </Text>
                 <Text size="xs" c="dimmed" ta="center" lh={1.5}>
-                  Add a banner image to attract attendees
+                  {t('event_create.event_identity.banner_dropzone_instructions')}
                   <br />
-                  PNG, JPG up to 3MB
+                  {t('event_create.event_identity.dropzone_formats', { size: 3 })}
                   <br />
                   <Text span c="blue.6" fw={500} size="xs">
-                    Recommended size: 1200×675px
+                    {t('event_create.event_identity.recommended_size', { dimensions: '1200×675px' })}
                   </Text>
                 </Text>
               </Box>
@@ -244,7 +242,7 @@ export const EventIdentitySection: React.FC<EventIdentitySectionProps> = ({
         }}
       >
         <Text fw={600} size="sm" mb="xs">
-          Event Details
+          {t('event_create.event_identity.event_details')}
         </Text>
         <Grid gutter="xl">
           <Grid.Col span={{ base: 12, md: 6 }}>

@@ -228,7 +228,14 @@
       "upload_logo": "Upload Logo",
       "upload_banner": "Upload Banner",
       "logo_description": "Recommended size: 500×500px (square format)",
-      "banner_description": "Recommended size: 1200×675px (16:9 format)"
+      "banner_description": "Recommended size: 1200×675px (16:9 format)",
+      "logo_format_hint": "(720:958 format recommended)",
+      "banner_format_hint": "(1280:720 format recommended)",
+      "dropzone_instructions": "Click or drag an image here",
+      "dropzone_formats": "PNG, JPG up to {{size}}MB",
+      "banner_dropzone_instructions": "Add a banner image to attract attendees",
+      "recommended_size": "Recommended size: {{dimensions}}",
+      "event_details": "Event Details"
     },
     "event_location": {
       "title": "Event Location",
@@ -573,6 +580,29 @@
     "seatmap": "Seat Map",
     "setting": "Settings",
     "voucher": "Voucher Management"
+  },
+  "event_dashboard": {
+    "welcome": "Welcome back",
+    "refresh": "Refresh",
+    "date_range": {
+      "start_date": "Start date",
+      "end_date": "End date",
+      "last_7_days": "Last 7 days",
+      "last_30_days": "Last 30 days",
+      "last_90_days": "Last 90 days"
+    },
+    "ticket_sales": {
+      "title": "Ticket Sales Overview",
+      "total_orders": "Total Orders",
+      "tickets_sold": "Tickets Sold",
+      "orders_created": "Orders Created"
+    },
+    "revenue_analytics": {
+      "title": "Revenue Analytics",
+      "gross_sales": "Gross Sales",
+      "net_sales": "Net Sales",
+      "total_discount": "Total Discount"
+    }
   },
   "voucher": {
     "name": "Name",
