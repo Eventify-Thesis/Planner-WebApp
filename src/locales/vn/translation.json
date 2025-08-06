@@ -112,6 +112,38 @@
     "uncheck": "Uncheck",
     "unchecked": "Unchecked"
   },
+  "statBoxes": {
+    "ticketsSold": "Vé đã bán",
+    "grossSales": "Doanh thu tổng",
+    "pageViews": "Lượt xem trang",
+    "ordersCreated": "Đơn hàng đã tạo"
+  },
+  "questionsTable": {
+    "tooltips": {
+      "hiddenQuestion": "Câu hỏi này chỉ hiển thị với người tổ chức sự kiện",
+      "hideHiddenQuestions": "Ẩn câu hỏi ẩn",
+      "showHiddenQuestions": "Hiện câu hỏi ẩn",
+      "defaultQuestionsInfo": "Họ, Tên và Địa chỉ email là các câu hỏi mặc định và luôn được bao gồm trong quy trình thanh toán."
+    },
+    "buttons": {
+      "addQuestion": "Thêm câu hỏi"
+    },
+    "labels": {
+      "hiddenQuestion": "câu hỏi ẩn",
+      "hiddenQuestions": "câu hỏi ẩn",
+      "orderQuestions": "Câu hỏi đơn hàng",
+      "attendeeQuestions": "Câu hỏi người tham dự",
+      "preview": "Xem trước",
+      "firstName": "Tên",
+      "lastName": "Họ",
+      "emailAddress": "Địa chỉ email"
+    },
+    "messages": {
+      "noOrderQuestions": "Bạn chưa có câu hỏi đơn hàng nào.",
+      "noAttendeeQuestions": "Bạn chưa có câu hỏi nào cho người tham dự.",
+      "hiddenQuestionEnabled": "Bạn đã tạo một câu hỏi ẩn nhưng đã tắt tùy chọn hiển thị câu hỏi ẩn. Tùy chọn này đã được bật lại."
+    }
+  },
   "common": {
     "manage": "Quản lý",
     "danger_zone": "Khu vực nguy hiểm",
@@ -266,6 +298,7 @@
     "lock": "Khóa",
     "login": "Đăng nhập",
     "maintenance": "Bảo trì",
+    "noResults": "Không tìm thấy kết quả",
     "map": "Bản đồ",
     "maps": "Bản đồ",
     "modal": "Cửa sổ",
@@ -562,15 +595,15 @@
     }
   },
   "header": {
-    "changeLanguage": "Change language",
-    "changeTheme": "Change theme",
-    "darkTheme": "Dark",
-    "lightTheme": "Light",
-    "logout": "Logout",
+    "changeLanguage": "Đổi ngôn ngữ",
+    "changeTheme": "Đổi giao diện",
+    "darkTheme": "Giao diện tối",
+    "lightTheme": "Giao diện sáng",
+    "logout": "Đăng xuất",
     "nightMode": {
-      "from": "From",
-      "title": "Nightmode",
-      "to": "To",
+      "from": "Từ",
+      "title": "Chế độ đêm",
+      "to": "Đến",
       "h": "h"
     },
     "notifications": {
@@ -1168,6 +1201,57 @@
     "tax_number": "Mã số thuế",
     "tax_number_invalid": "Vui lòng nhập mã số thuế hợp lệ",
     "tax_number_placeholder": "Nhập mã số thuế"
+  },
+  "members": {
+    "addMember": "Thêm thành viên",
+    "form": {
+      "email": "Email",
+      "emailRequired": "Vui lòng nhập email",
+      "emailInvalid": "Email không hợp lệ",
+      "role": "Vai trò",
+      "roleRequired": "Vui lòng chọn vai trò"
+    },
+    "table": {
+      "member": "Thành viên",
+      "role": "Vai trò",
+      "actions": "Thao tác"
+    },
+    "modal": {
+      "addTitle": "Thêm thành viên mới",
+      "editTitle": "Chỉnh sửa thành viên"
+    },
+    "permissions": {
+      "title": "Phân quyền",
+      "permission": "Quyền hạn"
+    },
+    "add": {
+      "success": "Đã thêm thành viên thành công",
+      "error": "Có lỗi xảy ra khi thêm thành viên"
+    },
+    "update": {
+      "success": "Đã cập nhật thành viên thành công",
+      "error": "Có lỗi xảy ra khi cập nhật thành viên"
+    },
+    "delete": {
+      "success": "Đã xóa thành viên thành công",
+      "error": "Có lỗi xảy ra khi xóa thành viên"
+    },
+    "errors": {
+      "alreadyExists": "Thành viên đã tồn tại trong tổ chức",
+      "notFound": "Không tìm thấy người dùng",
+      "cannotAssignRole": "Bạn không có quyền gán vai trò này",
+      "cannotDeleteMember": "Bạn không thể xóa thành viên này",
+      "cannotManageRole": "Bạn không thể quản lý vai trò này",
+      "notOrganizationMember": "Bạn không phải là thành viên của tổ chức này",
+      "clerkError": "Có lỗi xảy ra khi quản lý thành viên tổ chức"
+    },
+    "role": {
+      "OWNER": "Chủ sở hữu",
+      "ADMIN": "Quản trị viên",
+      "MANAGER": "Quản lý",
+      "ENTRY_STAFF": "Nhân viên kiểm soát vé",
+      "VENDOR": "Nhà cung cấp"
+    }
   },
   "questions": {
     "options": "Tùy chọn",

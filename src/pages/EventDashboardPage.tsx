@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PageTitle } from '@/components/common/PageTitle/PageTitle';
 import { useResponsive } from '@/hooks/useResponsive';
@@ -49,17 +49,59 @@ const EventDashboardPage: React.FC = () => {
   const [keyword, setKeyword] = useState('');
   const [status, setStatus] = useState(EventStatus.UPCOMING.toString());
 
+  // Reset to first page whenever status filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [status]);
+
   const { t } = useTranslation();
+
+  // Map UPCOMING and PAST filters to backend 'PUBLISHED' status
+  const backendStatus =
+    status === 'UPCOMING' || status === 'PAST' ? EventStatus.PUBLISHED : status as any;
+
+  // For UPCOMING and PAST we want full published list to filter client-side
+  const requestPage = status === 'UPCOMING' || status === 'PAST' ? 1 : currentPage;
+  const requestLimit = status === 'UPCOMING' || status === 'PAST' ? 1000 : pageSize;
 
   const { data, isLoading } = useGetEventList({
     keyword,
-    status,
-    page: currentPage,
-    limit: pageSize,
+    status: backendStatus,
+    page: requestPage,
+    limit: requestLimit,
   });
 
   const events = data?.docs || [];
-  const totalDocs = data?.totalDocs || 0;
+
+  // Apply client-side date filtering for UPCOMING and PAST tabs
+  const now = new Date();
+  const filteredEventsAll = events.filter((event: any) => {
+    if (status === 'UPCOMING') {
+      return new Date(event.startTime) > now;
+    }
+    if (status === 'PAST') {
+      return new Date(event.startTime) <= now;
+    }
+    return true;
+  });
+  // Slice for pagination when filtering client-side
+  const startIdx = (currentPage - 1) * pageSize;
+  const endIdx = startIdx + pageSize;
+  const sortedEventsAll = status === 'UPCOMING'
+    ? filteredEventsAll.sort((a: any, b: any) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+    : status === 'PAST'
+    ? filteredEventsAll.sort((a: any, b: any) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
+    : filteredEventsAll;
+
+  const displayEvents =
+    status === 'UPCOMING' || status === 'PAST'
+      ? sortedEventsAll.slice(startIdx, endIdx)
+      : events;
+
+  const totalDocs =
+    status === 'UPCOMING' || status === 'PAST'
+      ? filteredEventsAll.length
+      : data?.totalDocs || 0;
 
   const renderContent = () => {
     if (isLoading) {
@@ -76,8 +118,8 @@ const EventDashboardPage: React.FC = () => {
           marginTop: '1rem',
         }}
       >
-        <EventList events={events} />
-        {events && events.length > 0 && (
+        <EventList events={displayEvents} />
+        {totalDocs > 0 && (
           <Box className={classes.paginationContainer}>
             <Pagination
               value={currentPage}

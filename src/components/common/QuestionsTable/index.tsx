@@ -94,7 +94,7 @@ const SortableQuestion = ({
           <Truncate text={question.title} />{' '}
           {question.isHidden && (
             <Tooltip
-              label={t('This question is only visible to the event organizer')}
+              label={t('questionsTable.tooltips.hiddenQuestion')}
             >
               <IconEyeClosed className={classes.hiddenIcon} size={14} />
             </Tooltip>
@@ -232,21 +232,21 @@ const DefaultQuestions = () => {
       <InputGroup>
         <TextInput
           withAsterisk
-          label={t('First Name')}
-          placeholder={t('First name')}
+          label={t('questionsTable.labels.firstName')}
+          placeholder={t('questionsTable.labels.firstName')}
         />
         <TextInput
           withAsterisk
-          label={t('Last Name')}
-          placeholder={t('Last Name')}
+          label={t('questionsTable.labels.lastName')}
+          placeholder={t('questionsTable.labels.lastName')}
         />
       </InputGroup>
 
       <TextInput
         withAsterisk
         type={'email'}
-        label={t('Email Address')}
-        placeholder={t('Email Address')}
+        label={t('questionsTable.labels.emailAddress')}
+        placeholder={t('questionsTable.labels.emailAddress')}
       />
     </>
   );
@@ -289,9 +289,7 @@ export const QuestionsTable = ({
     if (question.isHidden && !showHiddenQuestions) {
       setShowHiddenQuestions(true);
       showSuccess(
-        t(
-          'You created a hidden question but disabled the option to show hidden questions. It has been enabled.',
-        ),
+        t('questionsTable.messages.hiddenQuestionEnabled'),
       );
     }
   };
@@ -305,21 +303,21 @@ export const QuestionsTable = ({
             rightSection={<IconPlus />}
             onClick={openCreateModal}
           >
-            {t('Add question')}
+            {t('questionsTable.buttons.addQuestion')}
           </Button>
           <div className={classes.hiddenToggle}>
             <Group>
               <span className={classes.hiddenCount}>
                 {questions.filter((question) => question.isHidden).length}{' '}
                 {questions.filter((question) => question.isHidden).length === 1
-                  ? t('hidden question')
-                  : t('hidden questions')}
+                  ? t('questionsTable.labels.hiddenQuestion')
+                  : t('questionsTable.labels.hiddenQuestions')}
               </span>
               <Tooltip
                 label={
                   showHiddenQuestions
-                    ? t('Hide hidden questions')
-                    : t('Show hidden questions')
+                    ? t('questionsTable.tooltips.hideHiddenQuestions')
+                    : t('questionsTable.tooltips.showHiddenQuestions')
                 }
               >
                 <Switch
@@ -337,7 +335,7 @@ export const QuestionsTable = ({
       <div className={classes.container}>
         <div className={classes.questionsContainer}>
           <div className={classes.questions}>
-            <h3>{t('Order questions')}</h3>
+            <h3>{t('questionsTable.labels.orderQuestions')}</h3>
             <QuestionsList
               questions={orderQuestions}
               onEditModalOpen={handleModalOpen}
@@ -348,12 +346,12 @@ export const QuestionsTable = ({
               (question) => showHiddenQuestions || !question.isHidden,
             ).length === 0 && (
               <Card className={classes.noQuestionsAlert}>
-                <IconInfoCircle /> {t('You have no order questions.')}
+                <IconInfoCircle /> {t('questionsTable.messages.noOrderQuestions')}
               </Card>
             )}
           </div>
           <div className={classes.questions}>
-            <h3>{t('Attendee questions')}</h3>
+            <h3>{t('questionsTable.labels.attendeeQuestions')}</h3>
             <QuestionsList
               questions={ticketQuestions}
               onEditModalOpen={handleModalOpen}
@@ -364,7 +362,7 @@ export const QuestionsTable = ({
               (question) => showHiddenQuestions || !question.isHidden,
             ).length === 0 && (
               <Card className={classes.noQuestionsAlert}>
-                <IconInfoCircle /> {t('You have no attendee questions.')}
+                <IconInfoCircle /> {t('questionsTable.messages.noAttendeeQuestions')}
               </Card>
             )}
           </div>
@@ -373,19 +371,17 @@ export const QuestionsTable = ({
         <div className={classes.previewContainer}>
           <h3>
             <Group>
-              {t('Preview')}
+              {t('questionsTable.labels.preview')}
               <Popover
                 width={'400px'}
-                title={t(
-                  'First Name, Last Name, and Email Address are default questions and are always included in the checkout process.',
-                )}
+                title={t('questionsTable.tooltips.defaultQuestionsInfo')}
               >
                 <IconInfoCircle size={18} />
               </Popover>
             </Group>
           </h3>
           <Card className={classes.previewCard}>
-            <h3>{t('Order questions')}</h3>
+            <h3>{t('questionsTable.labels.orderQuestions')}</h3>
             <div className={classes.previewForm}>
               <div className={classes.mask} />
               <DefaultQuestions />
@@ -400,7 +396,7 @@ export const QuestionsTable = ({
                   />
                 ))}
 
-              <h3>{t('Attendee questions')}</h3>
+              <h3>{t('questionsTable.labels.attendeeQuestions')}</h3>
               <DefaultQuestions />
               {ticketQuestions
                 .filter((question) => showHiddenQuestions || !question.isHidden)

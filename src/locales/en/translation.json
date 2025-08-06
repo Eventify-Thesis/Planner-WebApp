@@ -26,6 +26,38 @@
     "quantity": "Quantity",
     "select": "Select"
   },
+  "statBoxes": {
+    "ticketsSold": "Tickets sold",
+    "grossSales": "Gross sales",
+    "pageViews": "Page views",
+    "ordersCreated": "Orders Created"
+  },
+  "questionsTable": {
+    "tooltips": {
+      "hiddenQuestion": "This question is only visible to the event organizer",
+      "hideHiddenQuestions": "Hide hidden questions",
+      "showHiddenQuestions": "Show hidden questions",
+      "defaultQuestionsInfo": "First Name, Last Name, and Email Address are default questions and are always included in the checkout process."
+    },
+    "buttons": {
+      "addQuestion": "Add question"
+    },
+    "labels": {
+      "hiddenQuestion": "hidden question",
+      "hiddenQuestions": "hidden questions",
+      "orderQuestions": "Order questions",
+      "attendeeQuestions": "Attendee questions",
+      "preview": "Preview",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "emailAddress": "Email Address"
+    },
+    "messages": {
+      "noOrderQuestions": "You have no order questions.",
+      "noAttendeeQuestions": "You have no attendee questions.",
+      "hiddenQuestionEnabled": "You created a hidden question but disabled the option to show hidden questions. It has been enabled."
+    }
+  },
   "common": {
     "manage": "Manage",
     "danger_zone": "Danger Zone",
@@ -98,6 +130,7 @@
     "lock": "Lock",
     "login": "Log In",
     "maintenance": "Maintenance",
+    "noResults": "No results found",
     "map": "Map",
     "maps": "Maps",
     "modal": "Modal",

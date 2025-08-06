@@ -20,22 +20,22 @@ export const StatBoxes = () => {
   const data = [
     {
       number: formatNumber(eventStats?.totalTicketsSold as number),
-      description: t`Tickets sold`,
+      description: t('statBoxes.ticketsSold'),
       icon: <IconTicket />,
     },
     {
       number: formatCurrency(eventStats?.totalGrossSales || 0, 'VND'),
-      description: t`Gross sales`,
+      description: t('statBoxes.grossSales'),
       icon: <IconCash />,
     },
     {
       number: formatNumber(eventStats?.totalViews as number),
-      description: t`Page views`,
+      description: t('statBoxes.pageViews'),
       icon: <IconEye />,
     },
     {
       number: formatNumber(eventStats?.totalOrders as number),
-      description: t`Orders Created`,
+      description: t('statBoxes.ordersCreated'),
       icon: <IconReceipt />,
     },
   ];
